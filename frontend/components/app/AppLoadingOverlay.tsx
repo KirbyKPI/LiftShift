@@ -50,7 +50,7 @@ const getVisibleMessages = (baseIndex: number, isCompleting: boolean) => {
   const completedCount = isCompleting ? VISIBLE_COUNT : Math.min(2, baseIndex);
 
   for (let offset = 0; offset < VISIBLE_COUNT; offset++) {
-    const msgIndex = (baseIndex + offset) % LOADING_MESSAGES.length;
+    const msgIndex = baseIndex + offset;
     let state: 'completed' | 'active' | 'pending';
     if (offset < completedCount) state = 'completed';
     else if (offset === completedCount) state = 'active';
