@@ -1,101 +1,108 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { CsvLoadingAnimation } from '../modals/csvImport/CsvLoadingAnimation';
 
 interface AppLoadingOverlayProps {
   open: boolean;
-  loadingStep: number;
-  progress: number;
+  isCompleting: boolean;
 }
 
-// Phase-specific sequential rotating messages
-// Phase 1: Setup + Connection (can take long with cold starts)
-const PHASE_1_MESSAGES = [
-  'Initializing...',
-  'Setting up workspace...',
-  'Preparing environment...',
-  'Configuring application...',
-  'Initializing services...',
-  'Loading configuration...',
+// Single message pool - no phases
+const LOADING_MESSAGES = [
+  'Warming things up...',
+  'Starting services...',
+  'Setting up your space...',
+  'Preparing the environment...',
+  'Loading settings...',
   'Connecting to servers...',
-  'Establishing connection...',
-  'Sending data request...',
-  'Requesting workout data...',
+  'Establishing a secure connection...',
+  'Requesting your data...',
   'Fetching workout history...',
-  'Downloading records...',
-  'Receiving workout data...',
+  'Downloading workout records...',
+  'Receiving your workouts...',
   'Processing sets and reps...',
-  'Syncing with servers...',
-  'Cold starting servers (may take 10s)...',
-];
-
-// Phase 2: Building the UI (usually fast)
-const PHASE_2_MESSAGES = [
-  'Building dashboard...',
-  'Creating visualizations...',
-  'Generating analytics...',
-  'Setting up interface...',
-  'Preparing charts...',
-  'Building workout views...',
+  'Syncing everything...',
+  'Building your dashboard...',
+  'Creating charts and visuals...',
+  'Generating insights...',
+  'Preparing workout views...',
   'Calculating display data...',
-  'Rendering components...',
-  'Finalizing display...',
-  'Just a moment...',
+  'Rendering the interface...',
+  'Final touches...',
+  'Starting cold servers (one moment)...',
+  'Almost ready...',
+  'All set. Let’s train.'
 ];
 
-const getMessagesForStep = (step: number): string[] => {
-  switch (step) {
-    case 0:
-      return PHASE_1_MESSAGES;
-    case 1:
-    default:
-      return PHASE_2_MESSAGES;
+
+const ROW_HEIGHT = 36;
+const VISIBLE_COUNT = 4;
+const INTERVAL_MS = 400;
+const SLIDE_MS = 150;
+const INITIAL_DELAY_MS = 150;
+
+const getVisibleMessages = (baseIndex: number, isCompleting: boolean) => {
+  const messages = [] as Array<{
+    text: string;
+    state: 'completed' | 'active' | 'pending';
+    key: string;
+  }>;
+
+  const completedCount = isCompleting ? VISIBLE_COUNT : Math.min(2, baseIndex);
+
+  for (let offset = 0; offset < VISIBLE_COUNT; offset++) {
+    const msgIndex = (baseIndex + offset) % LOADING_MESSAGES.length;
+    let state: 'completed' | 'active' | 'pending';
+    if (offset < completedCount) state = 'completed';
+    else if (offset === completedCount) state = 'active';
+    else state = 'pending';
+
+    messages.push({
+      text: LOADING_MESSAGES[msgIndex],
+      state,
+      key: `${msgIndex}-${LOADING_MESSAGES[msgIndex]}`,
+    });
   }
-};
 
-const STEP_LABELS = [
-  'Connecting & Syncing',
-  'Preparing Dashboard',
-];
-
-// Hook to rotate messages sequentially through phase-specific list (stops at last message)
-const useRotatingMessage = (
-  currentStep: number,
-  intervalMs: number = 500
-): string => {
-  const [index, setIndex] = useState(0);
-  const messages = getMessagesForStep(currentStep);
-
-  useEffect(() => {
-    setIndex(0);
-
-    const interval = setInterval(() => {
-      setIndex((prev) => {
-        if (prev < messages.length - 1) {
-          return prev + 1;
-        }
-        return prev; // Stay on last message (indicates waiting)
-      });
-    }, intervalMs);
-
-    return () => clearInterval(interval);
-  }, [currentStep, intervalMs, messages.length]);
-
-  return messages[index] || '';
+  return messages;
 };
 
 export const AppLoadingOverlay: React.FC<AppLoadingOverlayProps> = ({
   open,
-  loadingStep,
-  progress,
+  isCompleting,
 }) => {
+  const [baseIndex, setBaseIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setBaseIndex(0);
+      setIsAnimating(false);
+      return;
+    }
+
+    let tickTimeout: number | null = null;
+    const advance = () => {
+      setIsAnimating(true);
+      tickTimeout = window.setTimeout(() => {
+        setBaseIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
+        setIsAnimating(false);
+      }, SLIDE_MS);
+    };
+
+    const initialTimeout = window.setTimeout(advance, INITIAL_DELAY_MS);
+    const interval = window.setInterval(advance, INTERVAL_MS);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(initialTimeout);
+      if (tickTimeout) window.clearTimeout(tickTimeout);
+    };
+  }, [open]);
+
   if (!open) return null;
 
-  const progressPercent = Math.round(progress);
-  // If step is 2 or more, treat as "completed" - show all steps as done
-  const isCompleteState = loadingStep >= 2;
-  const clampedStep = isCompleteState ? 1 : Math.min(Math.max(loadingStep, 0), 1);
-  const currentLabel = useRotatingMessage(clampedStep, 500);
+  const visibleMessages = getVisibleMessages(baseIndex, isCompleting);
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-in px-4 sm:px-6">
@@ -107,44 +114,37 @@ export const AppLoadingOverlay: React.FC<AppLoadingOverlayProps> = ({
         </p>
 
         <div className="w-full space-y-3">
-          {STEP_LABELS.map((label, index) => {
-            const isCompleted = isCompleteState || clampedStep > index;
-            const isActive = !isCompleteState && clampedStep === index;
-            const isPending = !isCompleteState && clampedStep < index;
-
-            // Show rotating message only on active step
-            const displayLabel = isActive ? currentLabel : label;
-
-            return (
-              <div
-                key={index}
-                className={`flex items-center space-x-3 text-sm transition-all duration-300 ${
-                  isActive ? 'opacity-100' : isCompleted ? 'opacity-70' : 'opacity-40'
-                }`}
-              >
-                {isCompleted ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                ) : isActive ? (
-                  <Loader2 className="w-5 h-5 text-blue-500 animate-spin flex-shrink-0" />
-                ) : (
-                  <div className="w-5 h-5 rounded-full border-2 border-slate-700 flex-shrink-0" />
-                )}
-                <span className={isPending ? 'text-slate-600' : 'text-slate-300'}>
-                  {displayLabel}
-                </span>
-              </div>
-            );
-          })}
-
-          <div className="mt-4 pt-2">
-            <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-              <div
-                className="h-full bg-blue-600 transition-all duration-200"
-                style={{ width: `${Math.min(100, progressPercent)}%` }}
-              />
+          {/* Sliding message list */}
+          <div className="relative h-[144px] overflow-hidden">
+            <div
+              className="absolute left-0 right-0 top-0 transition-transform ease-out"
+              style={{
+                transform: isAnimating ? `translateY(-${ROW_HEIGHT}px)` : 'translateY(0px)',
+                transitionDuration: isAnimating ? `${SLIDE_MS}ms` : '0ms',
+              }}
+            >
+              {visibleMessages.map((msg) => (
+                <div
+                  key={msg.key}
+                  className={`flex items-center space-x-3 text-sm h-[36px] transition-opacity duration-200 ease-out ${
+                    msg.state === 'completed' ? 'opacity-60' : msg.state === 'active' ? 'opacity-100' : 'opacity-40'
+                  }`}
+                >
+                  {msg.state === 'completed' ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                  ) : msg.state === 'active' ? (
+                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin flex-shrink-0" />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full border-2 border-slate-700 flex-shrink-0" />
+                  )}
+                  <span className={msg.state === 'pending' ? 'text-slate-600' : 'text-slate-300'}>
+                    {msg.text}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="text-right text-[10px] text-slate-500 mt-1">{progressPercent}%</div>
           </div>
+
         </div>
       </div>
     </div>

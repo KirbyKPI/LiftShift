@@ -19,7 +19,6 @@ import { loadCsvAuto } from './startupAutoLoadCsv';
 import { loadLyftaFromApiKey } from './startupAutoLoadLyfta';
 import { loadHevyFromProKey, loadHevyFromToken, loadHevyFromCredentials } from './startupAutoLoadHevy';
 import type { StartupAutoLoadParams } from './startupAutoLoadTypes';
-import { APP_LOADING_STEPS } from '../loadingSteps';
 
 export type { StartupAutoLoadParams } from './startupAutoLoadTypes';
 
@@ -53,7 +52,6 @@ export const useStartupAutoLoad = (params: StartupAutoLoadParams): void => {
     // This prevents showing an empty dashboard
     params.setLoadingKind(storedChoice === 'hevy' ? 'hevy' : storedChoice === 'lyfta' ? 'lyfta' : 'csv');
     params.setIsAnalyzing(true);
-    params.setLoadingStep(APP_LOADING_STEPS.CONNECT);
 
     params.setDataSource(storedChoice);
 

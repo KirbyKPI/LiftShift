@@ -99,11 +99,9 @@ const App: React.FC = () => {
     csvImportError,
     loadingKind,
     isAnalyzing,
-    loadingStep,
-    progress,
+    isCompleting,
     setLoadingKind,
     setIsAnalyzing,
-    setLoadingStep,
     startProgress,
     finishProgress,
     handleHevySyncSaved,
@@ -138,7 +136,6 @@ const App: React.FC = () => {
     setLyfatLoginError: clearLyfatLoginError,
     setCsvImportError: clearCsvImportError,
     setIsAnalyzing,
-    setLoadingStep,
     setLoadingKind,
     startProgress,
     finishProgress,
@@ -289,7 +286,7 @@ const App: React.FC = () => {
         onLyfatSyncSaved={handleLyfatSyncSaved}
       />
 
-      <AppLoadingOverlay open={isAnalyzing} loadingStep={loadingStep} progress={progress} />
+      <AppLoadingOverlay open={isAnalyzing} isCompleting={isCompleting} />
     </div>
   );
 };

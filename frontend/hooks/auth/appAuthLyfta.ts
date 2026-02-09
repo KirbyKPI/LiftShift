@@ -12,10 +12,7 @@ import { hydrateBackendWorkoutSets } from '../../app/auth';
 import { getLyfatErrorMessage } from '../../app/ui';
 import { trackEvent } from '../../utils/integrations/analytics';
 import type { AppAuthHandlersDeps } from './appAuthTypes';
-import { APP_LOADING_STEPS } from '../../app/loadingSteps';
 
-// Simple 2-step timeline
-const STEP = APP_LOADING_STEPS;
 
 export const runLyfatSyncSaved = (deps: AppAuthHandlersDeps): void => {
   const apiKey = getLyfataApiKey();
@@ -26,7 +23,6 @@ export const runLyfatSyncSaved = (deps: AppAuthHandlersDeps): void => {
   deps.setLyfatLoginError(null);
   deps.setLoadingKind('lyfta');
   deps.setIsAnalyzing(true);
-  deps.setLoadingStep(STEP.CONNECT);
   const startedAt = deps.startProgress();
 
   lyfatBackendGetSets<WorkoutSet>(apiKey)
@@ -35,7 +31,6 @@ export const runLyfatSyncSaved = (deps: AppAuthHandlersDeps): void => {
       const hydrated = hydrateBackendWorkoutSets(sets);
       const enriched = identifyPersonalRecords(hydrated);
 
-      deps.setLoadingStep(STEP.BUILD);
       deps.setParsedData(enriched);
       deps.setDataSource('lyfta');
       saveSetupComplete(true);
@@ -56,7 +51,6 @@ export const runLyfatLogin = (deps: AppAuthHandlersDeps, apiKey: string): void =
   deps.setLyfatLoginError(null);
   deps.setLoadingKind('lyfta');
   deps.setIsAnalyzing(true);
-  deps.setLoadingStep(STEP.CONNECT);
   const startedAt = deps.startProgress();
 
   lyfatBackendGetSets<WorkoutSet>(apiKey)
@@ -68,7 +62,6 @@ export const runLyfatLogin = (deps: AppAuthHandlersDeps, apiKey: string): void =
       const hydrated = hydrateBackendWorkoutSets(sets);
       const enriched = identifyPersonalRecords(hydrated);
 
-      deps.setLoadingStep(STEP.BUILD);
       deps.setParsedData(enriched);
       deps.setDataSource('lyfta');
       saveSetupComplete(true);

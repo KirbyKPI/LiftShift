@@ -22,12 +22,6 @@ import { hydrateBackendWorkoutSets } from '../../app/auth';
 import { getHevyErrorMessage } from '../../app/ui';
 import { trackEvent } from '../../utils/integrations/analytics';
 import type { AppAuthHandlersDeps } from './appAuthTypes';
-import { APP_LOADING_STEPS } from '../../app/loadingSteps';
-
-// Simple 2-step timeline
-// 0 = Connecting & Syncing (API fetch - the slow part with rotating messages)
-// 1 = Building dashboard (instant)
-const STEP = APP_LOADING_STEPS;
 
 export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
   const savedProKey = getHevyProApiKey();
@@ -35,7 +29,6 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
     deps.setHevyLoginError(null);
     deps.setLoadingKind('hevy');
     deps.setIsAnalyzing(true);
-    deps.setLoadingStep(STEP.CONNECT);
     const startedAt = deps.startProgress();
 
     hevyBackendGetSetsWithProApiKey<WorkoutSet>(savedProKey)
@@ -44,7 +37,6 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
         const hydrated = hydrateBackendWorkoutSets(sets);
         const enriched = identifyPersonalRecords(hydrated);
 
-        deps.setLoadingStep(STEP.BUILD);
         deps.setParsedData(enriched);
         saveLastLoginMethod('hevy', 'apiKey', getHevyUsernameOrEmail() ?? undefined);
         deps.setDataSource('hevy');
@@ -67,7 +59,6 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
   deps.setHevyLoginError(null);
   deps.setLoadingKind('hevy');
   deps.setIsAnalyzing(true);
-  deps.setLoadingStep(STEP.CONNECT);
   const startedAt = deps.startProgress();
 
   hevyBackendGetAccount(token)
@@ -79,7 +70,6 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
       const hydrated = hydrateBackendWorkoutSets(sets);
       const enriched = identifyPersonalRecords(hydrated);
 
-      deps.setLoadingStep(STEP.BUILD);
       deps.setParsedData(enriched);
       saveLastLoginMethod('hevy', 'credentials', getHevyUsernameOrEmail() ?? undefined);
       deps.setDataSource('hevy');
@@ -107,7 +97,6 @@ export const runHevyApiKeyLogin = (deps: AppAuthHandlersDeps, apiKey: string): v
   deps.setHevyLoginError(null);
   deps.setLoadingKind('hevy');
   deps.setIsAnalyzing(true);
-  deps.setLoadingStep(STEP.CONNECT);
   const startedAt = deps.startProgress();
 
   hevyBackendValidateProApiKey(trimmed)
@@ -123,7 +112,6 @@ export const runHevyApiKeyLogin = (deps: AppAuthHandlersDeps, apiKey: string): v
       const hydrated = hydrateBackendWorkoutSets(sets);
       const enriched = identifyPersonalRecords(hydrated);
 
-      deps.setLoadingStep(STEP.BUILD);
       deps.setParsedData(enriched);
       deps.setDataSource('hevy');
       saveSetupComplete(true);
@@ -144,7 +132,6 @@ export const runHevyLogin = (deps: AppAuthHandlersDeps, emailOrUsername: string,
   deps.setHevyLoginError(null);
   deps.setLoadingKind('hevy');
   deps.setIsAnalyzing(true);
-  deps.setLoadingStep(STEP.CONNECT);
   const startedAt = deps.startProgress();
 
   hevyBackendLogin(emailOrUsername, password)
@@ -167,7 +154,6 @@ export const runHevyLogin = (deps: AppAuthHandlersDeps, emailOrUsername: string,
       const hydrated = hydrateBackendWorkoutSets(sets);
       const enriched = identifyPersonalRecords(hydrated);
 
-      deps.setLoadingStep(STEP.BUILD);
       deps.setParsedData(enriched);
       deps.setDataSource('hevy');
       saveSetupComplete(true);

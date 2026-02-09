@@ -23,10 +23,7 @@ import { hydrateBackendWorkoutSets } from '../auth/hydrateBackendWorkoutSets';
 import { getHevyErrorMessage } from '../ui/appErrorMessages';
 import { trackEvent } from '../../utils/integrations/analytics';
 import type { StartupAutoLoadParams } from './startupAutoLoadTypes';
-import { APP_LOADING_STEPS } from '../loadingSteps';
 
-// Simple 2-step timeline
-const STEP = APP_LOADING_STEPS;
 
 interface TokenTrackConfig {
   successMethod: string;
@@ -36,7 +33,6 @@ interface TokenTrackConfig {
 export const loadHevyFromProKey = (deps: StartupAutoLoadParams, apiKey: string): void => {
   deps.setLoadingKind('hevy');
   deps.setIsAnalyzing(true);
-  deps.setLoadingStep(STEP.CONNECT);
   const startedAt = deps.startProgress();
 
   hevyBackendGetSetsWithProApiKey<WorkoutSet>(apiKey)
@@ -54,7 +50,6 @@ export const loadHevyFromProKey = (deps: StartupAutoLoadParams, apiKey: string):
       }
 
       const enriched = identifyPersonalRecords(hydrated);
-      deps.setLoadingStep(STEP.BUILD);
       deps.setParsedData(enriched);
       deps.setHevyLoginError(null);
       deps.setCsvImportError(null);
@@ -77,7 +72,6 @@ export const loadHevyFromToken = (
 ): void => {
   deps.setLoadingKind('hevy');
   deps.setIsAnalyzing(true);
-  deps.setLoadingStep(STEP.CONNECT);
   const startedAt = deps.startProgress();
 
   hevyBackendGetAccount(token)
@@ -101,7 +95,6 @@ export const loadHevyFromToken = (
       }
 
       const enriched = identifyPersonalRecords(hydrated);
-      deps.setLoadingStep(STEP.BUILD);
       deps.setParsedData(enriched);
       deps.setHevyLoginError(null);
       deps.setCsvImportError(null);
@@ -131,7 +124,6 @@ export const loadHevyFromCredentials = async (
 
   deps.setLoadingKind('hevy');
   deps.setIsAnalyzing(true);
-  deps.setLoadingStep(STEP.CONNECT);
   const startedAt = deps.startProgress();
 
   try {
@@ -165,7 +157,6 @@ export const loadHevyFromCredentials = async (
     }
 
     const enriched = identifyPersonalRecords(hydrated);
-    deps.setLoadingStep(STEP.BUILD);
     deps.setParsedData(enriched);
     deps.setHevyLoginError(null);
     deps.setCsvImportError(null);

@@ -5,15 +5,11 @@ import { clearLyfataApiKey, saveSetupComplete } from '../../utils/storage/dataSo
 import { hydrateBackendWorkoutSets } from '../auth/hydrateBackendWorkoutSets';
 import { getLyfatErrorMessage } from '../ui/appErrorMessages';
 import type { StartupAutoLoadParams } from './startupAutoLoadTypes';
-import { APP_LOADING_STEPS } from '../loadingSteps';
 
-// Simple 2-step timeline
-const STEP = APP_LOADING_STEPS;
 
 export const loadLyftaFromApiKey = (deps: StartupAutoLoadParams, apiKey: string): void => {
   deps.setLoadingKind('lyfta');
   deps.setIsAnalyzing(true);
-  deps.setLoadingStep(STEP.CONNECT);
   const startedAt = deps.startProgress();
 
   lyfatBackendGetSets<WorkoutSet>(apiKey)
@@ -31,7 +27,6 @@ export const loadLyftaFromApiKey = (deps: StartupAutoLoadParams, apiKey: string)
       }
 
       const enriched = identifyPersonalRecords(hydrated);
-      deps.setLoadingStep(STEP.BUILD);
       deps.setParsedData(enriched);
       deps.setLyfatLoginError(null);
       deps.setCsvImportError(null);

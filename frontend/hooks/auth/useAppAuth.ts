@@ -19,11 +19,9 @@ export interface UseAppAuthReturn {
   csvImportError: string | null;
   loadingKind: 'hevy' | 'lyfta' | 'csv' | null;
   isAnalyzing: boolean;
-  loadingStep: number;
-  progress: number;
+  isCompleting: boolean;
   setLoadingKind: (kind: 'hevy' | 'lyfta' | 'csv' | null) => void;
   setIsAnalyzing: (value: boolean) => void;
-  setLoadingStep: (step: number) => void;
   startProgress: () => number;
   finishProgress: (startedAt: number) => void;
   handleHevySyncSaved: () => void;
@@ -59,73 +57,21 @@ export function useAppAuth({
   const [csvImportError, setCsvImportError] = useState<string | null>(null);
   const [loadingKind, setLoadingKind] = useState<'hevy' | 'lyfta' | 'csv' | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [loadingStep, setLoadingStep] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const progressTimerRef = { current: null as number | null };
-  const progressValueRef = { current: 0 };
-  
-  // Keep ref in sync with state for finishProgress to read current value
-  useEffect(() => {
-    progressValueRef.current = progress;
-  }, [progress]);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const startProgress = useCallback((): number => {
-    setProgress(0);
-    if (progressTimerRef.current) {
-      window.clearInterval(progressTimerRef.current);
-    }
-    const startTime = Date.now();
-    const interval = window.setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      // Hybrid approach: fast initial bump to 30%, then asymptotic to 95%
-      let simulatedProgress: number;
-      if (elapsed < 300) {
-        // Fast ramp to 30% in first 300ms (instant feedback)
-        simulatedProgress = (elapsed / 300) * 30;
-      } else {
-        // Asymptotic easing from 30% toward 95%
-        const decay = 1 - Math.exp(-(elapsed - 300) / 2500);
-        simulatedProgress = 30 + (65 * decay);
-      }
-      setProgress(Math.min(95, simulatedProgress));
-    }, 50);
-    progressTimerRef.current = interval;
-    return startTime;
+    setIsCompleting(false);
+    return Date.now();
   }, []);
 
   const finishProgress = useCallback((startedAt: number): void => {
-    if (progressTimerRef.current) {
-      window.clearInterval(progressTimerRef.current);
-      progressTimerRef.current = null;
-    }
-    
-    // Rapidly animate to 100% and show completion state
-    const currentProgress = progressValueRef.current;
-    const remaining = 100 - currentProgress;
-    const animationDuration = 80; // ms to reach 100%
-    const animationStart = Date.now();
-    
-    // Show all steps as completed
-    setLoadingStep(2); // Step 2 means both steps (0 and 1) show as completed
-    
-    // Animate progress bar to 100% quickly
-    const animationInterval = window.setInterval(() => {
-      const elapsed = Date.now() - animationStart;
-      const progressRatio = Math.min(1, elapsed / animationDuration);
-      const newProgress = currentProgress + (remaining * progressRatio);
-      setProgress(newProgress);
-      
-      if (progressRatio >= 1) {
-        window.clearInterval(animationInterval);
-        // Brief moment to show completed state, then hide
-        window.setTimeout(() => {
-          setIsAnalyzing(false);
-          setLoadingKind(null);
-          setProgress(0);
-          setLoadingStep(0);
-        }, 100);
-      }
-    }, 16); // ~60fps
+    setIsCompleting(true);
+    // Brief moment to show completed state, then hide
+    window.setTimeout(() => {
+      setIsAnalyzing(false);
+      setLoadingKind(null);
+      setIsCompleting(false);
+    }, 250);
   }, []);
 
   const handlerDeps = useMemo<AppAuthHandlersDeps>(
@@ -141,7 +87,6 @@ export function useAppAuth({
       setCsvImportError,
       setLoadingKind,
       setIsAnalyzing,
-      setLoadingStep,
       startProgress,
       finishProgress,
     }),
@@ -157,7 +102,6 @@ export function useAppAuth({
       setCsvImportError,
       setLoadingKind,
       setIsAnalyzing,
-      setLoadingStep,
       startProgress,
       finishProgress,
     ]
@@ -186,11 +130,9 @@ export function useAppAuth({
     csvImportError,
     loadingKind,
     isAnalyzing,
-    loadingStep,
-    progress,
+    isCompleting,
     setLoadingKind,
     setIsAnalyzing,
-    setLoadingStep,
     startProgress,
     finishProgress,
     handleHevySyncSaved,

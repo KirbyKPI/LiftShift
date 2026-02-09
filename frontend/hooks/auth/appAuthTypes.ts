@@ -15,7 +15,6 @@ export interface AppAuthHandlersDeps {
   setCsvImportError: (value: string | null) => void;
   setLoadingKind: (value: 'hevy' | 'lyfta' | 'csv' | null) => void;
   setIsAnalyzing: (value: boolean) => void;
-  setLoadingStep: (value: number) => void;
   startProgress: () => number;
   finishProgress: (startedAt: number) => void;
 }

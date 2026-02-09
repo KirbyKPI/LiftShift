@@ -12,7 +12,6 @@ export interface StartupAutoLoadParams {
   setLyfatLoginError: Dispatch<SetStateAction<string | null>>;
   setCsvImportError: Dispatch<SetStateAction<string | null>>;
   setIsAnalyzing: Dispatch<SetStateAction<boolean>>;
-  setLoadingStep: Dispatch<SetStateAction<number>>;
   setLoadingKind: Dispatch<SetStateAction<'hevy' | 'lyfta' | 'csv' | null>>;
   startProgress: () => number;
   finishProgress: (startedAt: number) => void;

@@ -8,10 +8,7 @@ import { getErrorMessage } from '../../app/ui';
 import { parseWorkoutCSVAsyncWithUnit, ParseWorkoutCsvResult } from '../../utils/csv/csvParser';
 import { trackEvent } from '../../utils/integrations/analytics';
 import type { AppAuthHandlersDeps } from './appAuthTypes';
-import { APP_LOADING_STEPS } from '../../app/loadingSteps';
 
-// Simple 2-step timeline for CSV
-const STEP = APP_LOADING_STEPS;
 
 export const runCsvImport = (
   deps: AppAuthHandlersDeps,
@@ -22,7 +19,6 @@ export const runCsvImport = (
   trackEvent('csv_import_start', { platform, unit: unitOverride ?? deps.weightUnit });
   deps.setLoadingKind('csv');
   deps.setIsAnalyzing(true);
-  deps.setLoadingStep(STEP.CONNECT);
   const startedAt = deps.startProgress();
 
   const reader = new FileReader();
@@ -43,7 +39,6 @@ export const runCsvImport = (
             enriched_sets: enriched?.length,
           });
 
-          deps.setLoadingStep(STEP.BUILD);
           deps.setParsedData(enriched);
           saveCSVData(text);
           saveLastCsvPlatform(platform);
