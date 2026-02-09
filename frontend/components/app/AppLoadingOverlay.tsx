@@ -51,6 +51,7 @@ const getVisibleMessages = (baseIndex: number, isCompleting: boolean) => {
 
   for (let offset = 0; offset < VISIBLE_COUNT; offset++) {
     const msgIndex = baseIndex + offset;
+    if (msgIndex >= LOADING_MESSAGES.length) break;
     let state: 'completed' | 'active' | 'pending';
     if (offset < completedCount) state = 'completed';
     else if (offset === completedCount) state = 'active';
@@ -91,14 +92,20 @@ export const AppLoadingOverlay: React.FC<AppLoadingOverlayProps> = ({
     };
 
     const initialTimeout = window.setTimeout(advance, INITIAL_DELAY_MS);
-    const interval = window.setInterval(advance, INTERVAL_MS);
+    const interval = window.setInterval(() => {
+      const lastWindowStart = Math.max(0, LOADING_MESSAGES.length - VISIBLE_COUNT);
+      if (baseIndex >= lastWindowStart) {
+        return;
+      }
+      advance();
+    }, INTERVAL_MS);
 
     return () => {
       clearInterval(interval);
       clearTimeout(initialTimeout);
       if (tickTimeout) window.clearTimeout(tickTimeout);
     };
-  }, [open]);
+  }, [open, baseIndex]);
 
   if (!open) return null;
 
