@@ -11,7 +11,7 @@ let tokenInFlight: Promise<string> | null = null;
 const launchBrowser = async (): Promise<Browser> => {
   if (!browserPromise) {
     const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-    browserPromise = puppeteer.launch({
+    const launchOptions: Parameters<typeof puppeteer.launch>[0] = {
       headless: true,
       ...(executablePath ? { executablePath } : {}),
       args: [
@@ -23,6 +23,9 @@ const launchBrowser = async (): Promise<Browser> => {
         '--no-zygote',
         '--disable-blink-features=AutomationControlled',
       ],
+    };
+    browserPromise = puppeteer.launch({
+      ...launchOptions,
     });
   }
   return browserPromise;
