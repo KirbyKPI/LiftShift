@@ -29,7 +29,7 @@ const ProgressRing: React.FC<{ percent: number; size?: number; strokeWidth?: num
         fill="none"
         strokeWidth={strokeWidth}
         stroke="currentColor"
-        className="text-slate-400/60 dark:text-slate-700/50"
+        style={{ color: 'rgb(var(--border-rgb) / 0.45)' }}
       />
       <circle
         cx={size / 2}
@@ -49,7 +49,10 @@ const ProgressRing: React.FC<{ percent: number; size?: number; strokeWidth?: num
 
 /** Micro progress bar for per-muscle rows */
 const MicroBar: React.FC<{ percent: number; color: string }> = ({ percent, color }) => (
-  <div className="h-1.5 w-full rounded-full bg-slate-300/80 dark:bg-slate-700/50 overflow-hidden">
+  <div
+    className="h-1.5 w-full rounded-full overflow-hidden"
+    style={{ backgroundColor: 'rgb(var(--border-rgb) / 0.35)' }}
+  >
     <div
       className="h-full rounded-full transition-all duration-500 ease-out"
       style={{ width: `${Math.min(percent, 100)}%`, backgroundColor: color }}
