@@ -23,40 +23,6 @@ function Head() {
       }
     })();
   `;
-  const deepLinkRestoreScript = `
-    (function () {
-      // GitHub Pages SPA deep-linking support.
-      // If we were redirected via /404.html, restore the original URL so the app can load normally.
-      try {
-        var params = new URLSearchParams(window.location.search || '');
-        var p = params.get('p');
-        var q = params.get('q');
-        var h = params.get('h');
-        if (!p) return;
-
-        params.delete('p');
-        params.delete('q');
-        params.delete('h');
-
-        var rest = params.toString();
-        var search = (q ? decodeURIComponent(q) : '') || (rest ? '?' + rest : '');
-        var hash = (h ? decodeURIComponent(h) : '');
-        var path = decodeURIComponent(p);
-
-        var baseHref = document.querySelector('base')?.getAttribute('href') || '/';
-        var basePath = baseHref.endsWith('/') ? baseHref : baseHref + '/';
-
-        if (basePath !== '/' && path.indexOf(basePath) !== 0) {
-          var baseNoSlash = basePath.slice(0, -1);
-          path = baseNoSlash + (path.startsWith('/') ? path : '/' + path);
-        }
-
-        window.history.replaceState(null, '', path + search + hash);
-      } catch (e) {
-        // ignore
-      }
-    })();
-  `;
 
   return (
     <>
@@ -66,7 +32,6 @@ function Head() {
       <link rel="apple-touch-icon" href={withBase('UI/logo.png')} sizes="180x180" />
 
       <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      <script dangerouslySetInnerHTML={{ __html: deepLinkRestoreScript }} />
 
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
