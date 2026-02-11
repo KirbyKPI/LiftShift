@@ -112,14 +112,16 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
         <div className="relative flex-shrink-0">
           <ProgressRing percent={contextPercent} size={56} strokeWidth={4} color={color} />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[13px] font-bold text-white">{Math.round(contextPercent)}%</span>
+            <span className="text-[13px] font-bold" style={{ color: 'var(--text-primary)' }}>
+              {Math.round(contextPercent)}%
+            </span>
           </div>
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <Trophy className="w-3.5 h-3.5 flex-shrink-0" style={{ color: PR_GOLD }} />
-            <span className="text-xs font-bold text-white truncate">
+            <span className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>
               {isOverall ? 'Lifetime Growth Potential' : contextLabel}
             </span>
           </div>
@@ -133,14 +135,14 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
             </span>
           </div>
 
-          <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">
+          <p className="text-[10px] text-slate-500 mt-1 leading-tight">
             {contextTier.description}
           </p>
           
-          <p className="text-[10px] text-slate-600 dark:text-slate-500 mt-0.5">
+          <p className="text-[10px] text-slate-500 mt-0.5">
             {Math.round(contextPercent)}% of lifetime gains achieved
             {isOverall && totalLifetimeSets > 0 && (
-              <span className="text-slate-700 dark:text-slate-500"> · {formatNumber(Math.round(totalLifetimeSets))} sets</span>
+              <span className="text-slate-400"> · {formatNumber(Math.round(totalLifetimeSets))} sets</span>
             )}
           </p>
         </div>
@@ -156,17 +158,23 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
                 key={m.muscleId} 
                 className="flex items-center gap-2"
               >
-                <span className={`text-[10px] w-16 truncate flex-shrink-0 transition-opacity ${
-                  isSelected ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-600 dark:text-slate-500'
-                }`}>
+                <span
+                  className={`text-[10px] w-16 truncate flex-shrink-0 transition-opacity ${
+                    isSelected ? 'font-semibold' : 'text-slate-500'
+                  }`}
+                  style={isSelected ? { color: 'var(--text-primary)' } : undefined}
+                >
                   {m.name}
                 </span>
                 <div className="flex-1 min-w-0">
                   <MicroBar percent={m.achievementPercent} color={tierColor(m.tier.key)} />
                 </div>
-                <span className={`text-[10px] font-semibold w-8 text-right flex-shrink-0 transition-opacity ${
-                  isSelected ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'
-                }`}>
+                <span
+                  className={`text-[10px] font-semibold w-8 text-right flex-shrink-0 transition-opacity ${
+                    isSelected ? '' : 'text-slate-500'
+                  }`}
+                  style={isSelected ? { color: 'var(--text-primary)' } : undefined}
+                >
                   {Math.round(m.achievementPercent)}%
                 </span>
               </div>

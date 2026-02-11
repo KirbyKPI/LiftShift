@@ -47,7 +47,8 @@
           var basePath = baseHref.endsWith('/') ? baseHref : baseHref + '/';
 
           if (basePath !== '/' && path.indexOf(basePath) !== 0) {
-            path = basePath.replace(/\/$/, '') + (path.startsWith('/') ? path : '/' + path);
+            var baseNoSlash = basePath.slice(0, -1);
+            path = baseNoSlash + (path.startsWith('/') ? path : '/' + path);
           }
 
           window.history.replaceState(null, '', path + search + hash);

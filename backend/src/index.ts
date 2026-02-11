@@ -146,22 +146,43 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   res.status(status).json({ error: message });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`LiftShift backend listening on :${PORT}`);
 });
 
-const shutdown = async (signal: string) => {
+let shuttingDown = false;
+
+const shutdown = async (signal: string, exitCode = 0) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
   console.log(`[Server] Received ${signal}, shutting down gracefully...`);
-  
+
+  const forceExitTimer = setTimeout(() => {
+    console.error('[Server] Force exiting after shutdown timeout');
+    process.exit(1);
+  }, 10_000);
+  forceExitTimer.unref();
+
+  try {
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
+    console.log('[Server] HTTP server closed');
+  } catch (err) {
+    console.error('[Server] Error closing HTTP server:', err);
+  }
+
   try {
     await shutdownPosthog();
     console.log('[Server] PostHog shutdown complete');
   } catch (err) {
     console.error('[Server] Error during PostHog shutdown:', err);
   }
-  
+
   console.log('[Server] Graceful shutdown complete');
-  process.exit(0);
+  clearTimeout(forceExitTimer);
+  process.exit(exitCode);
 };
 
 process.on('SIGINT', () => shutdown('SIGINT'));
@@ -170,7 +191,7 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('[Server] Uncaught Exception:', err);
-  shutdown('uncaughtException').catch(() => process.exit(1));
+  shutdown('uncaughtException', 1).catch(() => process.exit(1));
 });
 
 process.on('unhandledRejection', (reason, promise) => {

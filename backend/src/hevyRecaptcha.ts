@@ -31,6 +31,7 @@ const launchBrowser = async (): Promise<Browser> => {
       '--disable-sync',
     ],
   };
+  console.log('[Puppeteer] Launching browser for recaptcha');
   return puppeteer.launch(launchOptions);
 };
 
@@ -91,6 +92,7 @@ export const getRecaptchaToken = async (): Promise<string> => {
       if (browser) {
         try {
           await browser.close();
+          console.log('[Puppeteer] Browser closed');
         } catch (closeError) {
           console.error('[Puppeteer] Failed to close browser:', closeError);
         }

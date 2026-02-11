@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { WorkoutSet } from './types';
 import { Tab } from './app/navigation';
@@ -26,6 +26,37 @@ import { useUpdateFlowHandler } from './app/auth';
 const App: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  useLayoutEffect(() => {
+    try {
+      const rawSearch = window.location.search || '';
+      if (!rawSearch.includes('p=')) return;
+
+      const params = new URLSearchParams(rawSearch);
+      const p = params.get('p');
+      if (!p) return;
+
+      const q = params.get('q');
+      const h = params.get('h');
+
+      params.delete('p');
+      params.delete('q');
+      params.delete('h');
+
+      const rest = params.toString();
+      const nextSearch = (q ? decodeURIComponent(q) : '') || (rest ? `?${rest}` : '');
+      const nextHash = h ? decodeURIComponent(h) : '';
+      const nextPath = decodeURIComponent(p);
+
+      const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      const desired = `${nextPath}${nextSearch}${nextHash}`;
+      if (current === desired) return;
+
+      navigate({ pathname: nextPath, search: nextSearch, hash: nextHash }, { replace: true });
+    } catch {
+      // ignore
+    }
+  }, [navigate]);
 
   const [parsedData, setParsedData] = useState<WorkoutSet[]>([]);
   const [onboarding, setOnboarding] = useState<OnboardingFlow | null>(() => {
