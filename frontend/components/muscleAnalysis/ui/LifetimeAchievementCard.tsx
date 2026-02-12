@@ -29,8 +29,7 @@ const ProgressRing: React.FC<{ percent: number; size?: number; strokeWidth?: num
         r={radius}
         fill="none"
         strokeWidth={strokeWidth}
-        stroke="currentColor"
-        style={{ color: 'rgb(var(--border-rgb) / 0.45)' }}
+        stroke="rgba(51, 65, 85, 0.45)"
       />
       <circle
         cx={size / 2}
@@ -52,7 +51,7 @@ const ProgressRing: React.FC<{ percent: number; size?: number; strokeWidth?: num
 const MicroBar: React.FC<{ percent: number; color: string }> = ({ percent, color }) => (
   <div
     className="h-2.5 w-full rounded-full overflow-hidden"
-    style={{ backgroundColor: 'rgb(var(--border-rgb) / 0.35)' }}
+    style={{ backgroundColor: 'rgba(51, 65, 85, 0.35)' }}
   >
     <div
       className="h-full rounded-full transition-all duration-500 ease-out"
@@ -129,7 +128,7 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
         <div className="relative flex-shrink-0">
           <ProgressRing percent={contextPercent} size={56} strokeWidth={4} color={color} />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[13px] font-bold" style={{ color: 'var(--text-primary)' }}>
+            <span className="text-[13px] font-bold text-white">
               {Math.round(contextPercent)}%
             </span>
           </div>
@@ -137,7 +136,7 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+            <span className="text-xs font-bold truncate text-white">
               {isOverall ? 'Lifetime Growth Potential' : contextLabel}
             </span>
           </div>
@@ -177,9 +176,8 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
               >
                 <span
                   className={`text-[10px] w-16 truncate flex-shrink-0 transition-opacity ${
-                    isSelected ? 'font-semibold' : 'text-slate-500'
+                    isSelected ? 'font-semibold text-white' : 'text-slate-500'
                   }`}
-                  style={isSelected ? { color: 'var(--text-primary)' } : undefined}
                 >
                   {m.name}
                 </span>
@@ -188,9 +186,8 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
                 </div>
                 <span
                   className={`text-[10px] font-semibold w-8 text-right flex-shrink-0 transition-opacity ${
-                    isSelected ? '' : 'text-slate-500'
+                    isSelected ? 'text-white' : 'text-slate-500'
                   }`}
-                  style={isSelected ? { color: 'var(--text-primary)' } : undefined}
                 >
                   {Math.round(m.achievementPercent)}%
                 </span>
