@@ -248,6 +248,7 @@ export const MuscleAnalysis: React.FC<MuscleAnalysisProps> = ({
             <LifetimeAchievementCard
               data={lifetimeAchievementData}
               selectedMuscleId={selectedMuscle}
+              onMuscleClick={handleMuscleClick}
             />
           </div>
         )}

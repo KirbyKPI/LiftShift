@@ -13,8 +13,9 @@ interface MuscleAnalysisExerciseListProps {
   onExerciseClick?: (exerciseName: string) => void;
 }
 
-const INITIAL_DISPLAY_COUNT = 10;
-const LAZY_LOAD_INCREMENT = 10;
+const INITIAL_DISPLAY_COUNT = 6;
+const LAZY_LOAD_INCREMENT = 3;
+const VISIBLE_COUNT = 3;
 
 export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProps> = ({
   contributingExercises,
@@ -31,9 +32,14 @@ export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProp
     setDisplayCount(prev => Math.min(prev + LAZY_LOAD_INCREMENT, contributingExercises.length));
   };
 
+  const mobileHeight = Math.min(displayCount, VISIBLE_COUNT) * 64;
+  const desktopHeight = Math.min(displayCount, VISIBLE_COUNT) * 88;
+
   return (
-    <div className="px-4 mt-2 scroll-smooth overflow-y-auto h-full">
-      <div className="space-y-2 pb-4">
+    <div className="px-4 mt-2">
+      <div
+        className="space-y-2 overflow-y-auto max-h-[192px] sm:max-h-[264px]"
+      >
         {displayedExercises.map((ex) => {
           const asset = assetsMap?.get(ex.name);
           const exData = lookupExerciseMuscleData(ex.name, exerciseMuscleData);
@@ -124,7 +130,7 @@ export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProp
         {hasMore && (
           <button
             onClick={handleShowMore}
-            className="w-full py-2 flex items-center justify-center gap-1 text-xs text-slate-400 hover:text-white transition-colors border border-dashed border-slate-700 rounded-lg hover:border-slate-500"
+            className="w-full py-2 mb-3 flex items-center justify-center gap-1 text-xs text-slate-400 hover:text-white transition-colors border border-dashed border-slate-700 rounded-lg hover:border-slate-500"
           >
             <ChevronDown className="w-3 h-3" />
             Show {Math.min(LAZY_LOAD_INCREMENT, contributingExercises.length - displayCount)} more

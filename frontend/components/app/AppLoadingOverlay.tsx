@@ -29,8 +29,8 @@ const LOADING_MESSAGES = [
   'Calculating display data...',
   'Rendering the interface...',
   'Final touches...',
+  'Just few seconds...(don\'t reload, hevy login is slow)',
   'Almost ready...',
-  'Just few seconds.',
  
 ];
 

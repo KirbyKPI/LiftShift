@@ -158,7 +158,7 @@ export const BodyMap: React.FC<BodyMapProps> = ({
 
   const svgClass = compact 
     ? (compactFill ? 'h-full w-auto' : 'h-28 w-auto') 
-    : 'h-[45vh] sm:h-[50vh] md:h-[55vh] lg:h-[60vh] xl:h-[65vh] w-auto max-h-[500px]';
+    : 'h-[45vh] sm:h-[50vh] md:h-[55vh] lg:h-[60vh] xl:h-[65vh] 2xl:max-h-[55vh] w-auto max-h-[500px]';
 
   const FrontSvg = gender === 'female' 
     ? (viewMode === 'group' || viewMode === 'headless' ? FemaleFrontBodyMapGroup : FemaleFrontBodyMapMuscle)

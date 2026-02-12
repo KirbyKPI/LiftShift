@@ -31,6 +31,7 @@ interface MuscleAnalysisDetailPanelProps {
   onExerciseClick?: (exerciseName: string) => void;
   clearSelection: () => void;
   lifetimeAchievement: LifetimeAchievementData | null;
+  onMuscleClick?: (muscleId: string) => void;
 }
 
 export const MuscleAnalysisDetailPanel: React.FC<MuscleAnalysisDetailPanelProps> = ({
@@ -48,6 +49,7 @@ export const MuscleAnalysisDetailPanel: React.FC<MuscleAnalysisDetailPanelProps>
   onExerciseClick,
   clearSelection,
   lifetimeAchievement,
+  onMuscleClick,
 }) => {
   const title = activeQuickFilter
     ? QUICK_FILTER_LABELS[activeQuickFilter]
@@ -168,7 +170,7 @@ export const MuscleAnalysisDetailPanel: React.FC<MuscleAnalysisDetailPanelProps>
           </div>
           {lifetimeAchievement && (
             <div className="border-t border-slate-800/30 p-3 flex-shrink-0">
-              <LifetimeAchievementCard data={lifetimeAchievement} selectedMuscleId={selectedMuscle} />
+              <LifetimeAchievementCard data={lifetimeAchievement} selectedMuscleId={selectedMuscle} onMuscleClick={onMuscleClick} />
             </div>
           )}
         </div>
@@ -176,7 +178,7 @@ export const MuscleAnalysisDetailPanel: React.FC<MuscleAnalysisDetailPanelProps>
 
       {!windowedSelectionBreakdown && lifetimeAchievement && (
         <div className="border-t border-slate-800/30 p-3 flex-1">
-          <LifetimeAchievementCard data={lifetimeAchievement} selectedMuscleId={selectedMuscle} />
+          <LifetimeAchievementCard data={lifetimeAchievement} selectedMuscleId={selectedMuscle} onMuscleClick={onMuscleClick} />
         </div>
       )}
     </div>

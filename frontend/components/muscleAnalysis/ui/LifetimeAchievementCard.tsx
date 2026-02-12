@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Trophy, Flame } from 'lucide-react';
+import { Sprout, GraduationCap, TrendingUp, Target, BadgeCheck, Medal, Gem, Crown, Zap } from 'lucide-react';
 import type { LifetimeAchievementData } from '../hooks/useLifetimeAchievement';
 import type { MuscleAchievementEntry } from '../../../utils/muscle/hypertrophy';
 import { formatNumber } from '../../../utils/format/formatters';
@@ -7,6 +7,7 @@ import { formatNumber } from '../../../utils/format/formatters';
 interface LifetimeAchievementCardProps {
   data: LifetimeAchievementData;
   selectedMuscleId?: string | null;
+  onMuscleClick?: (muscleId: string) => void;
 }
 
 /** Compact radial progress ring */
@@ -50,7 +51,7 @@ const ProgressRing: React.FC<{ percent: number; size?: number; strokeWidth?: num
 /** Micro progress bar for per-muscle rows */
 const MicroBar: React.FC<{ percent: number; color: string }> = ({ percent, color }) => (
   <div
-    className="h-1.5 w-full rounded-full overflow-hidden"
+    className="h-2.5 w-full rounded-full overflow-hidden"
     style={{ backgroundColor: 'rgb(var(--border-rgb) / 0.35)' }}
   >
     <div
@@ -59,9 +60,6 @@ const MicroBar: React.FC<{ percent: number; color: string }> = ({ percent, color
     />
   </div>
 );
-
-// PR Gold color from exercise view
-const PR_GOLD = '#d97706';
 
 /** Tier color → CSS color for ring / bars */
 function tierColor(tierKey: string): string {
@@ -80,9 +78,28 @@ function tierColor(tierKey: string): string {
   }
 }
 
-export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = ({ 
+/** Tier icon component for each achievement level */
+const TierIcon: React.FC<{ tierKey: string; className?: string }> = ({ tierKey, className }) => {
+  const iconClass = className || 'w-2.5 h-2.5';
+  switch (tierKey) {
+    case 'novice': return <Sprout className={iconClass} />;
+    case 'beginner': return <GraduationCap className={iconClass} />;
+    case 'intermediate': return <TrendingUp className={iconClass} />;
+    case 'advanced': return <Target className={iconClass} />;
+    case 'proficient': return <BadgeCheck className={iconClass} />;
+    case 'accomplished': return <Medal className={iconClass} />;
+    case 'exceptional': return <Gem className={iconClass} />;
+    case 'master': return <Crown className={iconClass} />;
+    case 'grandmaster': return <Crown className={iconClass} />;
+    case 'legendary': return <Zap className={iconClass} />;
+    default: return <Sprout className={iconClass} />;
+  }
+};
+
+export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = ({
   data,
-  selectedMuscleId 
+  selectedMuscleId,
+  onMuscleClick
 }) => {
   const {
     contextPercent,
@@ -120,7 +137,6 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <Trophy className="w-3.5 h-3.5 flex-shrink-0" style={{ color: PR_GOLD }} />
             <span className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>
               {isOverall ? 'Lifetime Growth Potential' : contextLabel}
             </span>
@@ -130,7 +146,7 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
             <span
               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${contextTier.bgColor} ${contextTier.color}`}
             >
-              <Flame className="w-2.5 h-2.5" />
+              <TierIcon tierKey={contextTier.key} />
               {contextTier.label}
             </span>
           </div>
@@ -150,13 +166,14 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
 
       {/* ── Per-muscle breakdown ─────────────────────────────────────── */}
       <div className="px-3 pb-3 h-full min-h-0">
-        <div className="space-y-2 overflow-y-auto h-full min-h-0 max-h-[40vh] lg:max-h-none">
+        <div className="space-y-2 overflow-y-auto h-full min-h-0 max-h-[40vh] lg:max-h-none pr-3">
           {visibleMuscles.map((m) => {
             const isSelected = m.muscleId === selectedMuscleId;
             return (
-              <div 
-                key={m.muscleId} 
-                className="flex items-center gap-2"
+              <div
+                key={m.muscleId}
+                className="flex items-center gap-2 cursor-pointer rounded px-1 py-0.5 -mx-1"
+                onClick={() => onMuscleClick?.(m.muscleId)}
               >
                 <span
                   className={`text-[10px] w-16 truncate flex-shrink-0 transition-opacity ${
@@ -176,6 +193,13 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
                   style={isSelected ? { color: 'var(--text-primary)' } : undefined}
                 >
                   {Math.round(m.achievementPercent)}%
+                </span>
+                <span
+                  className={`text-[9px] flex items-center justify-end gap-1 w-24 flex-shrink-0 ${m.tier.color}`}
+                  title={m.tier.description}
+                >
+                  <span>{m.tier.label}</span>
+                  <TierIcon tierKey={m.tier.key} />
                 </span>
               </div>
             );
