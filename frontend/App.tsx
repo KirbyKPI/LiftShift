@@ -59,6 +59,7 @@ const App: React.FC = () => {
   }, [navigate]);
 
   const [parsedData, setParsedData] = useState<WorkoutSet[]>([]);
+  const [hasHydratedData, setHasHydratedData] = useState(false);
   const [onboarding, setOnboarding] = useState<OnboardingFlow | null>(() => {
     return getSetupComplete() ? null : { intent: 'initial', step: 'platform' };
   });
@@ -146,7 +147,10 @@ const App: React.FC = () => {
     clearCsvImportError,
   } = useAppAuth({
     weightUnit,
-    setParsedData,
+    setParsedData: (data) => {
+      setParsedData(data);
+      if (data.length > 0) setHasHydratedData(true);
+    },
     setDataSource,
     setOnboarding,
     setSelectedMonth,
@@ -162,7 +166,10 @@ const App: React.FC = () => {
     parsedData,
     setOnboarding,
     setDataSource,
-    setParsedData,
+    setParsedData: (data) => {
+      setParsedData(data);
+      if (data.length > 0) setHasHydratedData(true);
+    },
     setHevyLoginError: clearHevyLoginError,
     setLyfatLoginError: clearLyfatLoginError,
     setCsvImportError: clearCsvImportError,
@@ -221,6 +228,8 @@ const App: React.FC = () => {
     setSelectedWeeks,
     setCalendarOpen,
   });
+
+  const showColdStartOverlay = onboarding?.intent !== 'initial' && parsedData.length === 0 && !hasHydratedData;
 
   return (
     <div
@@ -318,7 +327,7 @@ const App: React.FC = () => {
         onLyfatSyncSaved={handleLyfatSyncSaved}
       />
 
-      <AppLoadingOverlay open={isAnalyzing} isCompleting={isCompleting} />
+      <AppLoadingOverlay open={isAnalyzing || showColdStartOverlay} isCompleting={isCompleting} />
     </div>
   );
 };

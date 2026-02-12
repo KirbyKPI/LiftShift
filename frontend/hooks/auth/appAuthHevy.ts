@@ -1,8 +1,10 @@
 import { WorkoutSet } from '../../types';
 import {
   getHevyAuthToken,
+  getHevyAuthExpiresAt,
   getHevyRefreshToken,
   saveHevyAuthToken,
+  saveHevyAuthExpiresAt,
   saveHevyRefreshToken,
   clearHevyAuthToken,
   clearHevyRefreshToken,
@@ -80,6 +82,25 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
     hevyBackendGetAccount(accessToken)
       .then(({ username }) => hevyBackendGetSets<WorkoutSet>(accessToken, username));
 
+  const shouldRefreshToken = (): boolean => {
+    const expiresAt = getHevyAuthExpiresAt();
+    if (!expiresAt) return false;
+    const expiresMs = Date.parse(expiresAt);
+    if (!Number.isFinite(expiresMs)) return false;
+    const refreshSkewMs = 2 * 60 * 1000;
+    return Date.now() + refreshSkewMs >= expiresMs;
+  };
+
+  const refreshThenFetch = (tokenToRefresh: string) =>
+    hevyBackendRefreshToken(tokenToRefresh)
+      .then((refreshed) => {
+        if (!refreshed.auth_token) throw new Error('Missing auth token');
+        saveHevyAuthToken(refreshed.auth_token);
+        if (refreshed.refresh_token) saveHevyRefreshToken(refreshed.refresh_token);
+        saveHevyAuthExpiresAt(refreshed.expires_at ?? null);
+        return fetchSetsWithToken(refreshed.auth_token);
+      });
+
   const attemptCredentialFallback = () => {
     if (!savedUsername || !savedPassword) return Promise.reject(new Error('Missing saved credentials'));
     return hevyBackendLogin(savedUsername, savedPassword)
@@ -87,11 +108,16 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
         if (!r.auth_token) throw new Error('Missing auth token');
         saveHevyAuthToken(r.auth_token);
         if (r.refresh_token) saveHevyRefreshToken(r.refresh_token);
+        saveHevyAuthExpiresAt(r.expires_at ?? null);
         return fetchSetsWithToken(r.auth_token);
       });
   };
 
-  fetchSetsWithToken(token)
+  const initialPromise = shouldRefreshToken() && refreshToken
+    ? refreshThenFetch(refreshToken)
+    : fetchSetsWithToken(token);
+
+  initialPromise
     .then((resp) => {
       const sets = resp.sets ?? [];
       const hydrated = hydrateBackendWorkoutSets(sets);
@@ -106,13 +132,7 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
     .catch((err) => {
       const status = (err as any)?.statusCode;
       if (status === 401 && refreshToken) {
-        return hevyBackendRefreshToken(refreshToken)
-          .then((refreshed) => {
-            if (!refreshed.auth_token) throw new Error('Missing auth token');
-            saveHevyAuthToken(refreshed.auth_token);
-            if (refreshed.refresh_token) saveHevyRefreshToken(refreshed.refresh_token);
-            return fetchSetsWithToken(refreshed.auth_token);
-          })
+        return refreshThenFetch(refreshToken)
           .then((resp) => {
             const sets = resp.sets ?? [];
             const hydrated = hydrateBackendWorkoutSets(sets);
@@ -200,6 +220,7 @@ export const runHevyLogin = (deps: AppAuthHandlersDeps, emailOrUsername: string,
       if (!r.auth_token) throw new Error('Missing auth token');
       saveHevyAuthToken(r.auth_token);
       if (r.refresh_token) saveHevyRefreshToken(r.refresh_token);
+      saveHevyAuthExpiresAt(r.expires_at ?? null);
       const trimmed = emailOrUsername.trim();
       saveHevyUsernameOrEmail(trimmed);
       saveLastLoginMethod('hevy', 'credentials', trimmed);

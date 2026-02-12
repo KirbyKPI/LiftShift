@@ -2,10 +2,9 @@ import puppeteer, { type Browser } from 'puppeteer';
 
 const HEVY_LOGIN_URL = 'https://hevy.com/login';
 const RECAPTCHA_SITE_KEY = '6LfkQG0jAAAAANTrIkVXKPfSPHyJnt4hYPWqxh0R';
-const RECAPTCHA_TTL_MS = 90_000;
 
-// Token cache to avoid redundant browser launches within 90 seconds
-let tokenCache: { value: string; expiresAt: number } | null = null;
+// Serialize token generation to avoid concurrent browser launches
+// Tokens are single-use, so we do not cache or reuse them.
 let tokenInFlight: Promise<string> | null = null;
 
 const launchBrowser = async (): Promise<Browser> => {
@@ -35,77 +34,69 @@ const launchBrowser = async (): Promise<Browser> => {
   return puppeteer.launch(launchOptions);
 };
 
-export const getRecaptchaToken = async (): Promise<string> => {
-  const now = Date.now();
-  
-  // Return cached token if still valid
-  if (tokenCache && tokenCache.expiresAt > now) {
-    return tokenCache.value;
-  }
-  
-  // Return in-flight promise if already getting token
-  if (tokenInFlight) {
-    return tokenInFlight;
-  }
+const fetchRecaptchaToken = async (): Promise<string> => {
+  let browser: Browser | null = null;
 
-  tokenInFlight = (async () => {
-    let browser: Browser | null = null;
-    
+  try {
+    // Launch fresh browser for this request
+    browser = await launchBrowser();
+    const page = await browser.newPage();
+
     try {
-      // Launch fresh browser for this request
-      browser = await launchBrowser();
-      const page = await browser.newPage();
+      await page.setUserAgent(
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      );
 
-      try {
-        await page.setUserAgent(
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        );
-        
-        // Set navigation timeout to prevent hanging
-        page.setDefaultNavigationTimeout(30000);
-        page.setDefaultTimeout(30000);
-        
-        await page.goto(HEVY_LOGIN_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+      // Set navigation timeout to prevent hanging
+      page.setDefaultNavigationTimeout(30000);
+      page.setDefaultTimeout(30000);
 
-        await page.waitForFunction(() => (window as any).grecaptcha && (window as any).grecaptcha.enterprise, {
-          timeout: 15000,
-        });
+      await page.goto(HEVY_LOGIN_URL, { waitUntil: 'networkidle2', timeout: 30000 });
 
-        const token = await page.evaluate(async (siteKey: string) => {
-          const grecaptcha = (window as any).grecaptcha;
-          return await grecaptcha.enterprise.execute(siteKey, { action: 'login' });
-        }, RECAPTCHA_SITE_KEY);
+      await page.waitForFunction(() => (window as any).grecaptcha && (window as any).grecaptcha.enterprise, {
+        timeout: 15000,
+      });
 
-        if (!token || typeof token !== 'string') {
-          throw new Error('Failed to retrieve recaptcha token');
-        }
+      const token = await page.evaluate(async (siteKey: string) => {
+        const grecaptcha = (window as any).grecaptcha;
+        return await grecaptcha.enterprise.execute(siteKey, { action: 'login' });
+      }, RECAPTCHA_SITE_KEY);
 
-        // Cache the token for 90 seconds
-        tokenCache = { value: token, expiresAt: Date.now() + RECAPTCHA_TTL_MS };
-        return token;
-      } finally {
-        // Always close the page
-        await page.close();
+      if (!token || typeof token !== 'string') {
+        throw new Error('Failed to retrieve recaptcha token');
       }
+
+      return token;
     } finally {
-      // Always close the browser to prevent memory leaks
-      if (browser) {
-        try {
-          await browser.close();
-          console.log('[Puppeteer] Browser closed');
-        } catch (closeError) {
-          console.error('[Puppeteer] Failed to close browser:', closeError);
-        }
-      }
-      tokenInFlight = null;
+      // Always close the page
+      await page.close();
     }
-  })();
+  } finally {
+    // Always close the browser to prevent memory leaks
+    if (browser) {
+      try {
+        await browser.close();
+        console.log('[Puppeteer] Browser closed');
+      } catch (closeError) {
+        console.error('[Puppeteer] Failed to close browser:', closeError);
+      }
+    }
+  }
+};
 
-  return tokenInFlight;
+export const getRecaptchaToken = async (): Promise<string> => {
+  const pending = tokenInFlight ?? Promise.resolve('');
+  const next = pending.then(() => fetchRecaptchaToken());
+  tokenInFlight = next;
+
+  try {
+    return await next;
+  } finally {
+    if (tokenInFlight === next) tokenInFlight = null;
+  }
 };
 
 // Clear token cache (useful for testing or manual reset)
 export const clearTokenCache = (): void => {
-  tokenCache = null;
   tokenInFlight = null;
 };
