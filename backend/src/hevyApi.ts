@@ -18,8 +18,8 @@ const readPositiveNumberEnv = (key: string, fallback: number): number => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
-const HEVY_LOGIN_TIMEOUT_MS = readPositiveNumberEnv('HEVY_LOGIN_TIMEOUT_MS', 20_000);
-const HEVY_REFRESH_TIMEOUT_MS = readPositiveNumberEnv('HEVY_REFRESH_TIMEOUT_MS', 15_000);
+const HEVY_LOGIN_TIMEOUT_MS = readPositiveNumberEnv('HEVY_LOGIN_TIMEOUT_MS', 130_000);
+const HEVY_REFRESH_TIMEOUT_MS = readPositiveNumberEnv('HEVY_REFRESH_TIMEOUT_MS', 60_000);
 const HEVY_REFRESH_PATH = process.env.HEVY_REFRESH_PATH ?? '/auth/refresh_token';
 
 type HevyRequestContext = {

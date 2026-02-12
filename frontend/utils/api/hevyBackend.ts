@@ -16,8 +16,8 @@ const throwBackendError = async (res: Response): Promise<never> => {
 };
 
 const BACKEND_TIMEOUT_MS = (() => {
-  const raw = Number((import.meta as any).env?.VITE_BACKEND_TIMEOUT_MS ?? 25_000);
-  return Number.isFinite(raw) && raw > 0 ? raw : 25_000;
+  const raw = Number((import.meta as any).env?.VITE_BACKEND_TIMEOUT_MS ?? 135_000);
+  return Number.isFinite(raw) && raw > 0 ? raw : 135_000;
 })();
 
 const fetchWithTimeout = async (
