@@ -186,15 +186,26 @@ export const runHevyLogin = (deps: AppAuthHandlersDeps, emailOrUsername: string,
   deps.setLoadingKind('hevy');
   deps.setIsAnalyzing(true);
   const startedAt = deps.startProgress();
+  const trimmed = emailOrUsername.trim();
+  const savedUsername = getHevyUsernameOrEmail()?.trim().toLowerCase();
+  const canReuseRefreshForThisAccount = Boolean(
+    savedUsername &&
+    savedUsername === trimmed.toLowerCase() &&
+    getHevyRefreshToken()
+  );
 
-  hevyBackendLogin(emailOrUsername, password)
+  const authPromise = canReuseRefreshForThisAccount
+    ? hevyBackendRefresh(getHevyAuthToken(), getHevyRefreshToken() as string)
+        .catch(() => hevyBackendLogin(emailOrUsername, password))
+    : hevyBackendLogin(emailOrUsername, password);
+
+  authPromise
     .then((r) => {
       if (!r.auth_token) throw new Error('Missing auth token');
       saveHevyAuthToken(r.auth_token);
       saveHevyAuthExpiresAt(r.expires_at ?? null);
       if (r.refresh_token) saveHevyRefreshToken(r.refresh_token);
       else clearHevyRefreshToken();
-      const trimmed = emailOrUsername.trim();
       saveHevyUsernameOrEmail(trimmed);
       saveLastLoginMethod('hevy', 'credentials', trimmed);
       saveHevyPassword(password);

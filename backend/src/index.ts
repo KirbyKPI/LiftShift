@@ -149,6 +149,11 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
 
 const server = app.listen(PORT, () => {
   console.log(`LiftShift backend listening on :${PORT}`);
+  console.log('[Hevy Config]', {
+    refreshPath: process.env.HEVY_REFRESH_PATH ?? '/auth/refresh_token',
+    refreshTimeoutMs: Number(process.env.HEVY_REFRESH_TIMEOUT_MS ?? 15_000),
+    recaptchaIdleCloseMs: Number(process.env.HEVY_RECAPTCHA_IDLE_CLOSE_MS ?? 5 * 60 * 1000),
+  });
 
   if (String(process.env.HEVY_RECAPTCHA_WARMUP ?? 'true').toLowerCase() !== 'false') {
     const warmupTimer = setTimeout(() => {
