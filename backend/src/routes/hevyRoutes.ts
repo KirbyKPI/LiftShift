@@ -1,5 +1,5 @@
 import express from 'express';
-import { hevyGetAccount, hevyGetWorkoutsPaged, hevyLogin, hevyValidateAuthToken } from '../hevyApi';
+import { hevyGetAccount, hevyGetWorkoutsPaged, hevyLogin, hevyRefreshToken, hevyValidateAuthToken } from '../hevyApi';
 import { mapHevyWorkoutsToWorkoutSets } from '../mapToWorkoutSets';
 
 const createTraceId = (prefix: string): string =>
@@ -55,6 +55,7 @@ export const createHevyRouter = (opts: {
       res.json({ 
         auth_token: data.auth_token,
         access_token: data.access_token,
+        refresh_token: data.refresh_token,
         user_id: data.user_id, 
         expires_at: data.expires_at 
       });
@@ -86,6 +87,59 @@ export const createHevyRouter = (opts: {
     } catch (err) {
       const status = (err as any).statusCode ?? 500;
       res.status(status).json({ error: (err as Error).message || 'Validate failed' });
+    }
+  });
+
+  router.post('/refresh', async (req, res) => {
+    const traceId = createTraceId('hevy-refresh');
+    const startedAt = Date.now();
+    const refreshToken = String(req.body?.refresh_token ?? '').trim();
+    const bodyAuthToken = String(req.body?.auth_token ?? '').trim();
+    const authHeader = req.header('authorization');
+    const matchedAuth = authHeader?.match(/^Bearer\s+(.+)$/i);
+    const authToken = bodyAuthToken || (matchedAuth?.[1]?.trim() ?? '');
+
+    if (!refreshToken) {
+      console.warn('[Hevy Route] Refresh rejected: missing refresh token', { traceId });
+      return res.status(400).json({ error: 'Missing refresh_token' });
+    }
+
+    console.log('[Hevy Route] Refresh started', {
+      traceId,
+      hasAuthToken: Boolean(authToken),
+      refreshTokenLength: refreshToken.length,
+      ip: req.ip,
+      clientId: getClientId(req),
+    });
+
+    try {
+      const data = await hevyRefreshToken(refreshToken, authToken || undefined, { traceId });
+      console.log('[Hevy Route] Refresh succeeded', {
+        traceId,
+        durationMs: Date.now() - startedAt,
+        hasExpiresAt: Boolean(data.expires_at),
+        hasRefreshToken: Boolean(data.refresh_token),
+      });
+      res.json({
+        auth_token: data.auth_token,
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        user_id: data.user_id,
+        expires_at: data.expires_at,
+      });
+    } catch (err) {
+      const status = (err as any).statusCode ?? 500;
+      const message = (err as Error).message || 'Refresh failed';
+      console.error('[Hevy Route] Refresh failed', {
+        traceId,
+        status,
+        durationMs: Date.now() - startedAt,
+        message,
+      });
+      if (status === 401) {
+        return res.status(401).json({ error: message });
+      }
+      res.status(status).json({ error: message });
     }
   });
 

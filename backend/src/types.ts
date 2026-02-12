@@ -1,7 +1,8 @@
 export interface HevyLoginResponse {
   auth_token: string;
-  user_id: string;
+  user_id?: string;
   access_token?: string;
+  refresh_token?: string;
   expires_at?: string;
 }
 

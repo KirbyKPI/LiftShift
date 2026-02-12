@@ -4,13 +4,17 @@ import {
   hevyBackendGetSets,
   hevyBackendGetSetsWithProApiKey,
   hevyBackendLogin,
+  hevyBackendRefresh,
 } from '../../utils/api/hevyBackend';
 import { identifyPersonalRecords } from '../../utils/analysis/core';
 import {
   clearHevyAuthToken,
   clearHevyProApiKey,
+  clearHevyRefreshToken,
+  getHevyRefreshToken,
   saveHevyAuthToken,
   saveHevyAuthExpiresAt,
+  saveHevyRefreshToken,
   saveLastLoginMethod,
   saveSetupComplete,
 } from '../../utils/storage/dataSourceStorage';
@@ -71,6 +75,7 @@ export const loadHevyFromToken = (
   token: string,
   trackConfig?: TokenTrackConfig
 ): void => {
+  const savedRefreshToken = getHevyRefreshToken();
   deps.setLoadingKind('hevy');
   deps.setIsAnalyzing(true);
   const startedAt = deps.startProgress();
@@ -86,6 +91,18 @@ export const loadHevyFromToken = (
     return loadHevyFromCredentials(deps, username, password).then((success) => {
       if (!success) throw new Error('Credential login failed');
     });
+  };
+
+  const attemptRefreshFallback = () => {
+    if (!savedRefreshToken) return Promise.reject(new Error('Missing saved refresh token'));
+    return hevyBackendRefresh(token, savedRefreshToken)
+      .then((r) => {
+        if (!r.auth_token) throw new Error('Missing auth token');
+        saveHevyAuthToken(r.auth_token);
+        saveHevyAuthExpiresAt(r.expires_at ?? null);
+        if (r.refresh_token) saveHevyRefreshToken(r.refresh_token);
+        return fetchSetsWithToken(r.auth_token);
+      });
   };
 
   const initialPromise = fetchSetsWithToken(token);
@@ -116,7 +133,16 @@ export const loadHevyFromToken = (
       if (trackConfig) {
         trackEvent('hevy_sync_error', { method: trackConfig.errorMethod });
       }
-      attemptCredentialFallback()
+      const status = (err as any)?.statusCode;
+      if (status && status !== 401) {
+        clearHevyAuthToken();
+        saveSetupComplete(false);
+        deps.setHevyLoginError(getHevyErrorMessage(err));
+        deps.setOnboarding({ intent: 'initial', step: 'platform' });
+        return;
+      }
+      return attemptRefreshFallback()
+        .catch(() => attemptCredentialFallback())
         .catch(() => {
           clearHevyAuthToken();
           saveSetupComplete(false);
@@ -152,6 +178,8 @@ export const loadHevyFromCredentials = async (
 
     saveHevyAuthToken(loginResp.auth_token);
     saveHevyAuthExpiresAt(loginResp.expires_at ?? null);
+    if (loginResp.refresh_token) saveHevyRefreshToken(loginResp.refresh_token);
+    else clearHevyRefreshToken();
     saveHevyUsernameOrEmail(username);
     saveHevyPassword(password);
     saveLastLoginMethod('hevy', 'credentials', username);

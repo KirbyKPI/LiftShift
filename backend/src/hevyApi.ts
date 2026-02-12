@@ -19,6 +19,8 @@ const readPositiveNumberEnv = (key: string, fallback: number): number => {
 };
 
 const HEVY_LOGIN_TIMEOUT_MS = readPositiveNumberEnv('HEVY_LOGIN_TIMEOUT_MS', 20_000);
+const HEVY_REFRESH_TIMEOUT_MS = readPositiveNumberEnv('HEVY_REFRESH_TIMEOUT_MS', 15_000);
+const HEVY_REFRESH_PATH = process.env.HEVY_REFRESH_PATH ?? '/auth/refresh_token';
 
 type HevyRequestContext = {
   traceId?: string;
@@ -70,6 +72,9 @@ const maskIdentifier = (input: string): string => {
 };
 
 const getTraceLabel = (traceId?: string): string => (traceId ? `[${traceId}]` : '[no-trace]');
+const buildEndpointUrl = (path: string): string => (
+  path.startsWith('/') ? `${HEVY_BASE_URL}${path}` : `${HEVY_BASE_URL}/${path}`
+);
 
 export const hevyLogin = async (
   emailOrUsername: string,
@@ -87,7 +92,7 @@ export const hevyLogin = async (
   const body = { emailOrUsername, password, recaptchaToken, useAuth2_0: true };
 
   console.log(`[Hevy Login] Request ${trace}:`, {
-    url: `${HEVY_BASE_URL}/login`,
+    url: buildEndpointUrl('/login'),
     headers: { ...headers, 'x-api-key': '***' },
     body: {
       emailOrUsername: maskIdentifier(emailOrUsername),
@@ -101,7 +106,7 @@ export const hevyLogin = async (
   const requestStartedAt = Date.now();
   let res: Response;
   try {
-    res = await fetch(`${HEVY_BASE_URL}/login`, {
+    res = await fetch(buildEndpointUrl('/login'), {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
@@ -138,7 +143,78 @@ export const hevyLogin = async (
   console.log(`[Hevy Login] Success ${trace}:`, {
     totalDurationMs: Date.now() - startedAt,
     hasExpiresAt: Boolean(payload.expires_at),
+    hasRefreshToken: Boolean(payload.refresh_token),
     userId: payload.user_id,
+  });
+  return payload;
+};
+
+export const hevyRefreshToken = async (
+  refreshToken: string,
+  accessToken?: string,
+  context: HevyRequestContext = {}
+): Promise<HevyLoginResponse> => {
+  const trace = getTraceLabel(context.traceId);
+  const startedAt = Date.now();
+  const trimmedRefreshToken = String(refreshToken ?? '').trim();
+  if (!trimmedRefreshToken) {
+    const err = new Error('Missing refresh_token');
+    (err as any).statusCode = 400;
+    throw err;
+  }
+
+  const headers = buildHeaders(accessToken);
+  const body = { refresh_token: trimmedRefreshToken };
+  const refreshUrl = buildEndpointUrl(HEVY_REFRESH_PATH);
+
+  console.log(`[Hevy Refresh] Request ${trace}:`, {
+    url: refreshUrl,
+    headers: { ...headers, 'x-api-key': '***' },
+    body: { refreshTokenLength: trimmedRefreshToken.length },
+    hasAuthorization: Boolean(accessToken),
+  });
+
+  const requestStartedAt = Date.now();
+  let res: Response;
+  try {
+    res = await fetch(refreshUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: timeoutSignal(HEVY_REFRESH_TIMEOUT_MS),
+    });
+  } catch (err) {
+    console.error(`[Hevy Refresh] Network error ${trace}:`, {
+      error: err instanceof Error ? err.message : String(err),
+      requestDurationMs: Date.now() - requestStartedAt,
+      totalDurationMs: Date.now() - startedAt,
+    });
+    throw err;
+  }
+
+  const requestDurationMs = Date.now() - requestStartedAt;
+  console.log(`[Hevy Refresh] Response ${trace}:`, {
+    status: res.status,
+    statusText: res.statusText,
+    requestDurationMs,
+  });
+
+  if (!res.ok) {
+    const msg = await parseErrorBody(res);
+    console.error(`[Hevy Refresh] Error ${trace}:`, {
+      message: msg,
+      totalDurationMs: Date.now() - startedAt,
+    });
+    const err = new Error(msg);
+    (err as any).statusCode = res.status;
+    throw err;
+  }
+
+  const payload = mapOAuthResponse(await res.json() as HevyLoginResponse);
+  console.log(`[Hevy Refresh] Success ${trace}:`, {
+    totalDurationMs: Date.now() - startedAt,
+    hasExpiresAt: Boolean(payload.expires_at),
+    hasRefreshToken: Boolean(payload.refresh_token),
   });
   return payload;
 };

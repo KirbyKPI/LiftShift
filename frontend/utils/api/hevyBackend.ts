@@ -4,9 +4,16 @@ import { buildBackendUrl, parseError, type BackendSetsResponse } from './common'
 export interface BackendLoginResponse {
   auth_token: string;
   access_token?: string;
-  user_id: string;
+  refresh_token?: string;
+  user_id?: string;
   expires_at?: string;
 }
+
+const throwBackendError = async (res: Response): Promise<never> => {
+  const err = new Error(await parseError(res));
+  (err as any).statusCode = res.status;
+  throw err;
+};
 
 export const hevyBackendValidateAuthToken = async (authToken: string): Promise<boolean> => {
   const res = await fetch(buildBackendUrl('/api/hevy/validate'), {
@@ -77,7 +84,27 @@ export const hevyBackendLogin = async (emailOrUsername: string, password: string
     body: JSON.stringify({ emailOrUsername, password }),
   });
 
-  if (!res.ok) throw new Error(await parseError(res));
+  if (!res.ok) return throwBackendError(res);
+  return (await res.json()) as BackendLoginResponse;
+};
+
+export const hevyBackendRefresh = async (
+  authToken: string | null,
+  refreshToken: string
+): Promise<BackendLoginResponse> => {
+  const res = await fetch(buildBackendUrl('/api/hevy/refresh'), {
+    method: 'POST',
+    headers: mergeAnalyticsHeaders({
+      'content-type': 'application/json',
+      ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+    }),
+    body: JSON.stringify({
+      auth_token: authToken || undefined,
+      refresh_token: refreshToken,
+    }),
+  });
+
+  if (!res.ok) return throwBackendError(res);
   return (await res.json()) as BackendLoginResponse;
 };
 
@@ -92,7 +119,7 @@ export const hevyBackendGetAccount = async (authToken: string): Promise<{ userna
     },
   });
 
-  if (!res.ok) throw new Error(await parseError(res));
+  if (!res.ok) return throwBackendError(res);
   const json = (await res.json()) as { username?: string };
   if (!json.username) throw new Error('Failed to read Hevy username from backend.');
   return { username: json.username };
@@ -110,6 +137,6 @@ export const hevyBackendGetSets = async <TSet>(authToken: string, username: stri
     },
   });
 
-  if (!res.ok) throw new Error(await parseError(res));
+  if (!res.ok) return throwBackendError(res);
   return (await res.json()) as BackendSetsResponse<TSet>;
 };
