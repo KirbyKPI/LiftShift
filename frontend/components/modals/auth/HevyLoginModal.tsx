@@ -80,9 +80,20 @@ export const HevyLoginModal: React.FC<HevyLoginModalProps> = ({
     return expires > Date.now() + 60_000;
   };
 
+  const canRefreshForThisAccount = () => {
+    const refreshToken = getHevyRefreshToken();
+    if (!refreshToken) return false;
+    const savedUsername = getHevyUsernameOrEmail()?.trim().toLowerCase();
+    const currentUsername = emailOrUsername.trim().toLowerCase();
+    // Allow warmup if no saved username (new user) or if current username matches saved
+    return savedUsername && savedUsername === currentUsername;
+  };
+
   const maybeWarmup = () => {
     if (warmupTriggeredRef.current) return;
     if (hasValidToken()) return;
+    // Skip warmup if we have a refresh token for this account
+    if (canRefreshForThisAccount()) return;
     warmupTriggeredRef.current = true;
     console.log('[HevyLogin] 💻 Starting browser warmup on field focus');
     void hevyBackendWarmupSession(emailOrUsername.trim() || ' warmup');

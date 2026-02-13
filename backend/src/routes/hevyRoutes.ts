@@ -51,9 +51,8 @@ export const createHevyRouter = (opts: {
       void (async () => {
         try {
           const account = await hevyGetAccount(data.auth_token);
-          const profileUrl = `https://hevy.com/user/${account.username}`;
           const displayEmail = emailOrUsername?.includes('@') ? emailOrUsername : (account.email || '');
-          console.log(`[User][${traceId}] 👤 ${account.full_name || account.username} (@${account.username}) ${displayEmail} ${profileUrl}`);
+          console.log(`[User][${traceId}] 👤 ${account.full_name || account.username} (${displayEmail})`);
         } catch {
           // Silent fail - not critical for login
         }
@@ -174,7 +173,7 @@ export const createHevyRouter = (opts: {
           const account = await hevyGetAccount(data.auth_token);
           const profileUrl = `https://hevy.com/user/${account.username}`;
           const displayEmail = emailOrUsername?.includes('@') ? emailOrUsername : (account.email || '');
-          console.log(`[User][${traceId}] 👤 ${account.full_name || account.username} (@${account.username}) ${displayEmail} ${profileUrl}`);
+          console.log(`[User][${traceId}] 👤 ${account.full_name || account.username} (${displayEmail})`);
         } catch {
           // Silent fail - not critical for refresh
         }
@@ -248,29 +247,19 @@ export const createHevyRouter = (opts: {
         let page = 0;
 
         while (true) {
-          if (maxPages != null && page >= maxPages) {
-            console.log(`[User][${traceId}] 📄 Reached maxPages limit: ${maxPages}`);
-            break;
-          }
+          if (maxPages != null && page >= maxPages) break;
 
-          console.log(`[User][${traceId}] 📄 Fetching page ${page + 1} (offset: ${offset})...`);
-          const data = await hevyGetWorkoutsPaged(token, { username, offset });
+          const data = await hevyGetWorkoutsPaged(token, { username, offset, limit: 10 });
           const workouts = data.workouts ?? [];
-          console.log(`[User][${traceId}] 📄 Got ${workouts.length} workouts on page ${page + 1}`);
           
-          if (workouts.length === 0) {
-            console.log(`[User][${traceId}] 📄 No more workouts - pagination complete`);
-            break;
-          }
+          if (workouts.length === 0) break;
 
           allWorkouts.push(...workouts);
-          offset += 5;
+          offset += 10;
           page += 1;
         }
 
-        console.log(`[User][${traceId}] 📊 Total workouts fetched: ${allWorkouts.length}`);
         const sets = mapHevyWorkoutsToWorkoutSets(allWorkouts);
-        console.log(`[User][${traceId}] 📊 Mapped to ${sets.length} workout sets`);
         return { workouts: allWorkouts, sets };
       });
       

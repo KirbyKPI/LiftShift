@@ -176,7 +176,6 @@ export const hevyValidateAuthToken = async (accessToken: string): Promise<boolea
 };
 
 export const hevyGetAccount = async (accessToken: string): Promise<HevyAccountResponse> => {
-  console.log(`[hevyApi] 📡 Getting Hevy account info...`);
   const res = await fetch(`${HEVY_BASE_URL}/user/account`, {
     method: 'GET',
     headers: buildHeaders(accessToken),
@@ -184,24 +183,23 @@ export const hevyGetAccount = async (accessToken: string): Promise<HevyAccountRe
 
   if (!res.ok) {
     const msg = await parseErrorBody(res);
-    console.error(`[hevyApi] ❌ Failed to get account: ${msg}`);
     const err = new Error(msg);
     (err as any).statusCode = res.status;
     throw err;
   }
-  console.log(`[hevyApi] ✅ Account info retrieved`);
 
   return (await res.json()) as HevyAccountResponse;
 };
 
 export const hevyGetWorkoutsPaged = async (
   accessToken: string,
-  opts: { username: string; offset: number }
+  opts: { username: string; offset: number; limit?: number }
 ): Promise<HevyPagedWorkoutsResponse> => {
-  console.log(`[hevyApi] 📡 Fetching workouts page (offset: ${opts.offset})...`);
+  const limit = Math.min(Math.max(opts.limit ?? 10, 1), 10);
   const params = new URLSearchParams({
     username: opts.username,
     offset: String(opts.offset),
+    limit: String(limit),
   });
 
   const res = await fetch(`${HEVY_BASE_URL}/user_workouts_paged?${params.toString()}`, {
@@ -211,14 +209,10 @@ export const hevyGetWorkoutsPaged = async (
 
   if (!res.ok) {
     const msg = await parseErrorBody(res);
-    console.error(`[hevyApi] ❌ Failed to fetch workouts: ${msg}`);
     const err = new Error(msg);
     (err as any).statusCode = res.status;
     throw err;
   }
 
-  const data = await res.json() as HevyPagedWorkoutsResponse;
-  const workoutsCount = data.workouts?.length ?? 0;
-  console.log(`[hevyApi] ✅ Got ${workoutsCount} workouts (offset: ${opts.offset})`);
-  return data;
+  return (await res.json()) as HevyPagedWorkoutsResponse;
 };

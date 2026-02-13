@@ -4,6 +4,7 @@ import {
   getHevyRefreshToken,
   saveHevyAuthToken,
   saveHevyAuthExpiresAt,
+  getHevyAuthExpiresAt,
   saveHevyRefreshToken,
   clearHevyRefreshToken,
   clearHevyAuthToken,
@@ -81,6 +82,14 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
     hevyBackendGetAccount(accessToken)
       .then(({ username }) => hevyBackendGetSets<WorkoutSet>(accessToken, username));
 
+  const isTokenExpired = (): boolean => {
+    const expiresAt = getHevyAuthExpiresAt();
+    if (!expiresAt) return false; // Assume valid if no expiry set
+    const expires = Date.parse(expiresAt);
+    if (!Number.isFinite(expires)) return false;
+    return expires <= Date.now() + 60_000; // Within 60s of expiry
+  };
+
   const applySetsResponse = (resp: { sets?: WorkoutSet[] }): void => {
     const sets = resp.sets ?? [];
     const hydrated = hydrateBackendWorkoutSets(sets);
@@ -118,7 +127,9 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
       });
   };
 
-  const initialPromise = fetchSetsWithToken(token);
+  const initialPromise = isTokenExpired() && savedRefreshToken
+    ? attemptRefreshFallback()
+    : fetchSetsWithToken(token);
 
   initialPromise
     .then((resp) => {
