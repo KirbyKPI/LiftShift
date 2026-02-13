@@ -195,24 +195,37 @@ export const hevyGetWorkoutsPaged = async (
   accessToken: string,
   opts: { username: string; offset: number; limit?: number }
 ): Promise<HevyPagedWorkoutsResponse> => {
-  const limit = Math.min(Math.max(opts.limit ?? 10, 1), 10);
-  const params = new URLSearchParams({
-    username: opts.username,
-    offset: String(opts.offset),
-    limit: String(limit),
-  });
+  const limit = Math.min(Math.max(opts.limit ?? 5, 1), 10);
+  const chunkSize = 5;
+  const maxChunks = Math.ceil(limit / chunkSize);
+  const workouts: HevyPagedWorkoutsResponse['workouts'] = [];
 
-  const res = await fetch(`${HEVY_BASE_URL}/user_workouts_paged?${params.toString()}`, {
-    method: 'GET',
-    headers: buildHeaders(accessToken),
-  });
+  for (let i = 0; i < maxChunks; i += 1) {
+    const chunkOffset = opts.offset + (i * chunkSize);
+    const params = new URLSearchParams({
+      username: opts.username,
+      offset: String(chunkOffset),
+    });
 
-  if (!res.ok) {
-    const msg = await parseErrorBody(res);
-    const err = new Error(msg);
-    (err as any).statusCode = res.status;
-    throw err;
+    const res = await fetch(`${HEVY_BASE_URL}/user_workouts_paged?${params.toString()}`, {
+      method: 'GET',
+      headers: buildHeaders(accessToken),
+    });
+
+    if (!res.ok) {
+      const msg = await parseErrorBody(res);
+      const err = new Error(msg);
+      (err as any).statusCode = res.status;
+      throw err;
+    }
+
+    const data = (await res.json()) as HevyPagedWorkoutsResponse;
+    const chunkWorkouts = data.workouts ?? [];
+    workouts.push(...chunkWorkouts);
+
+    if (chunkWorkouts.length < chunkSize) break;
+    if (workouts.length >= limit) break;
   }
 
-  return (await res.json()) as HevyPagedWorkoutsResponse;
+  return { workouts: workouts.slice(0, limit) };
 };
