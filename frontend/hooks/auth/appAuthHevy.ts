@@ -232,6 +232,8 @@ export const runHevyLogin = (deps: AppAuthHandlersDeps, emailOrUsername: string,
       deps.setDataSource('hevy');
       saveSetupComplete(true);
       deps.setOnboarding(null);
+      const totalMs = Date.now() - startedAt;
+      console.log(`[Frontend] ✅ Hevy login flow complete (${(totalMs / 1000).toFixed(1)}s)`);
     })
     .catch((err) => {
       trackEvent('hevy_sync_error', { method: 'credentials' });

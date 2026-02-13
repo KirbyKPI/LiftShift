@@ -63,7 +63,10 @@ export const createHevyRouter = (opts: {
         });
       }
       res.status(status).json({ error: message });
+      console.log(`[User][${traceId}] 🧭 Login flow total (${formatDuration(Date.now() - startedAt)})`);
+      return;
     }
+    console.log(`[User][${traceId}] 🧭 Login flow total (${formatDuration(Date.now() - startedAt)})`);
   });
 
   // Warm only the browser/page session, not token. This avoids stale-token 400s.

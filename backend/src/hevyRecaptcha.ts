@@ -5,7 +5,7 @@ const RECAPTCHA_SITE_KEY = '6LfkQG0jAAAAANTrIkVXKPfSPHyJnt4hYPWqxh0R';
 const RECAPTCHA_TIMEOUT_MS = 120_000;
 const BROWSER_MAX_AGE_MS = 30 * 60 * 1000;
 const BROWSER_MAX_USE_COUNT = 100;
-const IDLE_CLOSE_MS = 4 * 60 * 1000;
+const IDLE_CLOSE_MS = 5 * 60 * 1000;
 // Keep one active page on low-CPU instances to avoid page-load contention.
 const MAX_PAGES = 1;
 
@@ -37,6 +37,8 @@ const formatDuration = (ms: number): string => `${(ms / 1000).toFixed(1)}s`;
 
 // Operation tracking for better logging
 const activeOperations = new Map<string, number>();
+let warmupStartAt = 0;
+let warmupLaunchMs = 0;
 
 const logOperationStart = (operation: string, traceId?: string): void => {
   const prefix = traceId ? `[User][${traceId}]` : '[System]';
@@ -82,8 +84,7 @@ const scheduleIdleClose = (traceId?: string): void => {
 };
 
 
-const launchBrowser = async (traceId?: string): Promise<Browser> => {
-  const prefix = traceId ? `[User][${traceId}]` : '[System]';
+const launchBrowser = async (): Promise<Browser> => {
   const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
   const launchOptions: Parameters<typeof puppeteer.launch>[0] = {
     headless: true,
@@ -106,10 +107,7 @@ const launchBrowser = async (traceId?: string): Promise<Browser> => {
       '--disable-sync',
     ],
   };
-  logOperationStart('Browser launch (cold start)', traceId);
-  console.log(`${prefix} 🚀 Launching Chromium browser...`);
   const browser = await puppeteer.launch(launchOptions);
-  logOperationEnd('Browser launch (cold start)', traceId);
   return browser;
 };
 
@@ -185,12 +183,23 @@ const ensureRecaptchaLoaded = async (p: Page, traceId?: string, forceReload = fa
     return;
   }
 
-  logOperationStart('Page load (hevy.com + reCAPTCHA)', traceId);
+  const loadStartedAt = now();
   await p.goto(HEVY_LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: RECAPTCHA_TIMEOUT_MS });
   await p.waitForFunction(() => Boolean((window as any).grecaptcha?.enterprise), {
     timeout: RECAPTCHA_TIMEOUT_MS,
   });
-  logOperationEnd('Page load (hevy.com + reCAPTCHA)', traceId);
+  const loadMs = now() - loadStartedAt;
+
+  if (warmupStartAt > 0 && !forceReload) {
+    const totalMs = now() - warmupStartAt;
+    const launchMs = warmupLaunchMs;
+    const suffix = launchMs > 0 ? ` [browser: ${formatDuration(launchMs)}, page: ${formatDuration(loadMs)}]` : '';
+    console.log(`${prefix} ✅ Warmup complete (${formatDuration(totalMs)})${suffix}`);
+    warmupStartAt = 0;
+    warmupLaunchMs = 0;
+  } else {
+    console.log(`${prefix} ✅ Page ready (${formatDuration(loadMs)})`);
+  }
 };
 
 const ensureBrowser = async (traceId?: string): Promise<void> => {
@@ -207,7 +216,9 @@ const ensureBrowser = async (traceId?: string): Promise<void> => {
     }
 
     if (!browser || !browser.isConnected()) {
-      browser = await launchBrowser(traceId);
+      const launchStartedAt = now();
+      browser = await launchBrowser();
+      warmupLaunchMs = now() - launchStartedAt;
       browserCreatedAt = now();
       browserUseCount = 0;
     }
@@ -312,8 +323,6 @@ const fetchRecaptchaToken = async (context?: RecaptchaContext): Promise<string> 
   const traceId = context?.traceId;
   const userPrefix = traceId ? `[User][${traceId}]` : '[User]';
   
-  logOperationStart('Full auth flow (browser → CAPTCHA)', traceId);
-
   const { page, isStandby, queueMs, queuePosition } = await acquirePage(traceId);
 
   logQueue(queuePosition, queueMs, traceId);
@@ -333,7 +342,6 @@ const fetchRecaptchaToken = async (context?: RecaptchaContext): Promise<string> 
     }
 
     browserUseCount += 1;
-    logOperationEnd('Full auth flow (browser → CAPTCHA)', traceId);
     console.log(`${userPrefix} 🔑 Auth token obtained${isStandby ? ' using standby page' : ''}`);
     return token;
   } finally {
@@ -362,11 +370,20 @@ export const warmRecaptchaSession = async (context?: RecaptchaContext): Promise<
       return;
     }
 
-    const { page } = await acquirePage(context?.traceId);
+    if (warmupStartAt === 0) {
+      warmupStartAt = now();
+      console.log('[System] 🚀 Warmup started (browser + page)');
+    }
+
+    let page: Page | null = null;
     try {
+      const acquired = await acquirePage(context?.traceId);
+      page = acquired.page;
       // Page load happens inside createPage/ensureRecaptchaLoaded.
     } finally {
-      await releasePage(page, context?.traceId);
+      if (page) {
+        await releasePage(page, context?.traceId);
+      }
       scheduleIdleClose(context?.traceId);
     }
   })();
