@@ -7,6 +7,9 @@ import {
   createOneRmTracker,
   createVolumeTracker,
   roundTo,
+  detectGoldAndSilverPRs,
+  sortSetsChronologically,
+  PRDetectionResult,
 } from './prCalculation';
 
 const sortByParsedDate = (sets: WorkoutSet[], ascending: boolean): WorkoutSet[] => {
@@ -40,46 +43,101 @@ export interface PRTypeFlags {
   isVolumePr: boolean;
 }
 
-export const identifyPersonalRecords = (data: WorkoutSet[]): WorkoutSet[] => {
+const SILVER_PR_WINDOW_DAYS = 60;
+
+interface PRMatchKey {
+  exercise: string;
+  timestamp: number;
+  weight: number;
+  reps: number;
+}
+
+const createPRMatchKey = (pr: { exercise: string; date: Date; weight: number; reps: number }): PRMatchKey => ({
+  exercise: pr.exercise,
+  timestamp: pr.date.getTime(),
+  weight: pr.weight,
+  reps: pr.reps,
+});
+
+const prMatchesSet = (key: PRMatchKey, set: WorkoutSet): boolean => {
+  if (!set.parsedDate) return false;
+  return (
+    key.exercise === set.exercise_title &&
+    key.timestamp === set.parsedDate.getTime() &&
+    key.weight === set.weight_kg &&
+    key.reps === set.reps
+  );
+};
+
+export const identifyPersonalRecords = (data: WorkoutSet[], referenceDate?: Date): WorkoutSet[] => {
   const sorted = sortByParsedDate(data, true);
-  const trackers: PRTracker[] = [
-    createWeightTracker(),
-    createOneRmTracker(),
-    createVolumeTracker(),
-  ];
-  const prTypesMap = new Map<WorkoutSet, PrType[]>();
-
-  for (const set of sorted) {
-    if (isWarmupSet(set)) {
-      prTypesMap.set(set, []);
-      continue;
-    }
-    
-    const exercise = set.exercise_title;
-    const weight = set.weight_kg || 0;
-    const reps = set.reps || 0;
-    
-    const prTypes: PrType[] = [];
-
-    for (const tracker of trackers) {
-      const currentValue = tracker.calculateValue(weight, reps);
-      const previousBest = tracker.getPreviousBest(exercise);
-
-      if (currentValue > 0 && currentValue > previousBest) {
-        prTypes.push(tracker.type);
-        tracker.setBest(exercise, currentValue);
+  
+  // Calculate reference date from data if not provided
+  // Use latest date in dataset, not actual current date
+  const effectiveReferenceDate = referenceDate ?? (() => {
+    let maxTs = -Infinity;
+    for (const set of data) {
+      if (set.parsedDate) {
+        const ts = set.parsedDate.getTime();
+        if (Number.isFinite(ts) && ts > maxTs) {
+          maxTs = ts;
+        }
       }
     }
-
-    prTypesMap.set(set, prTypes);
+    return Number.isFinite(maxTs) ? new Date(maxTs) : new Date();
+  })();
+  
+  // Use centralized detection for both gold and silver PRs
+  const { goldPRs, silverPRs } = detectGoldAndSilverPRs(
+    sorted,
+    SILVER_PR_WINDOW_DAYS,
+    effectiveReferenceDate
+  );
+  
+  // Create lookup maps using object pooling for efficiency
+  const goldPRMap = new Map<number, PrType[]>();
+  const silverPRMap = new Map<number, PrType[]>();
+  
+  // Build index of PRs by set index for O(1) lookup
+  for (let i = 0; i < sorted.length; i++) {
+    const set = sorted[i];
+    if (!set.parsedDate || isWarmupSet(set)) continue;
+    
+    // Check for gold PR match
+    const goldTypes: PrType[] = [];
+    for (const pr of goldPRs) {
+      if (prMatchesSet(createPRMatchKey(pr), set)) {
+        goldTypes.push(pr.type);
+      }
+    }
+    if (goldTypes.length > 0) {
+      goldPRMap.set(i, goldTypes);
+    }
+    
+    // Check for silver PR match
+    const silverTypes: PrType[] = [];
+    for (const pr of silverPRs) {
+      if (prMatchesSet(createPRMatchKey(pr), set)) {
+        silverTypes.push(pr.type);
+      }
+    }
+    if (silverTypes.length > 0) {
+      silverPRMap.set(i, silverTypes);
+    }
   }
-
-  return sortByParsedDate(sorted, false).map((set) => {
-    const prTypes = prTypesMap.get(set) ?? [];
+  
+  // Map PRs back to sets
+  return sortByParsedDate(sorted, false).map((set, index) => {
+    const originalIndex = sorted.indexOf(set);
+    const prTypes = goldPRMap.get(originalIndex) ?? [];
+    const silverPrTypes = silverPRMap.get(originalIndex) ?? [];
+    
     return {
       ...set,
       isPr: prTypes.length > 0,
       prTypes,
+      isSilverPr: silverPrTypes.length > 0,
+      silverPrTypes,
     };
   });
 };

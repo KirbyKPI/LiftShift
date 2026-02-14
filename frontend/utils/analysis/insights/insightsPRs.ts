@@ -2,12 +2,11 @@ import { differenceInDays, subDays } from 'date-fns';
 import { WorkoutSet } from '../../../types';
 import {
   PRDetectionResult,
-  createAllPRTrackers,
+  detectGoldAndSilverPRs,
   sortSetsChronologically,
-  detectPRsWithTrackers,
 } from '../core/prCalculation';
 
-export type RecentPR = PRDetectionResult;
+export type RecentPR = PRDetectionResult & { isSilver?: boolean };
 
 export interface PRInsights {
   daysSinceLastPR: number;
@@ -17,7 +16,11 @@ export interface PRInsights {
   recentPRs: RecentPR[];
   prFrequency: number;
   totalPRs: number;
+  totalSilverPRs: number;
+  recentSilverPRs: RecentPR[];
 }
+
+const SILVER_PR_WINDOW_DAYS = 60;
 
 export const calculatePRInsights = (data: WorkoutSet[], now: Date = new Date(0)): PRInsights => {
   const sorted = sortSetsChronologically(data);
@@ -31,40 +34,41 @@ export const calculatePRInsights = (data: WorkoutSet[], now: Date = new Date(0))
       recentPRs: [],
       prFrequency: 0,
       totalPRs: 0,
+      totalSilverPRs: 0,
+      recentSilverPRs: [],
     };
   }
 
-  const trackers = createAllPRTrackers();
-  const prEvents = detectPRsWithTrackers(sorted, trackers);
+  const { goldPRs, silverPRs } = detectGoldAndSilverPRs(sorted, SILVER_PR_WINDOW_DAYS, now);
 
-  if (prEvents.length === 0) {
-    return {
-      daysSinceLastPR: 0,
-      lastPRDate: null,
-      lastPRExercise: null,
-      prDrought: false,
-      recentPRs: [],
-      prFrequency: 0,
-      totalPRs: 0,
-    };
+  // Gold PR metrics (for drought tracking - only gold PRs break droughts)
+  const lastGoldPR = goldPRs[goldPRs.length - 1];
+  const daysSinceLastPR = lastGoldPR ? differenceInDays(now, lastGoldPR.date) : 0;
+
+  // Recent PRs - mix gold and silver, but prioritize gold
+  const recentGoldPRs: RecentPR[] = goldPRs.slice(-5).reverse().map(pr => ({ ...pr, isSilver: false }));
+  const recentSilverPRs: RecentPR[] = silverPRs.slice(-3).reverse().map(pr => ({ ...pr, isSilver: true }));
+  
+  // Combine: show up to 5 total, prioritizing gold
+  const recentPRs: RecentPR[] = [...recentGoldPRs];
+  if (recentPRs.length < 5) {
+    recentPRs.push(...recentSilverPRs.slice(0, 5 - recentPRs.length));
   }
 
-  const lastPR = prEvents[prEvents.length - 1];
-  const daysSinceLastPR = differenceInDays(now, lastPR.date);
-
-  const recentPRs: RecentPR[] = prEvents.slice(-5).reverse();
-
+  // Frequency calculations
   const thirtyDaysAgo = subDays(now, 30);
-  const recentPRCount = prEvents.filter((pr) => pr.date >= thirtyDaysAgo).length;
-  const prFrequency = Math.round((recentPRCount / 4) * 10) / 10;
+  const recentGoldCount = goldPRs.filter((pr) => pr.date >= thirtyDaysAgo).length;
+  const prFrequency = Math.round((recentGoldCount / 4) * 10) / 10;
 
   return {
     daysSinceLastPR,
-    lastPRDate: lastPR.date,
-    lastPRExercise: lastPR.exercise,
+    lastPRDate: lastGoldPR?.date ?? null,
+    lastPRExercise: lastGoldPR?.exercise ?? null,
     prDrought: daysSinceLastPR > 14,
     recentPRs,
     prFrequency,
-    totalPRs: prEvents.length,
+    totalPRs: goldPRs.length,
+    totalSilverPRs: silverPRs.length,
+    recentSilverPRs,
   };
 };
