@@ -86,18 +86,18 @@ export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProp
                     </div>
                     {isPrimary && (
                       <span
-                        className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-200"
+                        className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-500/15 text-emerald-200"
                         title={`${primaryRounded} direct set${primaryRounded === 1 ? '' : 's'}`}
                       >
-                        {primaryRounded} direct set{primaryRounded === 1 ? '' : 's'}
+                        {primaryRounded} direct
                       </span>
                     )}
                     {isSecondary && (
                       <span
-                        className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-200"
+                        className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-sky-500/15 text-sky-200"
                         title={`${secondaryRounded} indirect set${secondaryRounded === 1 ? '' : 's'}`}
                       >
-                        {secondaryRounded} indirect set{secondaryRounded === 1 ? '' : 's'}
+                        {secondaryRounded} indirect 
                       </span>
                     )}
                   </div>
