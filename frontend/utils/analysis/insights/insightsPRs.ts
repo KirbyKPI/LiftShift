@@ -1,15 +1,13 @@
 import { differenceInDays, subDays } from 'date-fns';
 import { WorkoutSet } from '../../../types';
-import { isWarmupSet } from '../classification/setClassification';
+import {
+  PRDetectionResult,
+  createAllPRTrackers,
+  sortSetsChronologically,
+  detectPRsWithTrackers,
+} from '../core/prCalculation';
 
-export interface RecentPR {
-  date: Date;
-  exercise: string;
-  weight: number;
-  reps: number;
-  previousBest: number;
-  improvement: number;
-}
+export type RecentPR = PRDetectionResult;
 
 export interface PRInsights {
   daysSinceLastPR: number;
@@ -22,15 +20,7 @@ export interface PRInsights {
 }
 
 export const calculatePRInsights = (data: WorkoutSet[], now: Date = new Date(0)): PRInsights => {
-  const sorted = [...data]
-    .filter((s) => s.parsedDate && !isWarmupSet(s) && (s.weight_kg || 0) > 0)
-    .map((s, i) => ({ s, i }))
-    .sort((a, b) => {
-      const dt = (a.s.parsedDate!.getTime() || 0) - (b.s.parsedDate!.getTime() || 0);
-      if (dt !== 0) return dt;
-      return a.i - b.i;
-    })
-    .map(({ s }) => s);
+  const sorted = sortSetsChronologically(data);
 
   if (sorted.length === 0) {
     return {
@@ -44,27 +34,8 @@ export const calculatePRInsights = (data: WorkoutSet[], now: Date = new Date(0))
     };
   }
 
-  const bestByExercise = new Map<string, number>();
-  const prEvents: RecentPR[] = [];
-
-  for (const set of sorted) {
-    const key = set.exercise_title || 'Unknown';
-    const bestSoFar = bestByExercise.get(key) ?? 0;
-    const current = set.weight_kg || 0;
-
-    if (current > bestSoFar) {
-      const improvement = current - bestSoFar;
-      prEvents.push({
-        date: set.parsedDate!,
-        exercise: key,
-        weight: current,
-        reps: set.reps || 0,
-        previousBest: bestSoFar,
-        improvement,
-      });
-      bestByExercise.set(key, current);
-    }
-  }
+  const trackers = createAllPRTrackers();
+  const prEvents = detectPRsWithTrackers(sorted, trackers);
 
   if (prEvents.length === 0) {
     return {

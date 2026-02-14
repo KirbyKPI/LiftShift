@@ -1,7 +1,13 @@
 import type { PrType, WorkoutSet } from '../../../types';
 import { getDateKey, type TimePeriod, sortByTimestamp } from '../../date/dateUtils';
-import { roundTo } from '../../format/formatters';
 import { isWarmupSet } from '../classification/setClassification';
+import {
+  PRTracker,
+  createWeightTracker,
+  createOneRmTracker,
+  createVolumeTracker,
+  roundTo,
+} from './prCalculation';
 
 const sortByParsedDate = (sets: WorkoutSet[], ascending: boolean): WorkoutSet[] => {
   const sign = ascending ? 1 : -1;
@@ -36,9 +42,11 @@ export interface PRTypeFlags {
 
 export const identifyPersonalRecords = (data: WorkoutSet[]): WorkoutSet[] => {
   const sorted = sortByParsedDate(data, true);
-  const maxWeightMap = new Map<string, number>();
-  const maxOneRmMap = new Map<string, number>();
-  const maxVolumeMap = new Map<string, number>();
+  const trackers: PRTracker[] = [
+    createWeightTracker(),
+    createOneRmTracker(),
+    createVolumeTracker(),
+  ];
   const prTypesMap = new Map<WorkoutSet, PrType[]>();
 
   for (const set of sorted) {
@@ -46,34 +54,21 @@ export const identifyPersonalRecords = (data: WorkoutSet[]): WorkoutSet[] => {
       prTypesMap.set(set, []);
       continue;
     }
+    
     const exercise = set.exercise_title;
-    const currentWeight = set.weight_kg || 0;
-    const currentReps = set.reps || 0;
-    const currentOneRm = calculateOneRepMax(currentWeight, currentReps);
-    const currentVolume = currentWeight * currentReps;
-
-    const previousMaxWeight = maxWeightMap.get(exercise) ?? 0;
-    const previousMaxOneRm = maxOneRmMap.get(exercise) ?? 0;
-    const previousMaxVolume = maxVolumeMap.get(exercise) ?? 0;
-
+    const weight = set.weight_kg || 0;
+    const reps = set.reps || 0;
+    
     const prTypes: PrType[] = [];
 
-    // Weight PR
-    if (currentWeight > 0 && currentWeight > previousMaxWeight) {
-      prTypes.push('weight');
-      maxWeightMap.set(exercise, currentWeight);
-    }
+    for (const tracker of trackers) {
+      const currentValue = tracker.calculateValue(weight, reps);
+      const previousBest = tracker.getPreviousBest(exercise);
 
-    // 1RM PR
-    if (currentOneRm > 0 && currentOneRm > previousMaxOneRm) {
-      prTypes.push('oneRm');
-      maxOneRmMap.set(exercise, currentOneRm);
-    }
-
-    // Volume PR
-    if (currentVolume > 0 && currentVolume > previousMaxVolume) {
-      prTypes.push('volume');
-      maxVolumeMap.set(exercise, currentVolume);
+      if (currentValue > 0 && currentValue > previousBest) {
+        prTypes.push(tracker.type);
+        tracker.setBest(exercise, currentValue);
+      }
     }
 
     prTypesMap.set(set, prTypes);

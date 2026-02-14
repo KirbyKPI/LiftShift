@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Dumbbell, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 
 import type { RecentPR } from '../../utils/analysis/insights';
 import type { ExerciseAsset } from '../../utils/data/exerciseAssets';
