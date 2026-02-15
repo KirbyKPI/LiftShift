@@ -106,17 +106,20 @@ export const hevyLogin = async (
 
   let { res } = await attemptLogin(recaptchaToken);
 
+  if (usedCache) {
+    clearTokenCache();
+  }
+
   if (res.status === 400) {
     console.log(`${trace} ⚠️ Got 400 error, retrying with fresh token...`);
-    clearTokenCache();
     
     const freshResult = await getRecaptchaToken({ traceId: context.traceId });
     const retryResult = await attemptLogin(freshResult.token);
     res = retryResult.res;
-  }
-
-  if (usedCache) {
-    clearTokenCache();
+    
+    if (freshResult.usedCache) {
+      clearTokenCache();
+    }
   }
 
   if (!res.ok) {
