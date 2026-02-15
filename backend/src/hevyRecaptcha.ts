@@ -332,13 +332,14 @@ const fetchRecaptchaToken = async (context?: RecaptchaContext): Promise<string> 
   }
 };
 
-export const getRecaptchaToken = async (context?: RecaptchaContext): Promise<string> => {
+export const getRecaptchaToken = async (context?: RecaptchaContext): Promise<{ token: string; usedCache: boolean }> => {
   if (isTokenCacheValid() && tokenCache) {
     const prefix = context?.traceId ? `[User][${context.traceId}]` : '[User]';
     console.log(`${prefix} 🎯 Using cached reCAPTCHA token`);
-    return tokenCache.token;
+    return { token: tokenCache.token, usedCache: true };
   }
-  return fetchRecaptchaToken(context);
+  const token = await fetchRecaptchaToken(context);
+  return { token, usedCache: false };
 };
 
 export const warmRecaptchaSession = async (context?: RecaptchaContext): Promise<void> => {

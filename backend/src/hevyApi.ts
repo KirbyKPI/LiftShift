@@ -74,7 +74,7 @@ export const hevyLogin = async (
   const startedAt = Date.now();
   
   const recaptchaStartedAt = Date.now();
-  const recaptchaToken = await getRecaptchaToken({
+  const { token: recaptchaToken, usedCache } = await getRecaptchaToken({
     traceId: context.traceId,
   });
   const recaptchaDurationMs = Date.now() - recaptchaStartedAt;
@@ -110,12 +110,14 @@ export const hevyLogin = async (
     console.log(`${trace} ⚠️ Got 400 error, retrying with fresh token...`);
     clearTokenCache();
     
-    const freshToken = await getRecaptchaToken({ traceId: context.traceId });
-    const retryResult = await attemptLogin(freshToken);
+    const freshResult = await getRecaptchaToken({ traceId: context.traceId });
+    const retryResult = await attemptLogin(freshResult.token);
     res = retryResult.res;
   }
 
-  clearTokenCache();
+  if (usedCache) {
+    clearTokenCache();
+  }
 
   if (!res.ok) {
     const msg = await parseErrorBody(res);
