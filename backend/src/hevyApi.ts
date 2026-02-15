@@ -3,7 +3,7 @@ import type {
   HevyLoginResponse,
   HevyPagedWorkoutsResponse,
 } from './types';
-import { getRecaptchaToken } from './hevyRecaptcha';
+import { clearTokenCache, getRecaptchaToken } from './hevyRecaptcha';
 
 const requireEnv = (key: string): string => {
   const v = process.env[key];
@@ -72,7 +72,7 @@ export const hevyLogin = async (
 ): Promise<HevyLoginResponse> => {
   const trace = getTraceLabel(context.traceId);
   const startedAt = Date.now();
-  console.log(`${trace} 🎫 Getting reCAPTCHA token...`);
+  
   const recaptchaStartedAt = Date.now();
   const recaptchaToken = await getRecaptchaToken({
     traceId: context.traceId,
@@ -80,25 +80,42 @@ export const hevyLogin = async (
   const recaptchaDurationMs = Date.now() - recaptchaStartedAt;
   console.log(`${trace} ✅ Got reCAPTCHA token in ${formatDuration(recaptchaDurationMs)}`);
 
-  const headers = buildHeaders();
-  const body = { emailOrUsername, password, recaptchaToken, useAuth2_0: true };
+  const attemptLogin = async (token: string): Promise<{ res: Response; token: string }> => {
+    const headers = buildHeaders();
+    const body = { emailOrUsername, password, recaptchaToken: token, useAuth2_0: true };
 
-  console.log(`${trace} 📡 Calling Hevy /login API...`);
-  const requestStartedAt = Date.now();
-  let res: Response;
-  try {
-    res = await fetch(buildEndpointUrl('/login'), {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-      signal: timeoutSignal(HEVY_LOGIN_TIMEOUT_MS),
-    });
-  } catch (err) {
-    console.error(`${trace} ❌ Network error calling Hevy API: ${(err as Error).message}`);
-    throw err;
+    console.log(`${trace} 📡 Calling Hevy /login API...`);
+    const requestStartedAt = Date.now();
+    let res: Response;
+    try {
+      res = await fetch(buildEndpointUrl('/login'), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: timeoutSignal(HEVY_LOGIN_TIMEOUT_MS),
+      });
+    } catch (err) {
+      console.error(`${trace} ❌ Network error calling Hevy API: ${(err as Error).message}`);
+      throw err;
+    }
+    const requestDurationMs = Date.now() - requestStartedAt;
+    console.log(`${trace} 📡 Hevy API responded in ${formatDuration(requestDurationMs)} - Status: ${res.status}`);
+    
+    return { res, token };
+  };
+
+  let { res } = await attemptLogin(recaptchaToken);
+
+  if (res.status === 400) {
+    console.log(`${trace} ⚠️ Got 400 error, retrying with fresh token...`);
+    clearTokenCache();
+    
+    const freshToken = await getRecaptchaToken({ traceId: context.traceId });
+    const retryResult = await attemptLogin(freshToken);
+    res = retryResult.res;
   }
-  const requestDurationMs = Date.now() - requestStartedAt;
-  console.log(`${trace} 📡 Hevy API responded in ${formatDuration(requestDurationMs)} - Status: ${res.status}`);
+
+  clearTokenCache();
 
   if (!res.ok) {
     const msg = await parseErrorBody(res);

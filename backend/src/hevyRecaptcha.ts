@@ -5,9 +5,16 @@ const RECAPTCHA_SITE_KEY = '6LfkQG0jAAAAANTrIkVXKPfSPHyJnt4hYPWqxh0R';
 const RECAPTCHA_TIMEOUT_MS = 120_000;
 const BROWSER_MAX_AGE_MS = 30 * 60 * 1000;
 const BROWSER_MAX_USE_COUNT = 100;
-const IDLE_CLOSE_MS = 5 * 60 * 1000;
-// Keep one active page on low-CPU instances to avoid page-load contention.
+const IDLE_CLOSE_MS = 10 * 60 * 1000;
 const MAX_PAGES = 1;
+const TOKEN_CACHE_DURATION_MS = 100_000;
+
+type TokenCache = {
+  token: string;
+  expiresAt: number;
+};
+
+let tokenCache: TokenCache | null = null;
 
 type RecaptchaContext = {
   traceId?: string;
@@ -26,6 +33,22 @@ let pageCreationReservations = 0;
 let sessionWarmupInFlight: Promise<void> | null = null;
 
 const now = (): number => Date.now();
+
+const isTokenCacheValid = (): boolean => {
+  if (!tokenCache) return false;
+  return Date.now() < tokenCache.expiresAt;
+};
+
+const setTokenCache = (token: string): void => {
+  tokenCache = {
+    token,
+    expiresAt: Date.now() + TOKEN_CACHE_DURATION_MS,
+  };
+};
+
+const clearTokenCacheInternal = (): void => {
+  tokenCache = null;
+};
 
 const getTracePrefix = (traceId?: string): string =>
   traceId ? `[System][${traceId}]` : '[System]';
@@ -310,12 +333,22 @@ const fetchRecaptchaToken = async (context?: RecaptchaContext): Promise<string> 
 };
 
 export const getRecaptchaToken = async (context?: RecaptchaContext): Promise<string> => {
+  if (isTokenCacheValid() && tokenCache) {
+    const prefix = context?.traceId ? `[User][${context.traceId}]` : '[User]';
+    console.log(`${prefix} 🎯 Using cached reCAPTCHA token`);
+    return tokenCache.token;
+  }
   return fetchRecaptchaToken(context);
 };
 
 export const warmRecaptchaSession = async (context?: RecaptchaContext): Promise<void> => {
   if (sessionWarmupInFlight) {
     await sessionWarmupInFlight;
+    return;
+  }
+
+  if (isTokenCacheValid()) {
+    console.log('[System] ✅ Warmup skipped - token already cached');
     return;
   }
 
@@ -336,7 +369,14 @@ export const warmRecaptchaSession = async (context?: RecaptchaContext): Promise<
     try {
       const acquired = await acquirePage(context?.traceId);
       page = acquired.page;
+      
+      console.log('[System] 🎯 Executing CAPTCHA for warmup...');
+      const token = await executeRecaptcha(page);
+      setTokenCache(token);
+      console.log('[System] ✅ Token cached during warmup');
       console.log('[System] ✅ Warmup complete');
+    } catch (err) {
+      console.warn('[System] ⚠️ Warmup failed:', safeErrorMessage(err));
     } finally {
       if (page) {
         await releasePage(page, context?.traceId);
@@ -357,7 +397,5 @@ export const shutdownRecaptchaSession = async (): Promise<void> => {
 };
 
 export const clearTokenCache = (): void => {
-  void closeBrowser('manual_clear').catch((err) => {
-    console.warn('[Puppeteer] Failed to clear browser state:', safeErrorMessage(err));
-  });
+  clearTokenCacheInternal();
 };
