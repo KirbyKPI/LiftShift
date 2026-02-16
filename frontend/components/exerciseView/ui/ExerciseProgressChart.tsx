@@ -14,7 +14,7 @@ import { ExerciseStats } from '../../../types';
 import { LazyRender } from '../../ui/LazyRender';
 import { ChartSkeleton } from '../../ui/ChartSkeleton';
 import { formatNumber } from '../../../utils/format/formatters';
-import { RECHARTS_XAXIS_PADDING } from '../../../utils/chart/chartEnhancements';
+import { RECHARTS_XAXIS_PADDING, RECHARTS_YAXIS_MARGIN, calculateYAxisDomain, formatAxisNumber } from '../../../utils/chart/chartEnhancements';
 import type { ExerciseSessionEntry } from '../../../utils/analysis/exerciseTrend';
 import type { WeightUnit } from '../../../utils/storage/localStorage';
 import { CustomTooltip } from './ExerciseChartTooltip';
@@ -55,8 +55,13 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
 }) => {
   if (!selectedStats) return null;
 
+  const dataKeys = showUnilateral && hasUnilateralChartData
+    ? (isBodyweightLike ? ['leftReps', 'rightReps'] : ['leftOneRepMax', 'rightOneRepMax'])
+    : (isBodyweightLike ? ['reps', 'sets'] : ['oneRepMax', 'weight']);
+  const yAxisDomain = calculateYAxisDomain(chartData, dataKeys);
+
   return (
-    <div className="w-full bg-black/70 border border-slate-700/50 rounded-2xl p-4 sm:p-6 relative flex flex-col h-[400px]">
+    <div className="w-full bg-black/70 border border-slate-700/50 rounded-2xl p-1 sm:p-2 relative flex flex-col h-[400px]">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-4 sm:mb-6 gap-2 shrink-0">
         <div>
           <h3 className="text-base sm:text-lg font-semibold text-white">{isBodyweightLike ? 'Reps Progression' : 'Strength Progression'}</h3>
@@ -163,7 +168,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               <AreaChart
                 key={`${selectedStats.name}:${viewMode}:${allAggregationMode}:${weightUnit}:${showUnilateral}`}
                 data={chartData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                margin={{ top: 10, ...RECHARTS_YAXIS_MARGIN, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="color1RM" x1="0" y1="0" x2="0" y2="1">
@@ -194,11 +199,8 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
                   fontSize={10}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(val) =>
-                    isBodyweightLike
-                      ? `${formatNumber(Number(val), { maxDecimals: 0 })}`
-                      : `${formatNumber(Number(val), { maxDecimals: 1 })}${weightUnit}`
-                  }
+                  domain={yAxisDomain}
+                  tickFormatter={(val) => formatAxisNumber(Number(val), isBodyweightLike ? undefined : weightUnit)}
                 />
                 <Tooltip
                   content={<CustomTooltip weightUnit={weightUnit} hasUnilateralData={hasUnilateralChartData} showUnilateral={showUnilateral} />}
