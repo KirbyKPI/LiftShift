@@ -20,7 +20,6 @@ import { AppFilterControls } from './app/ui';
 import { AppShell } from './app/ui';
 import { useAppSideEffects } from './app/state';
 import { useAppDerivedData } from './app/state';
-import { useBackendWakeup } from './hooks/useBackendWakeup';
 import { useCalendarSelectionHandlers } from './app/state';
 import { useUpdateFlowHandler } from './app/auth';
 
@@ -61,9 +60,6 @@ const tryRecoverFromChunkLoadError = (): void => {
 const App: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Wake up backend on any user interaction (scroll, click, type, etc.)
-  useBackendWakeup();
 
   useEffect(() => {
     const onVitePreloadError = (event: Event) => {

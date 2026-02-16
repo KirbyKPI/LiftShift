@@ -2,12 +2,12 @@ import puppeteer, { type Browser, type Page } from 'puppeteer';
 
 const HEVY_LOGIN_URL = 'https://hevy.com/login';
 const RECAPTCHA_SITE_KEY = '6LfkQG0jAAAAANTrIkVXKPfSPHyJnt4hYPWqxh0R';
-const RECAPTCHA_TIMEOUT_MS = 120_000;
-const BROWSER_MAX_AGE_MS = 30 * 60 * 1000;
+const HEADLESS_BROWSER_TIMEOUT_MS = 120_000;
+const BROWSER_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours for testing
 const BROWSER_MAX_USE_COUNT = 100;
-const IDLE_CLOSE_MS = 10 * 60 * 1000;
-const MAX_PAGES = 1;
-const TOKEN_CACHE_DURATION_MS = 100_000;
+const BROWSER_IDLE_CLOSE_MS = 24 * 60 * 60 * 1000; // 24 hours for testing
+const MAX_CONCURRENT_PAGES = 1;
+const RECAPTCHA_TOKEN_CACHE_MS = 100_000;
 
 type TokenCache = {
   token: string;
@@ -42,16 +42,13 @@ const isTokenCacheValid = (): boolean => {
 const setTokenCache = (token: string): void => {
   tokenCache = {
     token,
-    expiresAt: Date.now() + TOKEN_CACHE_DURATION_MS,
+    expiresAt: Date.now() + RECAPTCHA_TOKEN_CACHE_MS,
   };
 };
 
 const clearTokenCacheInternal = (): void => {
   tokenCache = null;
 };
-
-const getTracePrefix = (traceId?: string): string =>
-  traceId ? `[System][${traceId}]` : '[System]';
 
 const safeErrorMessage = (err: unknown): string =>
   err instanceof Error ? err.message : String(err);
@@ -62,18 +59,17 @@ const clearIdleCloseTimer = (): void => {
   idleCloseTimer = null;
 };
 
-const scheduleIdleClose = (traceId?: string): void => {
+const scheduleIdleClose = (): void => {
   clearIdleCloseTimer();
   if (!browser) return;
-  if (!Number.isFinite(IDLE_CLOSE_MS) || IDLE_CLOSE_MS <= 0) return;
+  if (!Number.isFinite(BROWSER_IDLE_CLOSE_MS) || BROWSER_IDLE_CLOSE_MS <= 0) return;
   if (activePages.size > 0) return;
 
-  const prefix = getTracePrefix(traceId);
   idleCloseTimer = setTimeout(() => {
-    void closeBrowser('idle_timeout', traceId).catch((err) => {
-      console.warn(`${prefix} Failed idle close:`, safeErrorMessage(err));
+    void closeBrowser('idle_timeout').catch((err) => {
+      console.warn(`⚠️ Browser idle close failed:`, safeErrorMessage(err));
     });
-  }, IDLE_CLOSE_MS);
+  }, BROWSER_IDLE_CLOSE_MS);
   idleCloseTimer.unref();
 };
 
@@ -114,23 +110,20 @@ const isPageClosed = (p: Page | null): boolean => {
   }
 };
 
-const closePage = async (p: Page, reason: string, traceId?: string): Promise<void> => {
-  const prefix = getTracePrefix(traceId);
+const closePage = async (p: Page, reason: string): Promise<void> => {
   openPages.delete(p);
   activePages.delete(p);
   if (standbyPage === p) standbyPage = null;
   if (!isPageClosed(p)) {
     try {
       await p.close();
-    } catch (err) {
-      console.warn(`${prefix} Failed to close page during ${reason}:`, safeErrorMessage(err));
+    } catch {
+      // Silent fail
     }
   }
 };
 
-const closeBrowser = async (reason: string, traceId?: string): Promise<void> => {
-  const prefix = getTracePrefix(traceId);
-  console.log(`${prefix} 🛑 Browser closing (${reason})`);
+const closeBrowser = async (reason: string): Promise<void> => {
   clearIdleCloseTimer();
   const activeBrowser = browser;
   const pages = Array.from(openPages);
@@ -144,15 +137,14 @@ const closeBrowser = async (reason: string, traceId?: string): Promise<void> => 
   pageCreationReservations = 0;
 
   for (const p of pages) {
-    await closePage(p, reason, traceId);
+    await closePage(p, reason);
   }
 
   if (activeBrowser) {
     try {
       await activeBrowser.close();
-      console.log(`${prefix} ✅ Browser closed`);
     } catch (err) {
-      console.warn(`${prefix} ❌ Failed to close browser:`, safeErrorMessage(err));
+      console.warn(`⚠️ Browser close failed:`, safeErrorMessage(err));
     }
   }
 
@@ -169,39 +161,33 @@ const needsBrowserRecycle = (): boolean => {
   return now() - browserCreatedAt >= BROWSER_MAX_AGE_MS;
 };
 
-const ensureRecaptchaLoaded = async (p: Page, traceId?: string, forceReload = false): Promise<void> => {
-  const prefix = getTracePrefix(traceId);
+const ensureRecaptchaLoaded = async (p: Page, forceReload = false): Promise<void> => {
   const ready = await p.evaluate(() => Boolean((window as any).grecaptcha?.enterprise));
   if (ready && !forceReload) {
     return;
   }
 
-  await p.goto(HEVY_LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: RECAPTCHA_TIMEOUT_MS });
+  await p.goto(HEVY_LOGIN_URL, { waitUntil: 'domcontentloaded', timeout: HEADLESS_BROWSER_TIMEOUT_MS });
   await p.waitForFunction(() => Boolean((window as any).grecaptcha?.enterprise), {
-    timeout: RECAPTCHA_TIMEOUT_MS,
+    timeout: HEADLESS_BROWSER_TIMEOUT_MS,
   });
-  console.log(`${prefix} 📄 Page loaded`);
 };
 
-const ensureBrowser = async (traceId?: string): Promise<void> => {
+const ensureBrowser = async (): Promise<void> => {
   if (browserInitInFlight) {
     await browserInitInFlight;
     return;
   }
 
-  const prefix = getTracePrefix(traceId);
   browserInitInFlight = (async () => {
     if (needsBrowserRecycle()) {
-      console.log(`${prefix} ♻️  Browser recycling`);
-      await closeBrowser('recycle', traceId);
+      await closeBrowser('recycle');
     }
 
     if (!browser || !browser.isConnected()) {
-      console.log(`${prefix} 🚀 Browser launching`);
       browser = await launchBrowser();
       browserCreatedAt = now();
       browserUseCount = 0;
-      console.log(`${prefix} ✅ Browser launched`);
     }
   })();
 
@@ -212,44 +198,42 @@ const ensureBrowser = async (traceId?: string): Promise<void> => {
   }
 };
 
-const createPage = async (traceId?: string): Promise<Page> => {
+const createPage = async (): Promise<Page> => {
   if (!browser) throw new Error('Recaptcha browser not available');
   const page = await browser.newPage();
   await page.setUserAgent(
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   );
-  page.setDefaultNavigationTimeout(RECAPTCHA_TIMEOUT_MS);
-  page.setDefaultTimeout(RECAPTCHA_TIMEOUT_MS);
+  page.setDefaultNavigationTimeout(HEADLESS_BROWSER_TIMEOUT_MS);
+  page.setDefaultTimeout(HEADLESS_BROWSER_TIMEOUT_MS);
   openPages.add(page);
   page.once('close', () => {
     openPages.delete(page);
     activePages.delete(page);
     if (standbyPage === page) standbyPage = null;
   });
-  await ensureRecaptchaLoaded(page, traceId);
+  await ensureRecaptchaLoaded(page);
   return page;
 };
 
 const acquirePage = async (
-  traceId?: string
 ): Promise<{ page: Page; isStandby: boolean; queueMs: number; queuePosition: number }> => {
   const startTime = now();
   let queuePosition = 0;
 
   while (true) {
-    await ensureBrowser(traceId);
+    await ensureBrowser();
 
     if (standbyPage && !activePages.has(standbyPage) && !isPageClosed(standbyPage)) {
       activePages.add(standbyPage);
       return { page: standbyPage, isStandby: true, queueMs: now() - startTime, queuePosition };
     }
 
-    // Reserve a slot synchronously before awaiting page creation.
-    if ((openPages.size + pageCreationReservations) < MAX_PAGES) {
+    if ((openPages.size + pageCreationReservations) < MAX_CONCURRENT_PAGES) {
       pageCreationReservations += 1;
       let created = false;
       try {
-        const page = await createPage(traceId);
+        const page = await createPage();
         created = true;
         activePages.add(page);
         return { page, isStandby: false, queueMs: now() - startTime, queuePosition };
@@ -269,17 +253,17 @@ const acquirePage = async (
   }
 };
 
-const releasePage = async (page: Page, traceId?: string): Promise<void> => {
+const releasePage = async (page: Page): Promise<void> => {
   activePages.delete(page);
 
   if (!standbyPage || standbyPage === page) {
     if (!standbyPage) standbyPage = page;
   } else {
-    await closePage(page, 'page_release', traceId);
+    await closePage(page, 'page_release');
   }
 
   if (activePages.size === 0) {
-    scheduleIdleClose(traceId);
+    scheduleIdleClose();
   }
 
   const waiter = pageWaiters.shift();
@@ -300,95 +284,72 @@ const executeRecaptcha = async (p: Page): Promise<string> => {
   return token;
 };
 
-const fetchRecaptchaToken = async (context?: RecaptchaContext): Promise<string> => {
-  const traceId = context?.traceId;
-  const userPrefix = traceId ? `[User][${traceId}]` : '[User]';
-  
-  const { page, isStandby, queueMs, queuePosition } = await acquirePage(traceId);
-
-  if (queuePosition > 0) {
-    console.log(`${userPrefix} ⏳ Waiting for CAPTCHA (#${queuePosition})`);
-  }
+const fetchRecaptchaToken = async (): Promise<string> => {
+  const { page, isStandby } = await acquirePage();
 
   try {
     let token: string;
     
     if (isTokenCacheValid() && tokenCache) {
-      console.log(`${userPrefix} 🎯 Using cached token (post-queue)`);
       token = tokenCache.token;
     } else {
       try {
-        console.log(`${userPrefix} 🎯 Executing CAPTCHA`);
         token = await executeRecaptcha(page);
-        console.log(`${userPrefix} ✅ CAPTCHA done`);
       } catch {
-        console.log(`${userPrefix} ⚠️ CAPTCHA failed, retrying...`);
-        await ensureRecaptchaLoaded(page, traceId, true);
-        console.log(`${userPrefix} 🎯 Executing CAPTCHA (retry)`);
+        await ensureRecaptchaLoaded(page, true);
         token = await executeRecaptcha(page);
-        console.log(`${userPrefix} ✅ CAPTCHA done (retry)`);
       }
     }
 
     browserUseCount += 1;
-    console.log(`${userPrefix} 🔑 Token obtained${isStandby ? ' (standby)' : ''}`);
     return token;
   } finally {
-    await releasePage(page, traceId);
+    await releasePage(page);
   }
 };
 
-export const getRecaptchaToken = async (context?: RecaptchaContext): Promise<{ token: string; usedCache: boolean }> => {
+export const getRecaptchaToken = async (): Promise<{ token: string; usedCache: boolean }> => {
   if (isTokenCacheValid() && tokenCache) {
-    const prefix = context?.traceId ? `[User][${context.traceId}]` : '[User]';
-    console.log(`${prefix} 🎯 Using cached reCAPTCHA token`);
     return { token: tokenCache.token, usedCache: true };
   }
-  const token = await fetchRecaptchaToken(context);
+  const token = await fetchRecaptchaToken();
   return { token, usedCache: false };
 };
 
-export const warmRecaptchaSession = async (context?: RecaptchaContext): Promise<void> => {
+export const warmRecaptchaSession = async (): Promise<void> => {
   if (sessionWarmupInFlight) {
     await sessionWarmupInFlight;
     return;
   }
 
   if (isTokenCacheValid()) {
-    console.log('[System] ✅ Warmup skipped - token already cached');
     return;
   }
 
   sessionWarmupInFlight = (async () => {
     if (activePages.size > 0 || pageWaiters.length > 0) {
-      scheduleIdleClose(context?.traceId);
+      scheduleIdleClose();
       return;
     }
 
     if (standbyPage && !isPageClosed(standbyPage)) {
-      scheduleIdleClose(context?.traceId);
+      scheduleIdleClose();
       return;
     }
 
-    console.log('[System] 🚀 Warmup starting');
-
     let page: Page | null = null;
     try {
-      const acquired = await acquirePage(context?.traceId);
+      const acquired = await acquirePage();
       page = acquired.page;
-      
-      console.log('[System] 🎯 Executing CAPTCHA for warmup...');
       const token = await executeRecaptcha(page);
       setTokenCache(token);
-      console.log('[System] ✅ Token cached during warmup');
-      console.log('[System] ✅ Warmup complete');
     } catch (err) {
-      console.warn('[System] ⚠️ Warmup failed:', safeErrorMessage(err));
+      console.warn(`⚠️ Warmup failed:`, safeErrorMessage(err));
     } finally {
       if (page) {
-        await releasePage(page, context?.traceId);
+        await releasePage(page);
       }
-      scheduleIdleClose(context?.traceId);
+      scheduleIdleClose();
     }
   })();
 

@@ -78,6 +78,7 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
   const savedPassword = getHevyPassword();
   const savedRefreshToken = getHevyRefreshToken();
 
+  // Get username then sets - username is cached so subsequent calls are fast
   const fetchSetsWithToken = (accessToken: string) =>
     hevyBackendGetAccount(accessToken)
       .then(({ username }) => hevyBackendGetSets<WorkoutSet>(accessToken, username));
@@ -90,7 +91,7 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
     return expires <= Date.now() + 60_000; // Within 60s of expiry
   };
 
-  const applySetsResponse = (resp: { sets?: WorkoutSet[] }): void => {
+  const applySetsResponse = (resp: { sets?: WorkoutSet[]; username?: string }, accessToken?: string): void => {
     const sets = resp.sets ?? [];
     const hydrated = hydrateBackendWorkoutSets(sets);
     const enriched = identifyPersonalRecords(hydrated);
@@ -100,6 +101,15 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
     deps.setDataSource('hevy');
     saveSetupComplete(true);
     deps.setOnboarding(null);
+
+    // Fetch account info in background AFTER main data loads (for email list logging)
+    // Use cached token from earlier if available, otherwise use provided token
+    const token = accessToken || getHevyAuthToken();
+    if (token) {
+      hevyBackendGetAccount(token).catch(() => {
+        // Silent fail - not critical
+      });
+    }
   };
 
   const attemptCredentialFallback = () => {

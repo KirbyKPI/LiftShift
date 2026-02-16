@@ -1,5 +1,6 @@
 import { mergeAnalyticsHeaders } from '../integrations/analyticsClientId';
 import { buildBackendUrl, parseError, type BackendSetsResponse } from './common';
+import { browserCache } from '../storage/browserCache';
 
 export interface BackendLoginResponse {
   auth_token: string;
@@ -89,6 +90,12 @@ export const hevyBackendValidateProApiKey = async (apiKey: string): Promise<bool
 };
 
 export const hevyBackendGetSetsWithProApiKey = async <TSet>(apiKey: string): Promise<BackendSetsResponse<TSet>> => {
+  const cacheKey = browserCache.getCacheKey('hevyPro', apiKey);
+  const cached = browserCache.getCached<BackendSetsResponse<TSet>>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const url = buildBackendUrl('/api/hevy/api-key/sets');
   const res = await fetchWithTimeout(url, {
     method: 'POST',
@@ -106,10 +113,15 @@ export const hevyBackendGetSetsWithProApiKey = async <TSet>(apiKey: string): Pro
     }
     throw new Error(msg);
   }
-  return (await res.json()) as BackendSetsResponse<TSet>;
+  const data = (await res.json()) as BackendSetsResponse<TSet>;
+  browserCache.setCache(cacheKey, data);
+  return data;
 };
 
 export const hevyBackendLogin = async (emailOrUsername: string, password: string): Promise<BackendLoginResponse> => {
+  const cacheKey = browserCache.getCacheKey('hevyLogin', emailOrUsername.toLowerCase());
+  browserCache.clearCache('hevyLogin', emailOrUsername.toLowerCase());
+  
   const res = await fetchWithTimeout(buildBackendUrl('/api/hevy/login'), {
     method: 'POST',
     headers: mergeAnalyticsHeaders({ 'content-type': 'application/json' }),
@@ -117,26 +129,13 @@ export const hevyBackendLogin = async (emailOrUsername: string, password: string
   });
 
   if (!res.ok) return throwBackendError(res);
-  return (await res.json()) as BackendLoginResponse;
-};
-
-export const hevyBackendWarmup = async (
-  emailOrUsername: string,
-  timeoutMs: number = 60_000
-): Promise<boolean> => {
-  const res = await fetchWithTimeout(
-    buildBackendUrl('/api/hevy/recaptcha/warmup'),
-    {
-      method: 'POST',
-      headers: mergeAnalyticsHeaders({ 'content-type': 'application/json' }),
-      body: JSON.stringify({ emailOrUsername }),
-    },
-    timeoutMs
-  );
-
-  if (!res.ok) return false;
-  const json = (await res.json()) as { warmed?: boolean };
-  return Boolean(json.warmed);
+  const data = (await res.json()) as BackendLoginResponse;
+  
+  if (data.auth_token) {
+    browserCache.setCache(cacheKey, data);
+  }
+  
+  return data;
 };
 
 export const hevyBackendWarmupSession = async (
@@ -158,26 +157,14 @@ export const hevyBackendWarmupSession = async (
   return Boolean(json.warmed);
 };
 
-export const backendWakeup = async (timeoutMs: number = 12_000, triggerType?: string): Promise<boolean> => {
-  try {
-    const headers: Record<string, string> = {};
-    if (triggerType) {
-      headers['x-interaction-type'] = triggerType;
-    }
-    const res = await fetchWithTimeout(buildBackendUrl('/api/health'), {
-      headers: mergeAnalyticsHeaders(headers),
-    }, timeoutMs);
-    return res.ok;
-  } catch {
-    return false;
-  }
-};
-
 export const hevyBackendRefresh = async (
   authToken: string | null,
   refreshToken: string,
   emailOrUsername?: string | null
 ): Promise<BackendLoginResponse> => {
+  const cacheKey = browserCache.getCacheKey('hevyLogin', (emailOrUsername || 'unknown').toLowerCase());
+  browserCache.clearCache('hevyLogin', (emailOrUsername || 'unknown').toLowerCase());
+  
   const res = await fetchWithTimeout(buildBackendUrl('/api/hevy/refresh'), {
     method: 'POST',
     headers: mergeAnalyticsHeaders({
@@ -192,10 +179,22 @@ export const hevyBackendRefresh = async (
   });
 
   if (!res.ok) return throwBackendError(res);
-  return (await res.json()) as BackendLoginResponse;
+  const data = (await res.json()) as BackendLoginResponse;
+  
+  if (data.auth_token) {
+    browserCache.setCache(cacheKey, data);
+  }
+  
+  return data;
 };
 
 export const hevyBackendGetAccount = async (authToken: string): Promise<{ username: string }> => {
+  const cacheKey = browserCache.getCacheKey('hevyAccount', authToken);
+  const cached = browserCache.getCached<{ username: string }>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const res = await fetchWithTimeout(buildBackendUrl('/api/hevy/account'), {
     method: 'GET',
     headers: {
@@ -209,10 +208,19 @@ export const hevyBackendGetAccount = async (authToken: string): Promise<{ userna
   if (!res.ok) return throwBackendError(res);
   const json = (await res.json()) as { username?: string };
   if (!json.username) throw new Error('Failed to read Hevy username from backend.');
-  return { username: json.username };
+  
+  const data = { username: json.username };
+  browserCache.setCache(cacheKey, data);
+  return data;
 };
 
 export const hevyBackendGetSets = async <TSet>(authToken: string, username: string): Promise<BackendSetsResponse<TSet>> => {
+  const cacheKey = browserCache.getCacheKey('hevySets', username);
+  const cached = browserCache.getCached<BackendSetsResponse<TSet>>(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const params = new URLSearchParams({ username });
   const res = await fetchWithTimeout(buildBackendUrl(`/api/hevy/sets?${params.toString()}`), {
     method: 'GET',
@@ -225,5 +233,7 @@ export const hevyBackendGetSets = async <TSet>(authToken: string, username: stri
   });
 
   if (!res.ok) return throwBackendError(res);
-  return (await res.json()) as BackendSetsResponse<TSet>;
+  const data = (await res.json()) as BackendSetsResponse<TSet>;
+  browserCache.setCache(cacheKey, data);
+  return data;
 };
