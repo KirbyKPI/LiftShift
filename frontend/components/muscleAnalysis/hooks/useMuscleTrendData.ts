@@ -113,8 +113,17 @@ export const useMuscleTrendData = ({
             chartPeriod = 'monthly';
           }
         } else if (weeklySetsWindow === '365d') {
-          chartPeriod = 'weekly';
-          shouldBucketToWeeks = true;
+          const spanDays = windowStart
+            ? Math.max(1, differenceInCalendarDays(effectiveNow, windowStart) + 1)
+            : 365;
+          if (spanDays < 35) {
+            chartPeriod = 'weekly';
+          } else if (spanDays < 150) {
+            chartPeriod = 'weekly';
+            shouldBucketToWeeks = true;
+          } else {
+            chartPeriod = 'monthly';
+          }
         } else {
           chartPeriod = 'weekly';
         }

@@ -86,7 +86,7 @@ export const buildExerciseChartData = (args: {
   }
 
   const preferred: 'daily' | 'weekly' | 'monthly' =
-    viewMode === 'all' ? allAggregationMode : viewMode === 'yearly' ? 'weekly' : 'daily';
+    viewMode === 'all' ? allAggregationMode : viewMode === 'yearly' ? allAggregationMode : 'daily';
 
   const agg: 'daily' | 'weekly' | 'monthly' =
     Number.isFinite(minTs) && Number.isFinite(maxTs) && maxTs > minTs
