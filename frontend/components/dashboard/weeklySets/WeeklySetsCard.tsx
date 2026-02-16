@@ -1,14 +1,16 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { formatDeltaPercentage } from '../../../utils/format/deltaFormat';
 import { type BodyMapGender } from '../../bodyMap/BodyMap';
 import { ChartDescription, InsightLine, InsightText, TrendBadge, BadgeLabel } from '../insights/ChartBits';
-import { toHeadlessVolumeMap } from '../../../utils/muscle/mapping';
+import { toHeadlessVolumeMap, HEADLESS_MUSCLE_NAMES } from '../../../utils/muscle/mapping';
 import { getHeadlessRadarSeries } from '../../../utils/muscle/mapping';
 import { differenceInCalendarDays } from 'date-fns';
 import { isPlausibleDate } from '../../../utils/date/dateUtils';
 import { WeeklySetsHeader } from './WeeklySetsHeader';
 import { WeeklySetsRadarView } from './WeeklySetsRadarView';
 import { WeeklySetsHeatmapView } from './WeeklySetsHeatmapView';
+import { Tooltip, type TooltipData } from '../../ui/Tooltip';
+import { weeklyStimulus } from '../../../utils/muscle/hypertrophy';
 
 type WeeklySetsView = 'radar' | 'heatmap';
 type WeeklySetsWindow = 'all' | '7d' | '30d' | '365d';
@@ -53,9 +55,39 @@ export const WeeklySetsCard = ({
   now: Date;
 }) => {
   const [heatmapHoveredMuscle, setHeatmapHoveredMuscle] = useState<string | null>(null);
+  const [hoverTooltip, setHoverTooltip] = useState<TooltipData | null>(null);
 
   const headlessVolumes = useMemo(() => toHeadlessVolumeMap(heatmap.volumes), [heatmap.volumes]);
   const radarData = useMemo(() => getHeadlessRadarSeries(headlessVolumes), [headlessVolumes]);
+
+  const handleMuscleHover = useCallback((muscleId: string | null, e?: MouseEvent) => {
+    if (!muscleId || !e) {
+      setHoverTooltip(null);
+      setHeatmapHoveredMuscle(null);
+      return;
+    }
+
+    const target = e.target as Element | null;
+    const groupEl = target?.closest?.('g[id]') as Element | null;
+    const rect = groupEl?.getBoundingClientRect?.() as DOMRect | undefined;
+    if (!rect) {
+      setHoverTooltip(null);
+      return;
+    }
+
+    setHeatmapHoveredMuscle(muscleId);
+
+    const rate = headlessVolumes.get(muscleId) || 0;
+    const stimulus = weeklyStimulus(rate, muscleId);
+    const bodyText = `${rate.toFixed(1)} sets/wk\n${stimulus}% of wkly possible gains`;
+
+    setHoverTooltip({
+      rect,
+      title: (HEADLESS_MUSCLE_NAMES as any)[muscleId] ?? muscleId,
+      body: bodyText,
+      status: rate > 0 ? 'success' : 'default',
+    });
+  }, [headlessVolumes]);
 
   const weeklySetsInsight = useMemo(() => {
     const hasData = radarData.some((d) => (d.value ?? 0) > 0);
@@ -76,7 +108,7 @@ export const WeeklySetsCard = ({
     return { total, top, top3Share, durationLabel };
   }, [radarData, windowStart, now]);
 
-  const heatmapHoveredMuscleIds = undefined;
+  const heatmapHoveredMuscleIds = heatmapHoveredMuscle ? [heatmapHoveredMuscle] : undefined;
 
   const handleBodyMapClick = (muscleId: string) => {
     if (!onMuscleClick) return;
@@ -106,10 +138,9 @@ export const WeeklySetsCard = ({
             heatmap={heatmap}
             headlessVolumes={headlessVolumes}
             heatmapHoveredMuscleIds={heatmapHoveredMuscleIds}
-            heatmapHoveredMuscle={heatmapHoveredMuscle}
-            setHeatmapHoveredMuscle={setHeatmapHoveredMuscle}
             onBodyMapClick={handleBodyMapClick}
             bodyMapGender={bodyMapGender}
+            onMuscleHover={handleMuscleHover}
           />
         )}
       </div>
@@ -173,6 +204,8 @@ export const WeeklySetsCard = ({
         </InsightLine>
         <InsightText text="Read this as your weekly set allocation. If the Top 3 share is high, your volume is concentrated. This is great for specialization, but watch balance." />
       </ChartDescription>
+
+      {hoverTooltip && <Tooltip data={hoverTooltip} />}
     </div>
   );
 };

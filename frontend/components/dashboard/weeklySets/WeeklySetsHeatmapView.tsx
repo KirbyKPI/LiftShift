@@ -1,8 +1,7 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { BodyMap, type BodyMapGender } from '../../bodyMap/BodyMap';
 import { LazyRender } from '../../ui/LazyRender';
 import { ChartSkeleton } from '../../ui/ChartSkeleton';
-import { HEADLESS_MUSCLE_NAMES, SVG_TO_MUSCLE_GROUP } from '../../../utils/muscle/mapping';
 
 interface HeatmapData {
   volumes: Map<string, number>;
@@ -13,30 +12,19 @@ interface WeeklySetsHeatmapViewProps {
   heatmap: HeatmapData;
   headlessVolumes: Map<string, number>;
   heatmapHoveredMuscleIds?: string[];
-  heatmapHoveredMuscle: string | null;
-  setHeatmapHoveredMuscle: (muscleId: string | null) => void;
   onBodyMapClick: (muscleId: string) => void;
   bodyMapGender?: BodyMapGender;
+  onMuscleHover?: (muscleId: string | null, e?: MouseEvent) => void;
 }
 
 export const WeeklySetsHeatmapView: React.FC<WeeklySetsHeatmapViewProps> = ({
   heatmap,
   headlessVolumes,
   heatmapHoveredMuscleIds,
-  heatmapHoveredMuscle,
-  setHeatmapHoveredMuscle,
   onBodyMapClick,
   bodyMapGender,
+  onMuscleHover,
 }) => {
-  const weeklySetsHoverMeta = useMemo(() => {
-    if (!heatmapHoveredMuscle) return null;
-    const name = (HEADLESS_MUSCLE_NAMES as any)[heatmapHoveredMuscle]
-      ?? (SVG_TO_MUSCLE_GROUP as any)[heatmapHoveredMuscle]
-      ?? 'Unknown';
-    const raw = headlessVolumes.get(heatmapHoveredMuscle) ?? 0;
-    const value = Math.round(raw * 10) / 10;
-    return { name, value };
-  }, [heatmapHoveredMuscle, headlessVolumes]);
 
   return (
     <LazyRender className="w-full" placeholder={<ChartSkeleton style={{ height: 300 }} />}>
@@ -54,22 +42,11 @@ export const WeeklySetsHeatmapView: React.FC<WeeklySetsHeatmapViewProps> = ({
                 muscleVolumes={headlessVolumes}
                 maxVolume={Math.max(1, ...(Array.from(headlessVolumes.values()) as number[]))}
                 hoveredMuscleIdsOverride={heatmapHoveredMuscleIds}
-                onPartHover={setHeatmapHoveredMuscle}
+                onPartHover={onMuscleHover}
                 gender={bodyMapGender}
                 viewMode="headless"
               />
             </div>
-
-            {weeklySetsHoverMeta ? (
-              <div className="absolute top-24 sm:top-28 left-1/2 -translate-x-1/2 bg-black/90 border border-slate-700/50 rounded-lg px-3 py-2 shadow-xl pointer-events-none z-20">
-                <div className="font-semibold text-[11px] text-center whitespace-nowrap text-white">
-                  {weeklySetsHoverMeta.name}
-                </div>
-                <div className="text-[10px] text-center font-semibold whitespace-nowrap text-white">
-                  {`${weeklySetsHoverMeta.value.toFixed(1)} sets/wk`}
-                </div>
-              </div>
-            ) : null}
           </div>
         )}
       </div>
