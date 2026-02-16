@@ -43,7 +43,11 @@ export const ExerciseListRow: React.FC<ExerciseListRowProps> = ({
   return (
     <button
       ref={rowRef}
-      onClick={onSelect}
+      onClick={(e) => {
+        e.preventDefault();
+        e.currentTarget.blur();
+        onSelect();
+      }}
       className={`w-full text-left px-2 py-1.5 rounded-md transition-all duration-200 flex items-center justify-between group border ${isSelected
         ? selectedHighlight.button
         : 'border-transparent hover:bg-black/60 hover:border-slate-600/50'

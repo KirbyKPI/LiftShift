@@ -246,7 +246,7 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
           setSelectedExerciseName={setSelectedExerciseName}
         />
 
-        <div className="lg:col-span-1 flex flex-col gap-2 h-full min-h-0">
+        <div data-exercise-summary-panel className="lg:col-span-1 flex flex-col gap-2 h-full min-h-0">
           <ExerciseSummaryPanel
             selectedStats={selectedStats}
             currentStatus={currentStatus}

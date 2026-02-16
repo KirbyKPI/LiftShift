@@ -32,6 +32,7 @@ export interface LifetimeAchievementData {
 
 interface UseLifetimeAchievementParams {
   lifetimeHeadlessVolumes: ReadonlyMap<string, number>;
+  weeklyHeadlessVolumes?: ReadonlyMap<string, number>;
   selectedMuscle: string | null;
   viewMode: 'muscle' | 'group' | 'headless';
 }
@@ -46,11 +47,12 @@ interface UseLifetimeAchievementParams {
  */
 export function useLifetimeAchievement({
   lifetimeHeadlessVolumes,
+  weeklyHeadlessVolumes,
   selectedMuscle,
   viewMode,
 }: UseLifetimeAchievementParams): LifetimeAchievementData {
   return useMemo(() => {
-    const muscles = computeAllMuscleAchievements(lifetimeHeadlessVolumes);
+    const muscles = computeAllMuscleAchievements(lifetimeHeadlessVolumes, weeklyHeadlessVolumes);
     const overallPercent = computeOverallAchievement(lifetimeHeadlessVolumes);
     const overallTier = getTier(overallPercent);
 

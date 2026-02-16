@@ -94,6 +94,9 @@ export function getTier(achievementPercent: number): AchievementTier {
   return TIERS[0]; // novice (below 10%)
 }
 
+// Tier thresholds for progress calculation
+const TIER_THRESHOLDS = [10, 20, 30, 40, 50, 58, 65, 72, 78, 85];
+
 // ---------------------------------------------------------------------------
 // Per-muscle achievement breakdown
 // ---------------------------------------------------------------------------
@@ -102,6 +105,7 @@ export interface MuscleAchievementEntry {
   readonly muscleId: HeadlessMuscleId;
   readonly name: string;
   readonly lifetimeSets: number;
+  readonly weeklySets: number;
   readonly achievementPercent: number;
   readonly tier: AchievementTier;
   readonly params: MuscleHypertrophyParams;
@@ -111,15 +115,18 @@ export interface MuscleAchievementEntry {
  * Compute lifetime achievement for every headless muscle.
  *
  * @param lifetimeVolumes  Map from headless muscle ID → total lifetime sets
+ * @param weeklyVolumes     Map from headless muscle ID → average weekly sets (optional)
  * @returns Sorted array (highest achievement first) of per-muscle entries
  */
 export function computeAllMuscleAchievements(
   lifetimeVolumes: ReadonlyMap<string, number>,
+  weeklyVolumes: ReadonlyMap<string, number> = new Map(),
 ): MuscleAchievementEntry[] {
   const entries: MuscleAchievementEntry[] = [];
 
   for (const id of HEADLESS_MUSCLE_IDS) {
     const sets = lifetimeVolumes.get(id) ?? 0;
+    const weekly = weeklyVolumes.get(id) ?? 0;
     const params = MUSCLE_PARAMS[id];
     const pct = lifetimeAchievement(sets, id);
 
@@ -127,6 +134,7 @@ export function computeAllMuscleAchievements(
       muscleId: id,
       name: HEADLESS_MUSCLE_NAMES[id],
       lifetimeSets: Math.round(sets * 10) / 10,
+      weeklySets: Math.round(weekly * 10) / 10,
       achievementPercent: pct,
       tier: getTier(pct),
       params,
@@ -139,21 +147,40 @@ export function computeAllMuscleAchievements(
 /**
  * Compute a single overall lifetime achievement %.
  * Weighted average: large muscles count 3x, medium 2x, small 1x.
+ * Excludes the bottom 4 lowest-achievement muscles to avoid penalizing
+ * intentional muscle neglect (e.g., skipping calves/forearms).
  */
 export function computeOverallAchievement(
   lifetimeVolumes: ReadonlyMap<string, number>,
 ): number {
   const sizeWeight: Record<string, number> = { large: 3, medium: 2, small: 1 };
-  let weightedSum = 0;
-  let totalWeight = 0;
+  const MUSCLES_TO_IGNORE = 4;
+
+  // Collect all muscle achievements with their weights
+  const muscleData: Array<{ pct: number; weight: number }> = [];
 
   for (const id of HEADLESS_MUSCLE_IDS) {
     const sets = lifetimeVolumes.get(id) ?? 0;
     const params = MUSCLE_PARAMS[id];
     const pct = lifetimeAchievement(sets, id);
-    const w = sizeWeight[params.size] ?? 1;
-    weightedSum += pct * w;
-    totalWeight += w;
+    const weight = sizeWeight[params.size] ?? 1;
+    muscleData.push({ pct, weight });
+  }
+
+  // Sort by achievement percentage ascending (lowest first)
+  muscleData.sort((a, b) => a.pct - b.pct);
+
+  // Exclude the bottom N muscles
+  const relevantMuscles = muscleData.slice(MUSCLES_TO_IGNORE);
+
+  if (relevantMuscles.length === 0) return 0;
+
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  for (const { pct, weight } of relevantMuscles) {
+    weightedSum += pct * weight;
+    totalWeight += weight;
   }
 
   if (totalWeight === 0) return 0;

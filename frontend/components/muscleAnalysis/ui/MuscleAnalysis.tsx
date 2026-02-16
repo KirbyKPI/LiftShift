@@ -159,6 +159,7 @@ export const MuscleAnalysis: React.FC<MuscleAnalysisProps> = ({
 
   const lifetimeAchievementData = useLifetimeAchievement({
     lifetimeHeadlessVolumes,
+    weeklyHeadlessVolumes: headlessRatesMap,
     selectedMuscle,
     viewMode,
   });
