@@ -4,7 +4,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { analyticsRequestMiddleware } from './analytics/requestTracking';
 import { shutdownPosthog } from './analytics/posthog';
-import { createPosthogProxy, createPosthogStaticProxy, posthogProxyPath } from './analytics/proxy';
+import { createPosthogAssetProxy, createPosthogProxy, posthogProxyPath } from './analytics/proxy';
 import { shutdownRecaptchaSession, warmRecaptchaSession } from './hevyRecaptcha';
 import { createHevyRouter } from './routes/hevyRoutes';
 import { createHevyProRouter } from './routes/hevyProRoutes';
@@ -125,25 +125,8 @@ app.get('/ping', (req, res) => {
 });
 
 const posthogProxy = createPosthogProxy(posthogProxyPath);
-const posthogStaticProxy = createPosthogStaticProxy(posthogProxyPath);
-
-app.options(`${posthogProxyPath}/static`, (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.sendStatus(200);
-});
-
-app.options(posthogProxyPath, (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.sendStatus(200);
-});
-
-app.use(`${posthogProxyPath}/static`, posthogStaticProxy);
+const posthogAssetProxy = createPosthogAssetProxy(`${posthogProxyPath}/static`);
+app.use('/static', posthogAssetProxy);
 app.use(posthogProxyPath, posthogProxy);
 
 app.use('/api/hevy', createHevyRouter({ loginLimiter, requireAuthTokenHeader, getCachedResponse }));
