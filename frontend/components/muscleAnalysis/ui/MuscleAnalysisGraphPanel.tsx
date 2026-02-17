@@ -64,10 +64,10 @@ const ZONE_CONFIG = {
 };
 
 const ZONE_LABELS = {
-  belowMV: { short: 'Below MV', full: 'Below Maintenance', color: '#64748b' },
-  growth: { short: 'Growth', full: 'Growth Zone', color: '#eab308' },
-  optimal: { short: 'Optimal', full: 'Optimal Zone', color: '#22c55e' },
-  risk: { short: 'Risk', full: 'Recovery Risk', color: '#ef4444' },
+  belowMV: { short: 'Maintenance', full: 'Maintenance', color: '#64748b' },
+  growth: { short: 'Growth', full: 'Growth', color: '#eab308' },
+  optimal: { short: 'Maximizing', full: 'Maximizing', color: '#22c55e' },
+  risk: { short: 'Specialization / Risk', full: 'Specialization / Risk', color: '#ef4444' },
 };
 
 export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> = React.memo(({
@@ -186,11 +186,11 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
           </div>
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-sm bg-green-500"></span>
-            <span className="text-slate-400">{zones.mev}-{zones.mrv} Optimal</span>
+            <span className="text-slate-400">{zones.mev}-{zones.mrv} Maximizing</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-sm bg-red-500"></span>
-            <span className="text-slate-400">&gt;{zones.mrv} Risk</span>
+            <span className="text-slate-400">&gt;{zones.mrv} Specialization / Risk</span>
           </div>
         </div>
       </div>

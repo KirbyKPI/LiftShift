@@ -3,10 +3,8 @@ import { differenceInCalendarDays } from 'date-fns';
 import type { WorkoutSet } from '../../../types';
 import { computeWeeklySetsSummary, computeWeeklySetsDelta } from '../utils/weeklySetsMetrics';
 import type { WeeklySetsWindow } from '../../../utils/muscle/analytics';
-import { bucketRollingWeeklySeriesToWeeks } from '../../../utils/muscle/analytics';
-import { getMuscleVolumeTimeSeriesRolling, getSvgMuscleVolumeTimeSeriesRolling } from '../../../utils/muscle/volume';
+import { computeDailyMuscleVolumes, computeDailySvgMuscleVolumes, computeWindowedExerciseBreakdown } from '../../../utils/muscle/volume';
 import { HEADLESS_ID_TO_DETAILED_SVG_IDS, MUSCLE_GROUP_ORDER } from '../../../utils/muscle/mapping';
-import { computeWindowedExerciseBreakdown } from '../../../utils/muscle/volume';
 import { isWarmupSet } from '../../../utils/analysis/classification';
 import type { NormalizedMuscleGroup } from '../../../utils/muscle/analytics';
 import type { ExerciseAsset } from '../../../utils/data/exerciseAssets';
@@ -84,7 +82,7 @@ export const useMuscleTrendData = ({
   }, [assetsMap, windowStart, weeklySetsWindow, selectedSubjectKeys, viewMode, data, effectiveNow, allTimeWindowStart]);
 
   const trendData = useMemo(() => {
-    if (!assetsMap || data.length === 0) return [];
+    if (!assetsMap || data.length === 0 || !windowStart) return [];
 
     // Create a hash of selected keys for cache key
     const selectedKeysHash = selectedSubjectKeys.sort().join(',') || 'all';
@@ -95,86 +93,75 @@ export const useMuscleTrendData = ({
       data,
       () => {
         const isGroupMode = viewMode === 'group';
-        const isAll = weeklySetsWindow === 'all';
+        const isHeadlessMode = viewMode === 'headless';
 
-        let chartPeriod: 'weekly' | 'monthly' = 'weekly';
-        let shouldBucketToWeeks = false;
+        // Get daily volumes (same calculation as dashboard)
+        const dailyVolumes = isGroupMode
+          ? computeDailyMuscleVolumes(data, assetsMap, true)
+          : computeDailySvgMuscleVolumes(data, assetsMap);
 
-        if (isAll) {
-          const spanDays = windowStart
-            ? Math.max(1, differenceInCalendarDays(effectiveNow, windowStart) + 1)
-            : 30;
-          if (spanDays < 35) {
-            chartPeriod = 'weekly';
-          } else if (spanDays < 150) {
-            chartPeriod = 'weekly';
-            shouldBucketToWeeks = true;
-          } else {
-            chartPeriod = 'monthly';
-          }
-        } else if (weeklySetsWindow === '365d') {
-          const spanDays = windowStart
-            ? Math.max(1, differenceInCalendarDays(effectiveNow, windowStart) + 1)
-            : 365;
-          if (spanDays < 35) {
-            chartPeriod = 'weekly';
-          } else if (spanDays < 150) {
-            chartPeriod = 'weekly';
-            shouldBucketToWeeks = true;
-          } else {
-            chartPeriod = 'monthly';
-          }
-        } else {
-          chartPeriod = 'weekly';
-        }
-
-        const baseSeries = isGroupMode
-          ? getMuscleVolumeTimeSeriesRolling(data, assetsMap, chartPeriod, true)
-          : getSvgMuscleVolumeTimeSeriesRolling(data, assetsMap, chartPeriod);
-
-        const series = shouldBucketToWeeks
-          ? bucketRollingWeeklySeriesToWeeks(baseSeries as any)
-          : baseSeries;
-
-        if (!series.data || series.data.length === 0) return [];
-
-        const filtered = windowStart
-          ? series.data.filter((row: any) => {
-            const ts = typeof row.timestamp === 'number' ? row.timestamp : 0;
-            if (!ts) return false;
-            return ts >= windowStart.getTime() && ts <= effectiveNow.getTime();
-          })
-          : series.data;
+        // Filter to window and calculate cumulative averages
+        const windowedDaily = dailyVolumes.filter(d => d.date >= windowStart && d.date <= effectiveNow);
+        if (windowedDaily.length === 0) return [];
 
         const keys = selectedSubjectKeys;
 
-        const dataForChart = filtered.length > 0 ? filtered : series.data;
-
-        return dataForChart.map((row: any) => {
-          const sumAll = () => (baseSeries.keys || []).reduce((acc, k) => acc + (typeof row[k] === 'number' ? row[k] : 0), 0);
-
-          const sumHeadlessSelected = () => {
-            if (keys.length === 0) return sumAll();
-            let acc = 0;
-            for (const headlessId of keys) {
-              const detailed = (HEADLESS_ID_TO_DETAILED_SVG_IDS as any)[headlessId] as readonly string[] | undefined;
-              if (!detailed) continue;
-              for (const d of detailed) acc += (typeof row[d] === 'number' ? (row[d] as number) : 0);
+        // Helper to get sum for a day based on view mode and selection
+        const getDaySum = (day: { muscles: ReadonlyMap<string, number> }) => {
+          if (isHeadlessMode) {
+            // For headless mode, aggregate detailed SVG parts to headless muscles using MAX
+            const headlessTotals = new Map<string, number>();
+            for (const [k, v] of day.muscles.entries()) {
+              // Find which headless muscle this SVG id belongs to
+              for (const [headlessId, detailedIds] of Object.entries(HEADLESS_ID_TO_DETAILED_SVG_IDS)) {
+                if ((detailedIds as readonly string[]).includes(k)) {
+                  const current = headlessTotals.get(headlessId) ?? 0;
+                  if (v > current) headlessTotals.set(headlessId, v);
+                  break;
+                }
+              }
             }
-            return acc;
-          };
+            
+            if (keys.length > 0) {
+              let sum = 0;
+              for (const k of keys) sum += headlessTotals.get(k) ?? 0;
+              return sum;
+            }
+            
+            let sum = 0;
+            for (const v of headlessTotals.values()) sum += v;
+            return sum;
+          }
+          
+          if (keys.length > 0) {
+            let sum = 0;
+            for (const k of keys) sum += (day.muscles.get(k) ?? 0) as number;
+            return sum;
+          }
+          
+          let sum = 0;
+          for (const v of day.muscles.values()) sum += v;
+          return sum;
+        };
 
-          const v = viewMode === 'headless'
-            ? sumHeadlessSelected()
-            : keys.length > 0
-              ? keys.reduce((acc, k) => acc + (typeof row[k] === 'number' ? row[k] : 0), 0)
-              : sumAll();
-          return {
-            period: row.dateFormatted,
-            timestamp: row.timestamp,
-            sets: Math.round(Number(v) * 10) / 10,
-          };
-        });
+        // Build data points showing cumulative average weekly rate at each training day
+        const result: Array<{ period: string; timestamp: number; sets: number }> = [];
+        let cumulativeTotal = 0;
+        
+        for (const day of windowedDaily) {
+          cumulativeTotal += getDaySum(day);
+          const daysSinceStart = Math.max(1, differenceInCalendarDays(day.date, windowStart) + 1);
+          const weeks = Math.max(1, daysSinceStart / 7);
+          const avgWeeklyRate = Math.round((cumulativeTotal / weeks) * 10) / 10;
+          
+          result.push({
+            period: day.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            timestamp: day.date.getTime(),
+            sets: avgWeeklyRate,
+          });
+        }
+
+        return result;
       },
       { ttl: 10 * 60 * 1000 }
     );
