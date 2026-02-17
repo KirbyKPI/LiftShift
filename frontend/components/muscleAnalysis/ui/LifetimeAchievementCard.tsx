@@ -208,7 +208,7 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold truncate text-white">
-              {isOverall ? 'Lifetime Growth Potential' : contextLabel}
+              {isOverall ? 'Lifetime Growth Unlocked' : contextLabel}
             </span>
           </div>
 
@@ -252,10 +252,10 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
             }
 
             const tooltipBody = tierInfo && timeToNext
-              ? `You're at ${Math.round(m.achievementPercent)}% of your ${m.name} growth potential, putting you in the ${m.tier.label.toLowerCase()} tier (${m.tier.description}). You're ${tierInfo.percentToNext}% away from ${tierInfo.nextTierLabel.toLowerCase()}, which means about ${formatNumber(tierInfo.setsToNext)} more sets at your current rate of ${m.weeklySets.toFixed(1)} sets/wk, roughly ${timeToNext.label} away.`
+              ? `You've already achieved ${Math.round(m.achievementPercent)}% of your ${m.name}'s lifetime possible gains, putting you in the ${m.tier.label.toLowerCase()} tier (${m.tier.description}). You're ${tierInfo.percentToNext}% away from the ${tierInfo.nextTierLabel.toLowerCase()}, which means about ${formatNumber(tierInfo.setsToNext)} more sets at your current rate of ${m.weeklySets.toFixed(1)} sets/wk, roughly ${timeToNext.label} away.`
               : tierInfo
-              ? `You're at ${Math.round(m.achievementPercent)}% of your ${m.name} growth potential, putting you in the ${m.tier.label.toLowerCase()} tier (${m.tier.description}). You need about ${formatNumber(tierInfo.setsToNext)} more sets to reach ${tierInfo.nextTierLabel.toLowerCase()}.`
-              : `You're at ${Math.round(m.achievementPercent)}% of your ${m.name} growth potential, putting you in the ${m.tier.label.toLowerCase()} tier (${m.tier.description}). You've maxed out this muscle group, impressive!`;
+              ? `You've already achieved ${Math.round(m.achievementPercent)}% of your ${m.name}'s lifetime possible gains, putting you in the ${m.tier.label.toLowerCase()} tier (${m.tier.description}). You need about ${formatNumber(tierInfo.setsToNext)} more sets to reach ${tierInfo.nextTierLabel.toLowerCase()}.`
+              : `You've already achieved ${Math.round(m.achievementPercent)}% of your ${m.name}'s lifetime possible gains, putting you in the ${m.tier.label.toLowerCase()} tier (${m.tier.description}). You've maxed out this muscle group, impressive!`;
 
             const handleMouseEnter = (e: React.MouseEvent) => {
               showTooltip(e, {

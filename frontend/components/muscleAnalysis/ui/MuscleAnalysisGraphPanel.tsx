@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from 'recharts';
 import { TrendingDown, TrendingUp, X } from 'lucide-react';
 import { CHART_TOOLTIP_STYLE } from '../../../utils/ui/uiConstants';
@@ -6,6 +6,7 @@ import { getRechartsCategoricalTicks, formatAxisNumber, calculateYAxisDomain } f
 import { QUICK_FILTER_LABELS, HEADLESS_MUSCLE_NAMES } from '../../../utils/muscle/mapping';
 import type { WeeklySetsWindow } from '../../../utils/muscle/analytics';
 import type { QuickFilterCategory } from '../hooks/useMuscleSelection';
+import { getThemeMode } from '../../../utils/storage/localStorage';
 
 interface CustomMuscleTooltipProps {
   active?: boolean;
@@ -80,6 +81,21 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
   windowedSelectionBreakdown,
   clearSelection,
 }) => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const mode = getThemeMode();
+    return mode !== 'light';
+  });
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const mode = getThemeMode();
+      setIsDarkMode(mode !== 'light');
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const title = activeQuickFilter
     ? QUICK_FILTER_LABELS[activeQuickFilter]
     : selectedMuscle
@@ -117,22 +133,60 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
   const gradientStops = useMemo(() => {
     if (!displayData.length) return [];
     
+    const thresholds = [zones.mv, zones.mev, zones.mrv];
     const n = displayData.length;
     const stops: Array<{ offset: number; color: string }> = [];
     
-    displayData.forEach((d: any, idx: number) => {
-      const sets = d.sets;
-      const zone = getZone(sets);
-      const offset = n === 1 ? 0.5 : idx / (n - 1);
+    // Helper to get zone color
+    const getZoneColor = (sets: number) => {
+      if (sets < zones.mv) return ZONE_LABELS.belowMV.color;
+      if (sets < zones.mev) return ZONE_LABELS.growth.color;
+      if (sets < zones.mrv) return ZONE_LABELS.optimal.color;
+      return ZONE_LABELS.risk.color;
+    };
+    
+    // Add initial stop
+    stops.push({ offset: 0, color: getZoneColor(displayData[0].sets) });
+    
+    for (let i = 0; i < n - 1; i++) {
+      const y1 = displayData[i].sets;
+      const y2 = displayData[i + 1].sets;
+      const startOffset = i / (n - 1);
+      const endOffset = (i + 1) / (n - 1);
       
-      // Start of this segment
-      stops.push({ offset, color: zone.color });
-      // End of this segment
-      stops.push({ offset: Math.min(1, (idx + 1) / (n - 1)), color: zone.color });
-    });
+      // Find where the line crosses each threshold
+      const crossings: Array<{ offset: number; color: string }> = [];
+      
+      for (const thr of thresholds) {
+        const minY = Math.min(y1, y2);
+        const maxY = Math.max(y1, y2);
+        
+        if (minY < thr && maxY > thr) {
+          // Line crosses this threshold - calculate exact x position
+          const ratio = Math.abs(thr - y1) / Math.abs(y2 - y1);
+          const offset = startOffset + ratio * (endOffset - startOffset);
+          // Determine which zone we're entering
+          const enteringZoneColor = y2 > y1 
+            ? getZoneColor(thr + 0.001) // Going up
+            : getZoneColor(thr - 0.001); // Going down
+          crossings.push({ offset, color: enteringZoneColor });
+        }
+      }
+      
+      // Sort by position and add stops
+      crossings.sort((a, b) => a.offset - b.offset);
+      for (const crossing of crossings) {
+        // Add two stops at the crossing point for clean color transition
+        stops.push({ offset: crossing.offset, color: crossing.color });
+        stops.push({ offset: crossing.offset, color: crossing.color });
+      }
+      
+      // Add stop at the end of this segment
+      stops.push({ offset: endOffset, color: getZoneColor(y2) });
+    }
     
     return stops;
-  }, [displayData]);
+  }, [displayData, zones]);
 
   return (
     <div id="all-muscles-graph" className="bg-black/70 rounded-xl border border-slate-700/50 overflow-hidden flex flex-col h-full min-h-0">
@@ -174,26 +228,44 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
         )}
       </div>
 
-      <div className="px-3 pb-2">
-        <div className="flex items-center gap-3 text-[9px]  pt-1">
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-sm bg-slate-500"></span>
-            <span className="text-slate-400">&lt;{zones.mv} Maintenance</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-sm bg-yellow-500"></span>
-            <span className="text-slate-400">{zones.mv}-{zones.mev} Growth</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-sm bg-green-500"></span>
-            <span className="text-slate-400">{zones.mev}-{zones.mrv} Maximizing</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-sm bg-red-500"></span>
-            <span className="text-slate-400">&gt;{zones.mrv} Specialization / Risk</span>
-          </div>
-        </div>
+     <div className="flex justify-center px-12 pb-2">
+  <div className="flex items-center gap-6 text-[9px] pt-1">
+    
+    <div className="flex flex-col">
+      <div className="flex items-center gap-1">
+        <span className="w-2 h-2 rounded-sm bg-slate-500"></span>
+        <span className="text-slate-400">&lt;{zones.mv}</span>
       </div>
+      <span className="text-slate-500">Maintenance</span>
+    </div>
+
+    <div className="flex flex-col">
+      <div className="flex items-center gap-1">
+        <span className="w-2 h-2 rounded-sm bg-yellow-500"></span>
+        <span className="text-slate-400">{zones.mv}-{zones.mev}</span>
+      </div>
+      <span className="text-slate-500">Growth</span>
+    </div>
+
+    <div className="flex flex-col">
+      <div className="flex items-center gap-1">
+        <span className="w-2 h-2 rounded-sm bg-green-500"></span>
+        <span className="text-slate-400">{zones.mev}-{zones.mrv}</span>
+      </div>
+      <span className="text-slate-500">Maximizing</span>
+    </div>
+
+    <div className="flex flex-col">
+      <div className="flex items-center gap-1">
+        <span className="w-2 h-2 rounded-sm bg-red-500"></span>
+        <span className="text-slate-400">&gt;{zones.mrv}</span>
+      </div>
+      <span className="text-slate-500">Specialization / Risk</span>
+    </div>
+
+  </div>
+</div>
+
 
       <div className="flex-1 min-h-0 px-2 pb-3">
         {trendData.length > 0 ? (
@@ -203,7 +275,7 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
               <defs>
                 <linearGradient id="zoneGradient" x1="0" y1="0" x2="1" y2="0">
                   {gradientStops.map((stop, idx) => (
-                    <stop key={idx} offset={`${stop.offset * 100}%`} stopColor={stop.color} stopOpacity={0.35} />
+                    <stop key={idx} offset={`${stop.offset * 100}%`} stopColor={stop.color} stopOpacity={isDarkMode ? 0.2 : 0.5} />
                   ))}
                 </linearGradient>
               </defs>
