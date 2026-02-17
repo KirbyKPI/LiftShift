@@ -1,6 +1,7 @@
 import express from 'express';
 import { hevyProGetAllWorkouts, hevyProGetUserInfo, hevyProValidateApiKey } from '../hevyProApi';
 import { mapHevyProWorkoutsToWorkoutSets } from '../mapHevyProWorkoutsToWorkoutSets';
+import { getClientIP, getCountryFromIP } from '../geoLocation';
 
 const formatDuration = (ms: number): string => `${(ms / 1000).toFixed(1)}s`;
 
@@ -50,7 +51,9 @@ export const createHevyProRouter = (opts: {
       });
 
       const durationMs = Date.now() - startedAt;
-      console.log(`👤 ${userInfo.data.name || username} | ${userInfo.data.url} ✅ Sync successful: ${sets.length} sets (${formatDuration(durationMs)})`);
+      const ipCountryCode = await getCountryFromIP(getClientIP(req));
+      const countryInfo = ipCountryCode ? `[${ipCountryCode}] ` : '';
+      console.log(`👤 ${userInfo.data.name || username} ${countryInfo}| ${userInfo.data.url} ✅ Sync successful: ${sets.length} sets (${formatDuration(durationMs)})`);
       res.json({ sets, meta: { workouts: workouts.length } });
     } catch (err) {
       const status = (err as any).statusCode ?? 500;

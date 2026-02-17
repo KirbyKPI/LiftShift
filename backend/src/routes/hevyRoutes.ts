@@ -2,6 +2,7 @@ import express from 'express';
 import { hevyGetAccount, hevyGetWorkoutsPaged, hevyLogin, hevyRefreshToken, hevyValidateAuthToken } from '../hevyApi';
 import { warmRecaptchaSession } from '../hevyRecaptcha';
 import { mapHevyWorkoutsToWorkoutSets } from '../mapToWorkoutSets';
+import { getClientIP, getCountryFromIP } from '../geoLocation';
 
 const formatDuration = (ms: number): string => `${(ms / 1000).toFixed(1)}s`;
 
@@ -41,7 +42,9 @@ export const createHevyRouter = (opts: {
           const account = await hevyGetAccount(data.auth_token);
           const profileUrl = `https://hevy.com/user/${account.username}`;
           const displayEmail = emailOrUsername?.includes('@') ? emailOrUsername : (account.email || '');
-          console.log(`👤 ${account.full_name || account.username} (${displayEmail}) | ${profileUrl} ✅ Login OK (${formatDuration(loginDurationMs)})`);
+          const apiCountryCode = await getCountryFromIP(getClientIP(req));
+          const countryInfo = apiCountryCode ? `[${apiCountryCode}] ` : '';
+          console.log(`👤 ${account.full_name || account.username} (${displayEmail}) ${countryInfo}| ${profileUrl} ✅ Login OK (${formatDuration(loginDurationMs)})`);
         } catch {
           // Silent fail
         }
@@ -126,7 +129,9 @@ export const createHevyRouter = (opts: {
           const account = await hevyGetAccount(data.auth_token);
           const profileUrl = `https://hevy.com/user/${account.username}`;
           const displayEmail = emailOrUsername?.includes('@') ? emailOrUsername : (account.email || '');
-          console.log(`👤 ${account.full_name || account.username} (${displayEmail}) | ${profileUrl} ✅ Refresh OK (${formatDuration(refreshDurationMs)})`);
+          const apiCountryCode = await getCountryFromIP(getClientIP(req));
+          const countryInfo = apiCountryCode ? `[${apiCountryCode}] ` : '';
+          console.log(`👤 ${account.full_name || account.username} (${displayEmail}) ${countryInfo}| ${profileUrl} ✅ Refresh OK (${formatDuration(refreshDurationMs)})`);
         } catch {
           // Silent fail
         }
@@ -216,7 +221,9 @@ export const createHevyRouter = (opts: {
         try {
           const account = await hevyGetAccount(token);
           const profileUrl = `https://hevy.com/user/${account.username}`;
-          console.log(`👤 ${account.full_name || account.username} | ${profileUrl} ✅ Sets OK: ${sets.length} sets (${formatDuration(setsDurationMs)})`);
+          const apiCountryCode = await getCountryFromIP(getClientIP(req));
+          const countryInfo = apiCountryCode ? `[${apiCountryCode}] ` : '';
+          console.log(`👤 ${account.full_name || account.username} ${countryInfo}| ${profileUrl} ✅ Sets OK: ${sets.length} sets (${formatDuration(setsDurationMs)})`);
         } catch {
           // Fallback
           console.log(`👤 ${username} ✅ Sets OK: ${sets.length} sets (${formatDuration(setsDurationMs)})`);

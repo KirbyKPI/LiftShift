@@ -1,6 +1,7 @@
 import express from 'express';
 import { lyfatGetAllWorkouts, lyfatGetAllWorkoutSummaries, lyfatValidateApiKey } from '../lyfta';
 import { mapLyfataWorkoutsToWorkoutSets } from '../mapLyfataWorkoutsToWorkoutSets';
+import { getClientIP, getCountryFromIP } from '../geoLocation';
 
 const formatDuration = (ms: number): string => `${(ms / 1000).toFixed(1)}s`;
 
@@ -49,7 +50,9 @@ export const createLyftaRouter = (opts: {
 
       const durationMs = Date.now() - startedAt;
       const username = workouts[0]?.user?.username || 'unknown';
-      console.log(`👤 ${username} ✅ Lyfta sync successful: ${sets.length} sets (${formatDuration(durationMs)})`);
+      const ipCountryCode = await getCountryFromIP(getClientIP(req));
+      const countryInfo = ipCountryCode ? `[${ipCountryCode}] ` : '';
+      console.log(`👤 ${username} ${countryInfo}✅ Lyfta sync successful: ${sets.length} sets (${formatDuration(durationMs)})`);
       res.json({ sets, meta: { workouts: workouts.length } });
     } catch (err) {
       const status = (err as any).statusCode ?? 500;
