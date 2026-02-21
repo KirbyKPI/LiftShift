@@ -54,7 +54,7 @@ export const DashboardInsightsSection: React.FC<DashboardInsightsSectionProps> =
     <RecentPRsPanel prInsights={dashboardInsights.prInsights} weightUnit={weightUnit} now={effectiveNow} onExerciseClick={onExerciseClick} />
 
     {activePlateauExercises.length > 0 && (
-      <div className="bg-black/70 border border-amber-500/20 rounded-xl p-4">
+      <div className="bg-black/70 border border-amber-500/10 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-amber-500/10">
