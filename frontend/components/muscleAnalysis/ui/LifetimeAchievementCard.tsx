@@ -15,14 +15,14 @@ import {
 /** Format weeks to human-readable string */
 function formatEta(weeks: number | null): string {
   if (weeks === null || weeks <= 0) return 'Reached';
-  if (weeks <= 1) return '~1 week';
-  if (weeks < 6) return `~${weeks} weeks`;
+  if (weeks <= 1) return '~1 wek';
+  if (weeks < 6) return `~${weeks} wks`;
   const months = Math.round(weeks / 4.33);
-  if (months <= 1) return '~1 month';
-  if (months < 12) return `~${months} months`;
+  if (months <= 1) return '~1 mo';
+  if (months < 12) return `~${months} mo`;
   const years = Math.round((months / 12) * 10) / 10;
-  if (years <= 1) return '~1 year';
-  return `~${years} years`;
+  if (years <= 1) return '~1 yr';
+  return `~${years} yrs`;
 }
 
 interface LifetimeAchievementData {

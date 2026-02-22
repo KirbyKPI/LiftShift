@@ -30,10 +30,10 @@ interface UseTrainingLevelResult {
  * - Intermediate: Foundation → Builder → Sculptor
  * - Advanced: Elite → Master → Legend
  * 
- * Volume thresholds by level:
- * - beginner: { mv: 4, mev: 8, mrv: 14, maxv: 18 }
- * - intermediate: { mv: 6, mev: 12, mrv: 21, maxv: 25 }
- * - advanced: { mv: 8, mev: 16, mrv: 26, maxv: 33 }
+ * Volume thresholds by level (see muscleParams.ts for source of truth):
+ * - beginner: { mv: 4, mev: 8, mrv: 16, maxv: 20 }
+ * - intermediate: { mv: 6, mev: 12, mrv: 22, maxv: 28 }
+ * - advanced: { mv: 8, mev: 15, mrv: 26, maxv: 32 }
  */
 export const useTrainingLevel = (
   data: WorkoutSet[],

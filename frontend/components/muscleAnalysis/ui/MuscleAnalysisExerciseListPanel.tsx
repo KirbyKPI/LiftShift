@@ -3,6 +3,7 @@ import { MuscleAnalysisExerciseList } from './MuscleAnalysisExerciseList';
 import type { ExerciseAsset } from '../../../utils/data/exerciseAssets';
 import type { ExerciseMuscleData } from '../../../utils/muscle/mapping';
 import type { MuscleVolumeThresholds } from '../../../utils/muscle/hypertrophy/muscleParams';
+import type { BodyMapGender } from '../../bodyMap/BodyMap';
 
 interface MuscleAnalysisExerciseListPanelProps {
   contributingExercises: Array<{ name: string; sets: number; primarySets: number; secondarySets: number }>;
@@ -11,6 +12,7 @@ interface MuscleAnalysisExerciseListPanelProps {
   totalSetsInWindow: number;
   volumeThresholds: MuscleVolumeThresholds;
   onExerciseClick?: (exerciseName: string) => void;
+  bodyMapGender?: BodyMapGender;
 }
 
 export const MuscleAnalysisExerciseListPanel: React.FC<MuscleAnalysisExerciseListPanelProps> = React.memo(({
@@ -20,6 +22,7 @@ export const MuscleAnalysisExerciseListPanel: React.FC<MuscleAnalysisExerciseLis
   totalSetsInWindow,
   volumeThresholds,
   onExerciseClick,
+  bodyMapGender = 'male',
 }) => {
   return (
     <div className="bg-black/70 rounded-xl border border-slate-700/50 overflow-hidden flex flex-col h-full min-h-0">
@@ -40,6 +43,7 @@ export const MuscleAnalysisExerciseListPanel: React.FC<MuscleAnalysisExerciseLis
           totalSetsInWindow={totalSetsInWindow}
           volumeThresholds={volumeThresholds}
           onExerciseClick={onExerciseClick}
+          bodyMapGender={bodyMapGender}
         />
       </div>
     </div>

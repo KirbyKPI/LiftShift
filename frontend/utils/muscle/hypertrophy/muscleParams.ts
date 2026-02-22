@@ -108,7 +108,7 @@ export function getVolumeZoneColor(sets: number, thresholds?: MuscleVolumeThresh
     }
   }
   
-  // Overdrive: yellow → orange → brown
+  // Overreaching: yellow → orange → brown
   const overdriveProgress = Math.min((sets - maxv) / 20, 1);
   if (overdriveProgress < 0.5) {
     return interpolateColor('#fde047', '#f97316', overdriveProgress * 2);
@@ -128,27 +128,27 @@ export interface VolumeZoneInfo {
 
 export const VOLUME_ZONES: Record<string, VolumeZoneInfo> = {
   belowMV: {
-    label: 'Activate',
+    label: 'Activating',
     color: '#64748b',
     explanation: 'Minimal gains. Fine for low-priority muscles only.',
   },
   growth: {
-    label: 'Stimulate',
+    label: 'Stimulating',
     color: '#86efac',
     explanation: 'Steady progress. Default zone, push higher for priorities.',
   },
   optimal: {
-    label: 'Amplify',
+    label: 'Amplifying',
     color: '#22c55e',
     explanation: 'Best ROI. Sweet spot for muscles you care about.',
   },
   maximizing: {
-    label: 'Maximize',
+    label: 'Maximizing',
     color: '#15803d',
     explanation: 'High gains, high cost. Specialize 1-2 muscles only.',
   },
   high: {
-    label: 'Overdrive',
+    label: 'Overreaching',
     color: '#f97316',
     explanation: 'Peak week only. Poor ROI, recovery suffers.',
   },
@@ -158,7 +158,7 @@ export function getVolumeZone(sets: number, thresholds: MuscleVolumeThresholds):
   if (sets < thresholds.mv) return VOLUME_ZONES.belowMV;
   if (sets < thresholds.mev) return VOLUME_ZONES.growth;
   if (sets < thresholds.mrv) return VOLUME_ZONES.optimal;
-  if (sets < thresholds.maxv) return VOLUME_ZONES.maximizing;
+  if (sets <= thresholds.maxv) return VOLUME_ZONES.maximizing;
   return VOLUME_ZONES.high;
 }
 

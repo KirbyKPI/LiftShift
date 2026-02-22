@@ -235,6 +235,7 @@ export const MuscleAnalysis: React.FC<MuscleAnalysisProps> = ({
             totalSetsInWindow={windowedSelectionBreakdown?.totalSetsInWindow ?? 0}
             volumeThresholds={volumeThresholds}
             onExerciseClick={onExerciseClick}
+            bodyMapGender={bodyMapGender}
           />
         </div>
 

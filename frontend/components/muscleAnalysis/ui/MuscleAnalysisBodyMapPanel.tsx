@@ -195,15 +195,15 @@ export const MuscleAnalysisBodyMapPanel: React.FC<MuscleAnalysisBodyMapPanelProp
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-2 rounded" style={{ backgroundColor: getVolumeZoneColor(thresholds.mv, thresholds) }}></div>
-                      <span>Activate</span>
+                      <span>Activating</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-2 rounded" style={{ backgroundColor: getVolumeZoneColor(thresholds.mev, thresholds) }}></div>
-                      <span>Stimulate</span>
+                      <span>Stimulating</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-2 rounded" style={{ backgroundColor: getVolumeZoneColor(thresholds.maxv, thresholds) }}></div>
-                      <span>Overdrive</span>
+                      <span>Overreaching</span>
                     </div>
                   </>
                 );

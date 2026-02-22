@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BodyMap } from '../../bodyMap/BodyMap';
+import { BodyMap, type BodyMapGender } from '../../bodyMap/BodyMap';
 import { ExerciseThumbnail } from '../../common/ExerciseThumbnail';
 import { getExerciseMuscleVolumes, lookupExerciseMuscleData, toHeadlessVolumeMap, type ExerciseMuscleData } from '../../../utils/muscle/mapping';
 import type { ExerciseAsset } from '../../../utils/data/exerciseAssets';
@@ -13,6 +13,7 @@ interface MuscleAnalysisExerciseListProps {
   totalSetsInWindow: number;
   volumeThresholds: MuscleVolumeThresholds;
   onExerciseClick?: (exerciseName: string) => void;
+  bodyMapGender?: BodyMapGender;
 }
 
 const INITIAL_DISPLAY_COUNT = 6;
@@ -26,6 +27,7 @@ export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProp
   totalSetsInWindow,
   volumeThresholds,
   onExerciseClick,
+  bodyMapGender = 'male',
 }) => {
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
   const displayedExercises = contributingExercises.slice(0, displayCount);
@@ -119,6 +121,7 @@ export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProp
                         compact
                         compactFill
                         viewMode="headless"
+                        gender={bodyMapGender}
                       />
                     </div>
                   </div>

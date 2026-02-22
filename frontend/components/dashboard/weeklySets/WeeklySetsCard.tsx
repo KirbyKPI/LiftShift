@@ -84,7 +84,7 @@ export const WeeklySetsCard = ({
     const rate = headlessVolumes.get(muscleId) || 0;
     const stimulus = weeklyStimulusFromThresholds(rate, volumeThresholds);
     const zone = getVolumeZone(rate, volumeThresholds);
-    const bodyText = `${rate.toFixed(1)} sets/wk — ${zone.label}\n${stimulus}% of wkly possible gains\n${zone.explanation}`;
+    const bodyText = `avg ${rate.toFixed(1)} sets/wk (${zone.label})\n${stimulus}% of wkly possible gains\n${zone.explanation}`;
 
     setHoverTooltip({
       rect,
@@ -172,15 +172,15 @@ export const WeeklySetsCard = ({
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-2 rounded" style={{ backgroundColor: getVolumeZoneColor(thresholds.mv, thresholds) }}></div>
-                      <span>Activate</span>
+                      <span>Activating</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-2 rounded" style={{ backgroundColor: getVolumeZoneColor(thresholds.mev, thresholds) }}></div>
-                      <span>Stimulate</span>
+                      <span>Stimulating</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-3 h-2 rounded" style={{ backgroundColor: getVolumeZoneColor(thresholds.maxv, thresholds) }}></div>
-                      <span>Overdrive</span>
+                      <span>Overreaching</span>
                     </div>
                   </>
                 );

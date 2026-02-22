@@ -33,7 +33,7 @@ export const RecentPRCard: React.FC<RecentPRCardProps> = ({
   // Silver PR styling: slate/gray instead of gold/emerald - darker for visibility
   const cardClass = isSilver 
     ? (isLatest ? 'bg-slate-500/15 border border-slate-500/40' : 'bg-black/50')
-    : (isLatest ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-black/50');
+    : (isLatest ? 'bg-emerald-500/5 border border-emerald-500/20' : 'bg-black/50');
     
   const improvementClass = isSilver ? 'text-slate-300' : 'text-emerald-400';
 

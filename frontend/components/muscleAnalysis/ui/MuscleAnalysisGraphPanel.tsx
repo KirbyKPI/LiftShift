@@ -286,21 +286,21 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
                 background: 'transparent',
                 color: legendColors.textAtMv
               }}>
-                <span className="drop-shadow-md">Activate</span>
+                <span className="drop-shadow-md">Activating</span>
               </div>
               <div className="flex items-center justify-center text-[6px] sm:text-[7px] font-medium" style={{ 
                 width: `${(Math.min(zones.mev, legendMax) / legendMax) * 100}%`,
                 background: 'transparent',
                 color: legendColors.textAtMev
               }}>
-                <span className="drop-shadow-sm">Stimulate</span>
+                <span className="drop-shadow-sm">Stimulating</span>
               </div>
               <div className="flex items-center justify-center text-[6px] sm:text-[7px] font-medium" style={{ 
                 width: `${(Math.min(zones.mrv, legendMax) / legendMax) * 100}%`,
                 background: 'transparent',
                 color: legendColors.textAtMrv
               }}>
-                <span className="drop-shadow-md">Amplify</span>
+                <span className="drop-shadow-md">Amplifying</span>
               </div>
               {legendColors.showOverdrive ? (
                 <>
@@ -309,13 +309,13 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
                     background: 'transparent',
                     color: legendColors.textAtMaxv
                   }}>
-                    <span className="drop-shadow-md">Maximize</span>
+                    <span className="drop-shadow-md">Maximizing</span>
                   </div>
                   <div className="flex items-center justify-center text-[6px] sm:text-[7px] font-medium flex-1" style={{ 
                     background: 'transparent',
                     color: legendColors.textAtMaxvPlus10
                   }}>
-                    <span className="drop-shadow-md">Overdrive</span>
+                    <span className="drop-shadow-md">Overreaching</span>
                   </div>
                 </>
               ) : (
@@ -323,7 +323,7 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
                   background: 'transparent',
                   color: legendColors.textAtMaxv
                 }}>
-                  <span className="drop-shadow-md">Maximize</span>
+                  <span className="drop-shadow-md">Maximizing</span>
                 </div>
               )}
             </div>

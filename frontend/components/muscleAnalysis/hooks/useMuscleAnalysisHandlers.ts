@@ -3,7 +3,7 @@ import {
   getHeadlessIdForDetailedSvgId,
   HEADLESS_MUSCLE_NAMES,
 } from '../../../utils/muscle/mapping';
-import { weeklyStimulusFromThresholds, getVolumeThresholds } from '../../../utils/muscle/hypertrophy';
+import { weeklyStimulusFromThresholds, getVolumeThresholds, getVolumeZone } from '../../../utils/muscle/hypertrophy';
 import type { TooltipData } from '../../ui/Tooltip';
 import type { WeeklySetsWindow } from '../../../utils/muscle/analytics';
 import type { TrainingLevel } from '../../../utils/muscle/hypertrophy/muscleParams';
@@ -32,6 +32,8 @@ export const useMuscleAnalysisHandlers = ({
   trainingLevel,
 }: UseMuscleAnalysisHandlersParams) => {
   const [hoveredMuscle, setHoveredMuscle] = useState<string | null>(null);
+
+  const volumeThresholds = useMemo(() => getVolumeThresholds(trainingLevel), [trainingLevel]);
 
   const handleMuscleClick = useCallback((muscleId: string) => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
@@ -72,9 +74,9 @@ export const useMuscleAnalysisHandlers = ({
     }
 
     const rate = headlessRatesMap.get(muscleId) || 0;
-    const thresholds = getVolumeThresholds(trainingLevel);
-    const stimulus = weeklyStimulusFromThresholds(rate, thresholds);
-    const bodyText = `${rate.toFixed(1)} sets/wk\n${stimulus}% of possible gains`;
+    const zone = getVolumeZone(rate, volumeThresholds);
+    const stimulus = weeklyStimulusFromThresholds(rate, volumeThresholds);
+    const bodyText = `${rate.toFixed(1)} sets/wk — ${zone.label}\n${stimulus}% of possible gains\n${zone.explanation}`;
 
     setHoverTooltip({
       rect,
@@ -82,7 +84,7 @@ export const useMuscleAnalysisHandlers = ({
       body: bodyText,
       status: rate > 0 ? 'success' : 'default',
     });
-  }, [headlessRatesMap, setHoverTooltip, trainingLevel]);
+  }, [headlessRatesMap, setHoverTooltip, volumeThresholds]);
 
   const selectedBodyMapIds = useMemo(() => {
     if (!selectedMuscle) return undefined;
