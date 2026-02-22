@@ -230,7 +230,7 @@ export const createHevyRouter = (opts: {
         }
       })();
       
-      res.json({ sets, meta: { workouts: workouts.length }, _timing: { setsMs: setsDurationMs } });
+      res.json({ sets, meta: { workouts: workouts.length }, username, _timing: { setsMs: setsDurationMs } });
     } catch (err) {
       const status = (err as any).statusCode ?? 500;
       const message = (err as Error).message || 'Failed to fetch sets';

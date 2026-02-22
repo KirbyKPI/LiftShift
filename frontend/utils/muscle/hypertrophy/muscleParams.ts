@@ -109,11 +109,11 @@ export function getVolumeZoneColor(sets: number, thresholds?: MuscleVolumeThresh
   }
   
   // Overreaching: yellow → orange → brown
-  const overdriveProgress = Math.min((sets - maxv) / 20, 1);
-  if (overdriveProgress < 0.5) {
-    return interpolateColor('#fde047', '#f97316', overdriveProgress * 2);
+  const overreachingProgress = Math.min((sets - maxv) / 20, 1);
+  if (overreachingProgress < 0.5) {
+    return interpolateColor('#fde047', '#f97316', overreachingProgress * 2);
   } else {
-    return interpolateColor('#f97316', '#7c2d12', (overdriveProgress - 0.5) * 2);
+    return interpolateColor('#f97316', '#7c2d12', (overreachingProgress - 0.5) * 2);
   }
 }
 

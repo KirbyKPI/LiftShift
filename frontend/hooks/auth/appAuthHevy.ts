@@ -85,8 +85,7 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
   // Get username then sets - username is cached so subsequent calls are fast
   const fetchSetsWithToken = (accessToken: string) =>
     hevyBackendGetAccount(accessToken)
-      .then(({ username }) => ({ username, resp: hevyBackendGetSets<WorkoutSet>(accessToken, username) }))
-      .then(({ username, resp }) => ({ ...resp, username }));
+      .then(({ username }) => hevyBackendGetSets<WorkoutSet>(accessToken, username).then(resp => ({ ...resp, username })));
 
   const isTokenExpired = (): boolean => {
     const expiresAt = getHevyAuthExpiresAt();

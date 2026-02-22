@@ -15,7 +15,7 @@ import {
 /** Format weeks to human-readable string */
 function formatEta(weeks: number | null): string {
   if (weeks === null || weeks <= 0) return 'Reached';
-  if (weeks <= 1) return '~1 wek';
+  if (weeks <= 1) return '~1 wk';
   if (weeks < 6) return `~${weeks} wks`;
   const months = Math.round(weeks / 4.33);
   if (months <= 1) return '~1 mo';
