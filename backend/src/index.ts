@@ -125,7 +125,8 @@ app.get('/ping', (req, res) => {
 });
 
 const posthogProxy = createPosthogProxy(posthogProxyPath);
-const posthogAssetProxy = createPosthogAssetProxy(`${posthogProxyPath}/static`);
+const posthogAssetProxy = createPosthogAssetProxy();
+const posthogStaticPath = `${posthogProxyPath}/static`;
 
 app.options(posthogProxyPath, (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -135,7 +136,16 @@ app.options(posthogProxyPath, (req, res) => {
   res.sendStatus(200);
 });
 
-app.use('/static', posthogAssetProxy);
+app.options(`${posthogStaticPath}/*`, (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'content-type');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.sendStatus(200);
+});
+
+app.use(posthogStaticPath, posthogAssetProxy);
 app.use(posthogProxyPath, posthogProxy);
 
 app.use('/api/hevy', createHevyRouter({ loginLimiter, requireAuthTokenHeader, getCachedResponse }));

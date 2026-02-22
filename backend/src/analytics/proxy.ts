@@ -29,12 +29,12 @@ export const createPosthogProxy = (prefix: string) => {
   } as any);
 };
 
-export const createPosthogAssetProxy = (assetPrefix: string) => {
+export const createPosthogAssetProxy = () => {
   return createProxyMiddleware({
     target: `https://${ASSET_HOST}`,
     changeOrigin: true,
     secure: true,
-    pathRewrite: (path: string) => `${assetPrefix}${path}`,
+    pathRewrite: (path: string) => `/static${path}`,
     onProxyReq: (proxyReq: any, req: any) => {
       proxyReq.setHeader('host', ASSET_HOST);
       proxyReq.setHeader('X-Real-IP', req.ip || '');
