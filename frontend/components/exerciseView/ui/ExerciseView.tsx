@@ -18,6 +18,7 @@ import { ExerciseViewHeader } from './ExerciseViewHeader';
 import { ExerciseListPanel } from './ExerciseListPanel';
 import { ExerciseSummaryPanel } from './ExerciseSummaryPanel';
 import { ExerciseProgressChart } from './ExerciseProgressChart';
+import { ExerciseOverviewCard } from './ExerciseOverviewCard';
 import type { ExerciseMuscleTargets, InactiveReason } from '../utils/exerciseViewTypes';
 import { buildExerciseMuscleTargets, getBodyMapHoverMeta, getExerciseSpanDays, getInactiveReason } from '../utils/exerciseViewDerived';
 
@@ -254,17 +255,25 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
         />
 
         <div data-exercise-summary-panel className="lg:col-span-1 flex flex-col gap-2 h-full min-h-0">
+          {selectedStats && (
+            <div className="hidden lg:block">
+              <ExerciseOverviewCard
+                selectedStats={selectedStats}
+                assetLookup={assetLookup}
+                bodyMapGender={bodyMapGender}
+                selectedExerciseMuscleInfo={selectedExerciseMuscleInfo}
+                selectedExerciseHeadlessVolumes={selectedExerciseHeadlessVolumes}
+                selectedExerciseHeadlessMaxVolume={selectedExerciseHeadlessMaxVolume}
+                volumeThresholds={volumeThresholds}
+                exerciseBodyMapHoverMeta={exerciseBodyMapHoverMeta}
+                onBodyMapHover={setExerciseBodyMapHoveredMuscle}
+              />
+            </div>
+          )}
+
           <ExerciseSummaryPanel
             selectedStats={selectedStats}
             currentStatus={currentStatus}
-            assetLookup={assetLookup}
-            bodyMapGender={bodyMapGender}
-            selectedExerciseMuscleInfo={selectedExerciseMuscleInfo}
-            selectedExerciseHeadlessVolumes={selectedExerciseHeadlessVolumes}
-            selectedExerciseHeadlessMaxVolume={selectedExerciseHeadlessMaxVolume}
-            volumeThresholds={volumeThresholds}
-            exerciseBodyMapHoverMeta={exerciseBodyMapHoverMeta}
-            onBodyMapHover={setExerciseBodyMapHoveredMuscle}
             isSelectedEligible={isSelectedEligible}
             inactiveReason={inactiveReason}
             currentCore={currentCore}
@@ -274,22 +283,37 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
       </div>
 
       {selectedStats && (
-        <ExerciseProgressChart
-          selectedStats={selectedStats}
-          selectedSessions={selectedSessions}
-          chartData={chartData}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          allAggregationMode={allAggregationMode}
-          weightUnit={weightUnit}
-          isBodyweightLike={isBodyweightLike}
-          showUnilateral={showUnilateral}
-          setShowUnilateral={setShowUnilateral}
-          hasUnilateralChartData={hasUnilateralChartData}
-          sessionsCount={sessionsCount}
-          xTicks={xTicks}
-          tickIndexMap={tickIndexMap}
-        />
+        <>
+          <ExerciseProgressChart
+            selectedStats={selectedStats}
+            selectedSessions={selectedSessions}
+            chartData={chartData}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            allAggregationMode={allAggregationMode}
+            weightUnit={weightUnit}
+            isBodyweightLike={isBodyweightLike}
+            showUnilateral={showUnilateral}
+            setShowUnilateral={setShowUnilateral}
+            hasUnilateralChartData={hasUnilateralChartData}
+            sessionsCount={sessionsCount}
+            xTicks={xTicks}
+            tickIndexMap={tickIndexMap}
+          />
+          <div className="lg:hidden">
+            <ExerciseOverviewCard
+              selectedStats={selectedStats}
+              assetLookup={assetLookup}
+              bodyMapGender={bodyMapGender}
+              selectedExerciseMuscleInfo={selectedExerciseMuscleInfo}
+              selectedExerciseHeadlessVolumes={selectedExerciseHeadlessVolumes}
+              selectedExerciseHeadlessMaxVolume={selectedExerciseHeadlessMaxVolume}
+              volumeThresholds={volumeThresholds}
+              exerciseBodyMapHoverMeta={exerciseBodyMapHoverMeta}
+              onBodyMapHover={setExerciseBodyMapHoveredMuscle}
+            />
+          </div>
+        </>
       )}
     </div>
   );

@@ -118,19 +118,103 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
   }, [chartData, isBodyweightLike]);
 
   return (
-    <div className="w-full bg-black/70 border border-slate-700/50 rounded-2xl p-1 sm:p-2 relative flex flex-col h-[400px]">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-4 sm:mb-6 gap-2 shrink-0">
+    <div className="w-full bg-black/70 border border-slate-700/50 rounded-2xl p-1 sm:p-2 relative flex flex-col h-[280px] sm:h-[310px]">
+      {/* Mobile header - compact 2-line layout */}
+      <div className="sm:hidden flex flex-col gap-1 mb-2 shrink-0">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-base font-semibold text-white">{isBodyweightLike ? 'Reps Progression' : 'Strength Progression'}</h3>
+          <div className="bg-black/70 p-1 rounded-lg flex gap-1 border border-slate-700/50">
+            <button
+              onClick={() => setViewMode('all')}
+              title="All"
+              aria-label="All"
+              className={`px-2 py-1 rounded text-[10px] font-bold ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+            >
+              <Infinity className="w-3 h-3" />
+            </button>
+            <button
+              onClick={() => setViewMode('weekly')}
+              title="Last Week"
+              aria-label="Last Week"
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${viewMode === 'weekly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+            >
+              lst wk
+            </button>
+            <button
+              onClick={() => setViewMode('monthly')}
+              title="Last Month"
+              aria-label="Last Month"
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${viewMode === 'monthly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+            >
+              lst mo
+            </button>
+            <button
+              onClick={() => setViewMode('yearly')}
+              title="Last Year"
+              aria-label="Last Year"
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${viewMode === 'yearly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+            >
+              lst yr
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-2 text-[10px]">
+          <span className="text-slate-500">
+            {isBodyweightLike ? 'Top reps vs sets' : (
+              <>
+                <span className="text-blue-400">1RM</span> & <span className="text-slate-400">Weight</span>
+              </>
+            )}
+          </span>
+          <div className="flex items-center gap-2 font-medium">
+            {isBodyweightLike ? (
+              <>
+                <div className="flex items-center gap-0.5 text-blue-400">
+                  <span className="w-2 h-2 rounded bg-blue-500/20 border border-blue-500"></span> Reps
+                </div>
+                <div className="flex items-center gap-0.5 text-slate-500">
+                  <span className="w-2 h-0.5 bg-slate-500"></span> Sets
+                </div>
+              </>
+            ) : showUnilateral && hasUnilateralChartData ? (
+              <>
+                <div className="flex items-center gap-0.5 text-cyan-400">
+                  <span className="w-2 h-2 rounded bg-cyan-500/20 border border-cyan-500"></span> L
+                </div>
+                <div className="flex items-center gap-0.5 text-violet-400">
+                  <span className="w-2 h-2 rounded bg-violet-500/20 border border-violet-500"></span> R
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1 text-emerald-400/70">
+                  <span className="w-2 h-2 rounded bg-emerald-500/20 border border-emerald-400/70"></span> Gaining
+                </div>
+                <div className="flex items-center gap-1 text-yellow-400/70">
+                  <span className="w-2 h-2 rounded bg-yellow-500/20 border border-yellow-400/70"></span> Plateauing
+                </div>
+                <div className="flex items-center gap-1 text-rose-400/70">
+                  <span className="w-2 h-2 rounded bg-rose-500/20 border border-rose-400/70"></span> Losing
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop header - original layout */}
+      <div className="hidden sm:flex flex-row justify-between items-end mb-6 gap-2 shrink-0">
         <div>
-          <h3 className="text-base sm:text-lg font-semibold text-white">{isBodyweightLike ? 'Reps Progression' : 'Strength Progression'}</h3>
+          <h3 className="text-lg font-semibold text-white">{isBodyweightLike ? 'Reps Progression' : 'Strength Progression'}</h3>
           {isBodyweightLike ? (
-            <p className="text-[11px] sm:text-xs text-slate-500">Top reps vs sets</p>
+            <p className="text-xs text-slate-500">Top reps vs sets</p>
           ) : (
-            <p className="text-[11px] sm:text-xs text-slate-500">
-              Estimated <span className="text-blue-400">1RM</span> vs <span className="text-slate-400">Actual Lift Weight</span>
+            <p className="text-xs text-slate-500">
+              Estimated <span className="text-blue-400">1RM</span> & <span className="text-slate-400">Actual Lift Weight</span>
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs font-medium">
+        <div className="flex items-center gap-4 text-xs font-medium">
           <div className="hidden sm:flex items-center gap-2">
             <div className="flex items-center gap-2 px-2 py-1.5 min-h-8 bg-black/70 border border-slate-700/50 rounded-lg">
               <Activity className="w-3 h-3 text-slate-400" />
@@ -164,7 +248,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
                 <span className="w-2.5 h-2.5 rounded bg-emerald-500/20 border border-emerald-500"></span> Gaining
               </div>
               <div className="flex items-center gap-2 text-yellow-400">
-                <span className="w-2.5 h-2.5 rounded bg-yellow-500/20 border border-yellow-500"></span> Plateau
+                <span className="w-2.5 h-2.5 rounded bg-yellow-500/20 border border-yellow-500"></span> Plateauing
               </div>
               <div className="flex items-center gap-2 text-rose-400">
                 <span className="w-2.5 h-2.5 rounded bg-rose-500/20 border border-rose-500"></span> Losing
@@ -293,6 +377,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
                         selectedStats={selectedStats}
                         weightUnit={weightUnit}
                         prTypesToShow={['oneRm']}
+                        labelPosition="above"
                       />}
                       activeDot={{ r: 5, strokeWidth: 0 }}
                       isAnimationActive={true}
@@ -315,6 +400,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
                         selectedStats={selectedStats}
                         weightUnit={weightUnit}
                         prTypesToShow={['weight', 'volume']}
+                        labelPosition="below"
                       />}
                       activeDot={{ r: 5, strokeWidth: 0 }}
                       isAnimationActive={true}
@@ -356,6 +442,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
                   type="stepAfter"
                   dataKey={isBodyweightLike ? 'sets' : 'weight'}
                   stroke="var(--text-muted)"
+                  strokeOpacity={0.4}
                   strokeWidth={1}
                   strokeDasharray="4 4"
                   dot={false}

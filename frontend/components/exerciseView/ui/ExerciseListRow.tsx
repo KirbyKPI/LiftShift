@@ -77,7 +77,7 @@ export const ExerciseListRow: React.FC<ExerciseListRowProps> = ({
             <RowStatusIcon className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${status.color}`} />
             <span className={`text-[9px] sm:text-[10px] font-bold ${status.color}`}>{displayLabel}</span>
             {status.diffPct !== undefined && (
-              <span className={`text-[9px] sm:text-[10px] font-mono ${status.diffPct > 0 ? 'text-emerald-400' : status.diffPct < 0 ? 'text-rose-400' : 'text-slate-400'}`}>
+              <span className={`text-[9px] font-bold sm:text-[10px] font-mono ${status.diffPct > 0 ? 'text-emerald-400' : status.diffPct < 0 ? 'text-rose-400' : 'text-slate-400'}`}>
                 @ {status.diffPct > 0 ? '+' : ''}{status.diffPct.toFixed(1)}%
               </span>
             )}

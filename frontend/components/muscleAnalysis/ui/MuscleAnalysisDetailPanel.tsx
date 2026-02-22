@@ -164,7 +164,7 @@ export const MuscleAnalysisDetailPanel: React.FC<MuscleAnalysisDetailPanelProps>
 
       {windowedSelectionBreakdown && (
         <div className="border-t border-slate-800/30 flex-1 flex flex-col min-h-0">
-          <div className={`flex-1 flex flex-col min-h-0 ${lifetimeAchievement ? 'min-h-[120px] lg:min-h-0 lg:max-h-[35%]' : ''}`}>
+          <div className={`flex-1 flex flex-col min-h-0 ${lifetimeAchievement ? 'lg:min-h-0 lg:max-h-[35%]' : ''}`}>
             <MuscleAnalysisExerciseList
               contributingExercises={contributingExercises}
               assetsMap={assetsMap}

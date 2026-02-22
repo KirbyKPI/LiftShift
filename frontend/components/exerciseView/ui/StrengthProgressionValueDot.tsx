@@ -18,6 +18,7 @@ export const StrengthProgressionValueDot = (props: any) => {
     showDotWhenHidden = true,
     color = 'var(--text-muted)',
     prTypesToShow,
+    labelPosition,
   } = props;
 
   if (!payload || cx === undefined || cy === undefined) return null;
@@ -125,7 +126,15 @@ export const StrengthProgressionValueDot = (props: any) => {
   const isOnLeftSide = totalPoints > 0 && (index ?? 0) <= totalPoints * 0.3;
   const isNearTop = cy < 30;
 
-  const labelY = isNearTop ? cy + 16 : cy - 10;
+  // Force position based on labelPosition prop, otherwise use smart positioning
+  const forceAbove = labelPosition === 'above';
+  const forceBelow = labelPosition === 'below';
+  
+  const labelY = forceBelow 
+    ? cy + 14 
+    : forceAbove 
+      ? cy - 10 
+      : (isNearTop ? cy + 16 : cy - 10);
   const charWidth = 5.5;
   const textWidth = displayValue.length * charWidth;
 

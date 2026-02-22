@@ -25,7 +25,7 @@ export const MuscleAnalysisExerciseListPanel: React.FC<MuscleAnalysisExerciseLis
   bodyMapGender = 'male',
 }) => {
   return (
-    <div className="bg-black/70 rounded-xl border border-slate-700/50 overflow-hidden flex flex-col h-full min-h-0">
+    <div className="bg-black/70 rounded-xl border border-slate-700/50 overflow-hidden flex flex-col h-auto lg:h-full min-h-0">
       <div className="bg-black/70  p-2 flex-shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-white">Exercises</span>
@@ -35,7 +35,7 @@ export const MuscleAnalysisExerciseListPanel: React.FC<MuscleAnalysisExerciseLis
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="min-h-0 overflow-hidden">
         <MuscleAnalysisExerciseList
           contributingExercises={contributingExercises}
           assetsMap={assetsMap}

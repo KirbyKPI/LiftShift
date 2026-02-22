@@ -120,14 +120,19 @@ export const ActivityHeatmap = memo(({
 
   if (heatmapData.length === 0) return null;
 
-  const getColor = (count: number) => {
-    if (count === 0) return 'bg-slate-500/20';
-    if (count <= 15) return 'bg-emerald-400';
-    if (count <= 30) return 'bg-emerald-500';
-    if (count <= 45) return 'bg-emerald-700';
-    return 'bg-emerald-900';
-  };
+const getColor = (count: number) => {
+  if (count === 0) return 'bg-slate-500/10';
 
+  if (count <= 5)   return 'bg-emerald-200/70';
+  if (count <= 10)  return 'bg-emerald-300/70';
+  if (count <= 20)  return 'bg-emerald-400/70';
+  if (count <= 35)  return 'bg-emerald-500/70';
+  if (count <= 50)  return 'bg-emerald-600/70';
+  if (count <= 75)  return 'bg-emerald-700/70';
+  if (count <= 100) return 'bg-emerald-800/70';
+
+  return 'bg-emerald-900';
+};
   const handleMouseEnter = (e: React.MouseEvent, day: any) => {
     if (!day || day.count === 0) return;
     const rect = e.currentTarget.getBoundingClientRect();

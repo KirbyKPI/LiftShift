@@ -227,7 +227,7 @@ export const MuscleAnalysis: React.FC<MuscleAnalysisProps> = ({
         </div>
 
         {/* Column 3: Exercise List */}
-        <div className="h-[300px] sm:h-[350px] lg:col-start-3 lg:row-start-1 lg:h-full min-h-0">
+        <div className="h-auto max-h-[200px] sm:max-h-[350px] lg:h-full lg:max-h-none lg:col-start-3 lg:row-start-1 min-h-0">
           <MuscleAnalysisExerciseListPanel
             contributingExercises={contributingExercises}
             assetsMap={assetsMap}

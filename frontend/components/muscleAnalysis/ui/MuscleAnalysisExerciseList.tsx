@@ -43,7 +43,7 @@ export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProp
   return (
     <div className="px-4 mt-2">
       <div
-        className="space-y-2 overflow-y-auto max-h-[250px]"
+        className="space-y-2 overflow-y-auto max-h-[120px] sm:max-h-[250px]"
       >
         {displayedExercises.map((ex) => {
           const asset = assetsMap?.get(ex.name);
