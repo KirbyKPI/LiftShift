@@ -67,19 +67,20 @@ const ensurePosthogInitialized = (): void => {
   const posthogCfg = getPosthogConfig();
   if (!posthogCfg) return;
 
-  posthogInitPromise = import('posthog-js')
-    .then((m: any) => {
+  posthogInitPromise = Promise.all([
+    import('posthog-js'),
+    import('posthog-js/dist/posthog-recorder')
+  ])
+    .then(([m]: any[]) => {
       posthogClient = m?.default ?? m;
       if (!posthogClient?.init) return;
 
       posthogClient.init(posthogCfg.key, {
         api_host: posthogCfg.host,
         ui_host: posthogCfg.uiHost,
+        disable_external_dependency_loading: true,
         ...(isGithubPagesHost()
           ? {
-              // GitHub Pages is hosted on a public suffix (github.io). PostHog's cookie-domain
-              // probing can attempt to set cookies on invalid parent domains and trigger
-              // noisy console warnings like `dmn_chk_* has been rejected for invalid domain`.
               cross_subdomain_cookie: false,
               persistence: 'localStorage',
             }
