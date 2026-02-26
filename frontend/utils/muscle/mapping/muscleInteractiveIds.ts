@@ -1,6 +1,7 @@
 /** All interactive muscle SVG IDs in the body map (detailed muscle view) */
 export const INTERACTIVE_MUSCLE_IDS = [
   'upper-trapezius',
+  'neck',
   'gastrocnemius',
   'tibialis',
   'soleus',
@@ -44,10 +45,8 @@ export const INTERACTIVE_MUSCLE_IDS = [
   'shoulders',
   'traps',
   'back',
-  'lats',
-  'lowerback',
-  'obliques',
   'adductors',
+  'abductors',
 ] as const;
 
 export type InteractiveMuscleId = typeof INTERACTIVE_MUSCLE_IDS[number];

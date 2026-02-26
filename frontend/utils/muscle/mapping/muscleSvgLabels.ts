@@ -98,6 +98,8 @@ export const SVG_MUSCLE_NAMES: Record<string, string> = {
   // Other
   'neck': 'Neck',
   'inner-thigh': 'Adductors',
+  'adductors': 'Adductors',
+  'abductors': 'Abductors',
 };
 
 /** All interactive SVG muscle IDs */

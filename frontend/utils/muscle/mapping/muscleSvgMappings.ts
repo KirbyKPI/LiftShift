@@ -106,7 +106,9 @@ export const MUSCLE_ID_TO_DETAILED_SVG_IDS: Readonly<Record<MuscleId, readonly s
   hamstrings: ['medial-hamstrings', 'lateral-hamstrings'],
   glutes: ['gluteus-maximus', 'gluteus-medius'],
   calves: ['gastrocnemius', 'soleus', 'tibialis'],
-  adductors: ['adductor-longus', 'adductor-magnus', 'gracilis'],
+  adductors: ['inner-thigh'],
+  abductors: ['gluteus-medius'],
+  neck: ['neck'],
 };
 
 /** @deprecated Use MUSCLE_ID_TO_DETAILED_SVG_IDS instead */

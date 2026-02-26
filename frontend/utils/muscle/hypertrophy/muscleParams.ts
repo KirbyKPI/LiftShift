@@ -257,6 +257,18 @@ export const MUSCLE_PARAMS: Readonly<Record<HeadlessMuscleId, MuscleHypertrophyP
     weeklySteepness: 0.30,
     weeklyInflection: 8,
   },
+  abductors: {
+    name: 'Abductors',
+    size: 'medium',
+    weeklySteepness: 0.30,
+    weeklyInflection: 8,
+  },
+  neck: {
+    name: 'Neck',
+    size: 'small',
+    weeklySteepness: 0.35,
+    weeklyInflection: 7,
+  },
 
   // ── Small muscles ────────────────────────────────────────────────────
   calves: {

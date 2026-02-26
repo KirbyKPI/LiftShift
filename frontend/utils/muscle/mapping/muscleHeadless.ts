@@ -14,6 +14,8 @@ export const MUSCLE_IDS = [
   'glutes',
   'calves',
   'adductors',
+  'abductors',
+  'neck',
 ] as const;
 
 /** @deprecated Use MuscleId instead */
@@ -40,6 +42,8 @@ export const MUSCLE_NAMES: Readonly<Record<MuscleId, string>> = {
   glutes: 'Glutes',
   calves: 'Calves',
   adductors: 'Adductors',
+  abductors: 'Abductors',
+  neck: 'Neck',
 };
 
 /** @deprecated Use MUSCLE_NAMES instead */

@@ -7,7 +7,7 @@ export const CSV_TO_SVG_MUSCLE_MAP: Record<string, string[]> = {
   // Generic muscle names (from original Hevy data)
   Abdominals: ['lower-abdominals', 'upper-abdominals'],
   Abductors: ['gluteus-medius'],
-  Adductors: ['inner-thigh'],
+  Adductors: ['adductors', 'inner-thigh'],
   Biceps: ['long-head-bicep', 'short-head-bicep'],
   Calves: ['gastrocnemius', 'soleus', 'tibialis'],
   Chest: ['mid-lower-pectoralis', 'upper-pectoralis'],

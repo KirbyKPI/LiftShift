@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { getVolumeColor, getExerciseMuscleColor, SVG_MUSCLE_GROUPS, CSV_TO_SVG_MUSCLE_MAP } from '../../utils/muscle/mapping';
 import { INTERACTIVE_MUSCLE_IDS } from '../../utils/muscle/mapping';
+import { getMuscleWithFallback } from '../../utils/muscle/mapping/bodyMapAvailability';
 import type { MuscleVolumeThresholds } from '../../utils/muscle/hypertrophy/muscleParams';
 import MaleFrontBodyMapMuscle from './muscles/MaleFrontBodyMapMuscle';
 import MaleBackBodyMapMuscle from './muscles/MaleBackBodyMapMuscle';
@@ -79,16 +80,21 @@ export const BodyMap: React.FC<BodyMapProps> = ({
     [selectedMuscleIdsOverride, selectedPart]
   );
 
+  const effectiveGender: BodyMapGender = (gender ?? 'male') as BodyMapGender;
+  const effectiveVariant: BodyMapVariant = (variant ?? 'demo') as BodyMapVariant;
+
   const applyColors = useCallback((hoveredId: string | null = null) => {
     if (!containerRef.current) return;
     INTERACTIVE_MUSCLES.forEach(muscleId => {
-      const elements = containerRef.current?.querySelectorAll(`#${muscleId}`);
+      const targetId = getMuscleWithFallback(muscleId, effectiveVariant, effectiveGender);
+      const elements = containerRef.current?.querySelectorAll(`#${targetId}`);
+      const isOriginalSelection = muscleId !== targetId;
       elements?.forEach(el => {
         const volume = muscleVolumes.get(muscleId) || 0;
         const color = useExerciseColors 
           ? getExerciseMuscleColor(volume)
           : getVolumeColor(volume, volumeThresholds, maxVolume);
-        const isSelected = selectedMuscleIds.includes(muscleId);
+        const isSelected = selectedMuscleIds.includes(muscleId) || (isOriginalSelection && selectedMuscleIds.includes(targetId));
         const isHovered = hoveredMuscleIdsOverride
           ? hoveredMuscleIdsOverride.includes(muscleId)
           : (hoveredId === muscleId || (hoveredId && getRelatedMuscleIds(hoveredId).includes(muscleId)));
@@ -123,9 +129,10 @@ export const BodyMap: React.FC<BodyMapProps> = ({
     const target = e.target as Element;
     const muscleGroup = target.closest('g[id]');
     if (muscleGroup && INTERACTIVE_MUSCLES.includes(muscleGroup.id)) {
-      onPartClick(muscleGroup.id);
+      const targetId = getMuscleWithFallback(muscleGroup.id, effectiveVariant, effectiveGender);
+      onPartClick(targetId);
     }
-  }, [onPartClick]);
+  }, [onPartClick, effectiveVariant, effectiveGender]);
 
   const handleMouseOver = useCallback((e: MouseEvent) => {
     const target = e.target as Element;
