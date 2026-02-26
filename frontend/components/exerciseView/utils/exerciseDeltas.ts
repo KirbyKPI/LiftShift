@@ -1,5 +1,5 @@
-import { ExerciseHistoryEntry } from '../../types';
-import { summarizeExerciseHistory } from '../../utils/analysis/exerciseTrend';
+import { ExerciseHistoryEntry } from '../../../types';
+import { summarizeExerciseHistory } from '../../../utils/analysis/exerciseTrend';
 
 export interface ExerciseDeltas {
   weightDelta: number;

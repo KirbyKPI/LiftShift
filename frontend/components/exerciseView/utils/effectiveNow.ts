@@ -1,4 +1,4 @@
-import { ExerciseStats } from '../../types';
+import { ExerciseStats } from '../../../types';
 
 export const computeEffectiveNowFromStats = (stats: ExerciseStats[]): Date => {
   let maxTs = -Infinity;

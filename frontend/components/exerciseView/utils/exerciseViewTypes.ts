@@ -1,4 +1,4 @@
-import type { ExerciseMuscleData } from '../../utils/muscle/mapping';
+import type { ExerciseMuscleData } from '../../../utils/muscle/mapping';
 
 export interface ExerciseMuscleTargets {
   exData?: ExerciseMuscleData;

@@ -1,4 +1,4 @@
-import { ExerciseTrendStatus } from '../../utils/analysis/exerciseTrend';
+import { ExerciseTrendStatus } from '../../../utils/analysis/exerciseTrend';
 
 export interface SelectedHighlightClasses {
   button: string;

@@ -1,4 +1,4 @@
-import { ExerciseHistoryEntry } from '../../types';
+import { ExerciseHistoryEntry } from '../../../types';
 
 export const getLatestHistoryKey = (history: ExerciseHistoryEntry[]): string => {
   let maxTs = -Infinity;

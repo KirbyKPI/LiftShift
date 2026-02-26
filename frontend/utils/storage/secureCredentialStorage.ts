@@ -114,7 +114,7 @@ const decryptString = async (payload: string): Promise<string> => {
   const iv = fromBase64(parsed.iv);
   const data = fromBase64(parsed.data);
 
-  const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+  const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv as BufferSource }, key, data as BufferSource);
   return new TextDecoder().decode(plaintext);
 };
 

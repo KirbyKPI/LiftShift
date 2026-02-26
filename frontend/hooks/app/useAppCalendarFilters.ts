@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { format, isSameDay, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
-import { WorkoutSet } from '../types';
+import { WorkoutSet } from '../../types';
 import { formatDayYearContraction, formatHumanReadableDate } from '../../utils/date/dateUtils';
 
 export interface UseAppCalendarFiltersReturn {

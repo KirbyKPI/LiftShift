@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import type { Location } from 'react-router';
 import { setContext, trackEvent } from '../../utils/integrations/analytics';
 import { trackPageView } from '../../utils/integrations/ga';
-import { saveDataSourceChoice } from '../../utils/storage/dataSourceStorage';
+import { saveDataSourceChoice, type DataSourceChoice } from '../../utils/storage/dataSourceStorage';
 
 interface AppSideEffectsProps {
   onboardingIntent: 'initial' | 'update' | null;
@@ -50,7 +50,7 @@ export const useAppSideEffects = ({ onboardingIntent, dataSource, location }: Ap
 
   useEffect(() => {
     if (!dataSource) return;
-    saveDataSourceChoice(dataSource);
+    saveDataSourceChoice(dataSource as DataSourceChoice);
     setContext({ data_source: dataSource });
   }, [dataSource]);
 

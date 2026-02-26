@@ -1,6 +1,6 @@
 import type { ElementType } from 'react';
-import type { ExerciseTrendStatus } from '../../utils/analysis/exerciseTrend';
-import type { ExerciseTrendCoreResult } from '../../utils/analysis/exerciseTrend';
+import type { ExerciseTrendStatus } from '../../../utils/analysis/exerciseTrend';
+import type { ExerciseTrendCoreResult } from '../../../utils/analysis/exerciseTrend';
 
 export interface StatusResult {
   status: ExerciseTrendStatus;

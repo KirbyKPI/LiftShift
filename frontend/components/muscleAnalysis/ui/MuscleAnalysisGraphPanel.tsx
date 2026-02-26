@@ -35,8 +35,8 @@ const CustomMuscleTooltip: React.FC<CustomMuscleTooltipProps> = ({ active, paylo
         <p className="text-xs text-slate-200 mb-1">
           {formatAxisNumber(value)} sets/wk
         </p>
-        <p className="text-[10px] mb-2" style={{ color: zone.color }}>
-          {stimulus}% of weekly possible gains
+        <p className="text-[10px] mb-2 text-white">
+          {stimulus}% of wkly possible gains
         </p>
         <div className="text-[10px] text-slate-400 leading-relaxed">
           {zone.explanation}
@@ -66,8 +66,6 @@ const LEGEND_MAX_DISPLAY = 41; // Set a reasonable max for legend display - can 
 
 /** Progress bar for weekly possible gains */
 const PossibleGainsBar: React.FC<{ percent: number; color: string }> = ({ percent, color }) => {
-  const textShadow = percent < 70 ? '0 1px 3px rgba(0,0,0,0.5)' : 'none';
-
   return (
     <div className="relative flex items-center gap-2 text-[9px]">
       <div className="flex-1 h-4 rounded-md overflow-hidden relative flex" style={{ backgroundColor: 'rgba(100,116,139,0.15)' }}>
@@ -76,8 +74,8 @@ const PossibleGainsBar: React.FC<{ percent: number; color: string }> = ({ percen
           style={{ width: `${Math.min(percent, 100)}%`, backgroundColor: color }}
         />
         <span 
-          className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white"
-          style={{ textShadow }}
+          className="absolute inset-0 flex items-center justify-center text-[8px] font-bold"
+          style={{ color: '#fff', textShadow: '0 0 1px #000, 0 0 1px #000, 0 0 1px #000' }}
         >
           {percent}% possible gains
         </span>
@@ -277,46 +275,46 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
               <div className="flex items-center justify-center text-[6px] sm:text-[7px] font-medium" style={{ 
                 width: `${(Math.min(zones.mv, legendMax) / legendMax) * 100}%`,
                 background: 'transparent',
-                color: legendColors.textAtMv
+                color: '#fff'
               }}>
-                <span className="drop-shadow-md">Activating</span>
+                <span style={{ textShadow: '0 0 1px #000, 0 0 1px #000, 0 0 1px #000' }}>Activating</span>
               </div>
               <div className="flex items-center justify-center text-[6px] sm:text-[7px] font-medium" style={{ 
                 width: `${(Math.min(zones.mev, legendMax) / legendMax) * 100}%`,
                 background: 'transparent',
-                color: legendColors.textAtMev
+                color: '#fff'
               }}>
-                <span className="drop-shadow-sm">Stimulating</span>
+                <span style={{ textShadow: '0 0 1px #000, 0 0 1px #000, 0 0 1px #000' }}>Stimulating</span>
               </div>
               <div className="flex items-center justify-center text-[6px] sm:text-[7px] font-medium" style={{ 
                 width: `${(Math.min(zones.mrv, legendMax) / legendMax) * 100}%`,
                 background: 'transparent',
-                color: legendColors.textAtMrv
+                color: '#fff'
               }}>
-                <span className="drop-shadow-sm" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>Amplifying</span>
+                <span style={{ textShadow: '0 0 1px #000, 0 0 1px #000, 0 0 1px #000' }}>Amplifying</span>
               </div>
               {legendColors.showOverdrive ? (
                 <>
                   <div className="flex items-center justify-center text-[6px] sm:text-[7px] font-medium" style={{ 
                     width: `${(Math.min(zones.maxv, legendMax) / legendMax) * 100}%`,
                     background: 'transparent',
-                    color: legendColors.textAtMaxv
+                    color: '#fff'
                   }}>
-                    <span className="drop-shadow-md">Maximizing</span>
+                    <span style={{ textShadow: '0 0 1px #000, 0 0 1px #000, 0 0 1px #000' }}>Maximizing</span>
                   </div>
                   <div className="flex items-center justify-center text-[6px] sm:text-[7px] font-medium flex-1" style={{ 
                     background: 'transparent',
-                    color: legendColors.textAtMaxvPlus10
+                    color: '#fff'
                   }}>
-                    <span className="drop-shadow-md">Overreaching</span>
+                    <span style={{ textShadow: '0 0 1px #000, 0 0 1px #000, 0 0 1px #000' }}>Overreaching</span>
                   </div>
                 </>
               ) : (
                 <div className="flex items-center justify-center text-[6px] sm:text-[7px] font-medium flex-1" style={{ 
                   background: 'transparent',
-                  color: legendColors.textAtMaxv
+                  color: '#fff'
                 }}>
-                  <span className="drop-shadow-md">Maximizing</span>
+                  <span style={{ textShadow: '0 0 1px #000, 0 0 1px #000, 0 0 1px #000' }}>Maximizing</span>
                 </div>
               )}
             </div>

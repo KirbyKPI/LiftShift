@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
-import type { AnalysisResult, SetWisdom, StructuredTooltip } from '../../types';
-import type { TooltipState } from './HistoryTooltipPortal';
+import { useCallback, useState, type MouseEvent } from 'react';
+import type { AnalysisResult, SetWisdom, StructuredTooltip } from '../../../types';
+import type { TooltipState } from '../ui/HistoryTooltipPortal';
 
 export const useHistoryTooltip = () => {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
@@ -31,12 +31,12 @@ export const useHistoryTooltip = () => {
     return { rect, title, body, status, metrics, structured };
   }, []);
 
-  const handleMouseEnter = useCallback((e: React.MouseEvent, data: any, variant: 'set' | 'macro') => {
+  const handleMouseEnter = useCallback((e: MouseEvent, data: any, variant: 'set' | 'macro') => {
     const rect = e.currentTarget.getBoundingClientRect();
     setTooltip(buildTooltipState(rect, data, variant));
   }, [buildTooltipState]);
 
-  const handleTooltipToggle = useCallback((e: React.MouseEvent, data: any, variant: 'set' | 'macro') => {
+  const handleTooltipToggle = useCallback((e: MouseEvent, data: any, variant: 'set' | 'macro') => {
     e.preventDefault();
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
