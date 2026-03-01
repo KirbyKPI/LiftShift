@@ -173,6 +173,7 @@ export function getNextTier(achievementPercent: number): TierDef | null {
 
 /**
  * Estimate weeks to reach next tier based on weekly sets.
+ * Returns Infinity if weeklySets is 0 (no recent training).
  */
 export function estimateWeeksToNextTier(
   achievementPercent: number,
@@ -186,7 +187,7 @@ export function estimateWeeksToNextTier(
   const targetSets = (nextTier.positionPercent / 100) * halfLife / (1 - nextTier.positionPercent / 100);
   const remainingSets = Math.max(0, targetSets - currentSets);
   
-  if (weeklySets <= 0) return null;
+  if (weeklySets <= 0) return Infinity;
   return Math.ceil(remainingSets / weeklySets);
 }
 

@@ -94,7 +94,7 @@ export const IntensityEvolutionCard = ({
               onClick={() => onViewToggle('area')}
               title="Area"
               aria-label="Area"
-              className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 ${
+              className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 cursor-pointer ${
                 view === 'area' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
               }`}
             >
@@ -104,7 +104,7 @@ export const IntensityEvolutionCard = ({
               onClick={() => onViewToggle('stackedBar')}
               title="Stacked"
               aria-label="Stacked"
-              className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 ${
+              className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 cursor-pointer ${
                 view === 'stackedBar' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
               }`}
             >
@@ -117,7 +117,7 @@ export const IntensityEvolutionCard = ({
               onClick={() => onToggle('all')}
               title="All"
               aria-label="All"
-              className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 ${
+              className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 cursor-pointer ${
                 mode === 'all' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
               }`}
             >
@@ -127,7 +127,7 @@ export const IntensityEvolutionCard = ({
               onClick={() => onToggle('weekly')}
               title="Last Week"
               aria-label="Last Week"
-              className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap ${
+              className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
                 mode === 'weekly' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
               }`}
             >
@@ -137,7 +137,7 @@ export const IntensityEvolutionCard = ({
               onClick={() => onToggle('monthly')}
               title="Last Month"
               aria-label="Last Month"
-              className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap ${
+              className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
                 mode === 'monthly' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
               }`}
             >
@@ -147,7 +147,7 @@ export const IntensityEvolutionCard = ({
               onClick={() => onToggle('yearly')}
               title="Last Year"
               aria-label="Last Year"
-              className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap ${
+              className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
                 mode === 'yearly' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
               }`}
             >

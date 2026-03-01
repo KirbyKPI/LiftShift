@@ -20,7 +20,7 @@ import { ExerciseSummaryPanel } from './ExerciseSummaryPanel';
 import { ExerciseProgressChart } from './ExerciseProgressChart';
 import { ExerciseOverviewCard } from './ExerciseOverviewCard';
 import type { ExerciseMuscleTargets, InactiveReason } from '../utils/exerciseViewTypes';
-import { buildExerciseMuscleTargets, getBodyMapHoverMeta, getExerciseSpanDays, getInactiveReason } from '../utils/exerciseViewDerived';
+import { buildExerciseMuscleTargets, getExerciseSpanDays, getInactiveReason } from '../utils/exerciseViewDerived';
 
 interface ExerciseViewProps {
   stats: ExerciseStats[];
@@ -164,12 +164,6 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
 
   const volumeThresholds = useMemo(() => getVolumeThresholds(trainingLevel), [trainingLevel]);
 
-  const [exerciseBodyMapHoveredMuscle, setExerciseBodyMapHoveredMuscle] = useState<string | null>(null);
-
-  const exerciseBodyMapHoverMeta = useMemo(() => {
-    return getBodyMapHoverMeta(exerciseBodyMapHoveredMuscle, selectedExerciseHeadlessVolumes, volumeThresholds);
-  }, [exerciseBodyMapHoveredMuscle, selectedExerciseHeadlessVolumes, volumeThresholds]);
-
   const isSelectedEligible = useMemo(() => {
     if (!selectedStats) return true;
     return trainingStructure.eligibilityByName.get(selectedStats.name)?.isEligible ?? false;
@@ -265,8 +259,6 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
                 selectedExerciseHeadlessVolumes={selectedExerciseHeadlessVolumes}
                 selectedExerciseHeadlessMaxVolume={selectedExerciseHeadlessMaxVolume}
                 volumeThresholds={volumeThresholds}
-                exerciseBodyMapHoverMeta={exerciseBodyMapHoverMeta}
-                onBodyMapHover={setExerciseBodyMapHoveredMuscle}
               />
             </div>
           )}
@@ -309,8 +301,6 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
               selectedExerciseHeadlessVolumes={selectedExerciseHeadlessVolumes}
               selectedExerciseHeadlessMaxVolume={selectedExerciseHeadlessMaxVolume}
               volumeThresholds={volumeThresholds}
-              exerciseBodyMapHoverMeta={exerciseBodyMapHoverMeta}
-              onBodyMapHover={setExerciseBodyMapHoveredMuscle}
             />
           </div>
         </>

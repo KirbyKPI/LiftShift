@@ -82,7 +82,7 @@ export const ExerciseListPanel: React.FC<ExerciseListPanelProps> = ({
               onClick={() => setExerciseListSortMode('recent')}
               title="Sort by most recently trained"
               aria-label="Sort by recent"
-              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${exerciseListSortMode === 'recent' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap cursor-pointer ${exerciseListSortMode === 'recent' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
             >
               recent
             </button>
@@ -91,7 +91,7 @@ export const ExerciseListPanel: React.FC<ExerciseListPanelProps> = ({
               onClick={() => setExerciseListSortMode('trend')}
               title="Sort by % strength change"
               aria-label="Sort by trend"
-              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${exerciseListSortMode === 'trend' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap cursor-pointer ${exerciseListSortMode === 'trend' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
             >
               %
             </button>
@@ -104,7 +104,7 @@ export const ExerciseListPanel: React.FC<ExerciseListPanelProps> = ({
               ? (exerciseListSortDir === 'desc' ? 'Highest % to lowest' : 'Lowest % to highest')
               : (exerciseListSortDir === 'desc' ? 'Latest to oldest' : 'Oldest to latest')}
             aria-label="Reverse sort direction"
-            className="p-2 rounded-lg bg-black/70 border border-slate-700/50 text-slate-500 hover:text-slate-300 hover:bg-black/60 transition-colors"
+            className="p-2 rounded-lg bg-black/70 border border-slate-700/50 text-slate-500 hover:text-slate-300 hover:bg-black/60 transition-colors cursor-pointer"
           >
             <ArrowUpDown className="w-3 h-3" />
           </button>

@@ -42,7 +42,7 @@ export function ToggleButtonGroup<T extends string = string>({
         <button
           key={option.value}
           onClick={() => onChange(option.value)}
-          className={`${sizeClasses} font-bold rounded transition-all duration-200 ${
+          className={`${sizeClasses} font-bold rounded transition-all duration-200 cursor-pointer ${
             value === option.value ? activeClass : INACTIVE_CLASS
           }`}
         >

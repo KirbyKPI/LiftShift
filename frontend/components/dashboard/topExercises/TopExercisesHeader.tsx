@@ -32,7 +32,7 @@ export const TopExercisesHeader: React.FC<TopExercisesHeaderProps> = ({
           onClick={() => setTopExerciseMode('all')}
           title="All"
           aria-label="All"
-          className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 ${
+          className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 cursor-pointer ${
             topExerciseMode === 'all'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -45,7 +45,7 @@ export const TopExercisesHeader: React.FC<TopExercisesHeaderProps> = ({
           onClick={() => setTopExerciseMode('weekly')}
           title="Last Week"
           aria-label="Last Week"
-          className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap ${
+          className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
             topExerciseMode === 'weekly'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -57,7 +57,7 @@ export const TopExercisesHeader: React.FC<TopExercisesHeaderProps> = ({
           onClick={() => setTopExerciseMode('monthly')}
           title="Last Month"
           aria-label="Last Month"
-          className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap ${
+          className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
             topExerciseMode === 'monthly'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -69,7 +69,7 @@ export const TopExercisesHeader: React.FC<TopExercisesHeaderProps> = ({
           onClick={() => setTopExerciseMode('yearly')}
           title="Last Year"
           aria-label="Last Year"
-          className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap ${
+          className={`px-1 h-5 flex items-center justify-center rounded transition-all duration-200 text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
             topExerciseMode === 'yearly'
               ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -84,7 +84,7 @@ export const TopExercisesHeader: React.FC<TopExercisesHeaderProps> = ({
           onClick={() => setTopExercisesView('barh')}
           title="Bars"
           aria-label="Bars"
-          className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 ${
+          className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 cursor-pointer ${
             topExercisesView === 'barh'
               ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -97,7 +97,7 @@ export const TopExercisesHeader: React.FC<TopExercisesHeaderProps> = ({
           onClick={() => setTopExercisesView('area')}
           title="Area"
           aria-label="Area"
-          className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 ${
+          className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 cursor-pointer ${
             topExercisesView === 'area'
               ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'

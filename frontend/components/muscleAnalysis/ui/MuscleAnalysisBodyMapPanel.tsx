@@ -69,14 +69,14 @@ export const MuscleAnalysisBodyMapPanel: React.FC<MuscleAnalysisBodyMapPanelProp
   };
 
   return (
-    <div className="bg-black/70 rounded-xl border border-slate-700/50 p-4 relative flex flex-col h-full overflow-hidden">
+    <div className="bg-black/70 rounded-xl border border-slate-700/50 p-4 relative flex flex-col h-full">
       <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-end gap-2">
         <div className="bg-black/70 p-0.5 rounded-lg inline-flex gap-0.5 border border-slate-700/50 shrink-0">
           <button
             onClick={() => setWeeklySetsChartView('heatmap')}
             title="Heatmap"
             aria-label="Heatmap"
-            className={`w-6 h-5 flex items-center justify-center rounded ${weeklySetsChartView === 'heatmap' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
+            className={`w-6 h-5 flex items-center justify-center rounded cursor-pointer ${weeklySetsChartView === 'heatmap' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
           >
             <Grid3X3 className="w-3 h-3" />
           </button>
@@ -84,7 +84,7 @@ export const MuscleAnalysisBodyMapPanel: React.FC<MuscleAnalysisBodyMapPanelProp
             onClick={() => setWeeklySetsChartView('radar')}
             title="Radar"
             aria-label="Radar"
-            className={`w-6 h-5 flex items-center justify-center rounded ${weeklySetsChartView === 'radar' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
+            className={`w-6 h-5 flex items-center justify-center rounded cursor-pointer ${weeklySetsChartView === 'radar' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
           >
             <Scan className="w-3 h-3" />
           </button>
@@ -100,7 +100,7 @@ export const MuscleAnalysisBodyMapPanel: React.FC<MuscleAnalysisBodyMapPanelProp
                 if (!svgId) return;
                 updateSelectionUrl({ svgId, window: w });
               }}
-              className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-all ${weeklySetsWindow === w
+              className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-all cursor-pointer ${weeklySetsWindow === w
                 ? 'bg-red-600 text-white'
                 : 'text-slate-400 hover:text-white'
                 }`}
@@ -161,55 +161,32 @@ export const MuscleAnalysisBodyMapPanel: React.FC<MuscleAnalysisBodyMapPanelProp
           )}
         </div>
       ) : (
-        <div className="flex-1 flex flex-col h-full pt-10">
-          <div className="flex-1 h-full flex items-center justify-center pb-8 scale-[0.9]">
-            <BodyMap
-              onPartClick={handleClick}
-              selectedPart={selectedMuscle}
-              selectedMuscleIdsOverride={selectedBodyMapIds}
-              hoveredMuscleIdsOverride={hoveredBodyMapIds}
-              muscleVolumes={muscleVolumes}
-              maxVolume={maxVolume}
-              volumeThresholds={volumeThresholds}
-              onPartHover={handleMuscleHover}
-              gender={bodyMapGender}
-              variant="demo"
-              viewMode="headless"
-              stroke={{ width: 2, color: '#484a68', opacity: 0.5 }}
-            />
+        <div className="flex-1 flex flex-col h-full pt-10 pb-6">
+          <div className="flex-1 h-full flex items-center justify-center">
+            <div className="scale-90">
+              <BodyMap
+                onPartClick={handleClick}
+                selectedPart={selectedMuscle}
+                selectedMuscleIdsOverride={selectedBodyMapIds}
+                hoveredMuscleIdsOverride={hoveredBodyMapIds}
+                muscleVolumes={muscleVolumes}
+                maxVolume={maxVolume}
+                volumeThresholds={volumeThresholds}
+                onPartHover={handleMuscleHover}
+                gender={bodyMapGender}
+                variant="demo"
+                viewMode="headless"
+                stroke={{ width: 2, color: '#484a68', opacity: 0.5 }}
+              />
+            </div>
           </div>
 
-          <div className="sm:hidden mb-6 text-center text-[11px] font-semibold text-slate-600">
+          <div className="sm:hidden text-center text-[11px] font-semibold text-slate-600 mt-3">
             Tap to see more details
           </div>
-          <div className="mt-auto flex flex-col items-center justify-center gap-2 pb-1 w-full">
+          <div className="flex flex-col items-center justify-center w-full mt-3">
             <div className="hidden sm:block text-center text-[11px] text-slate-500">
               Hover over muscles to preview, click to view exercises
-            </div>
-            <div className="flex items-center gap-3 text-xs text-slate-400 bg-slate-950/75 rounded-lg px-3 py-1.5 max-w-full">
-              {(() => {
-                const thresholds = volumeThresholds;
-                return (
-                  <>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-2 rounded" style={{ backgroundColor: '#ffffff' }}></div>
-                      <span>None</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-2 rounded" style={{ backgroundColor: getVolumeZoneColor(thresholds.mv, thresholds) }}></div>
-                      <span>Activating</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-2 rounded" style={{ backgroundColor: getVolumeZoneColor(thresholds.mev, thresholds) }}></div>
-                      <span>Stimulating</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-2 rounded" style={{ backgroundColor: getVolumeZoneColor(thresholds.maxv, thresholds) }}></div>
-                      <span>Overreaching</span>
-                    </div>
-                  </>
-                );
-              })()}
             </div>
           </div>
           

@@ -63,7 +63,7 @@ export const AppFilterControls: React.FC<AppFilterControlsProps> = ({
     ) : (
       <button
         onClick={toggleCalendarOpen}
-        className="inline-flex items-center gap-2 h-8 px-2 rounded-md bg-black/50 hover:bg-white/5 border border-slate-700/50 text-xs font-semibold text-slate-200 whitespace-nowrap transition-colors"
+        className="inline-flex items-center gap-2 h-8 px-2 rounded-md bg-black/50 hover:bg-white/5 border border-slate-700/50 text-xs font-semibold text-slate-200 whitespace-nowrap transition-colors cursor-pointer"
       >
         <Calendar className="w-4 h-4 text-slate-400" />
         <span>Calendar</span>

@@ -72,7 +72,7 @@ export const WeeklyRhythmCard = ({
               onClick={() => onViewToggle('radar')}
               title="Radar"
               aria-label="Radar"
-              className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 ${
+              className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 cursor-pointer ${
                 view === 'radar'
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                   : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -84,7 +84,7 @@ export const WeeklyRhythmCard = ({
               onClick={() => onViewToggle('bar')}
               title="Bar"
               aria-label="Bar"
-              className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 ${
+              className={`w-6 h-5 flex items-center justify-center rounded transition-all duration-200 cursor-pointer ${
                 view === 'bar'
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                   : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'

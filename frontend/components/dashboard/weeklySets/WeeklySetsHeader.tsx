@@ -30,7 +30,7 @@ export const WeeklySetsHeader: React.FC<WeeklySetsHeaderProps> = ({
           onClick={() => setWeeklySetsView('radar')}
           title="Radar"
           aria-label="Radar"
-          className={`w-6 h-5 flex items-center justify-center rounded ${
+          className={`w-6 h-5 flex items-center justify-center rounded cursor-pointer ${
             weeklySetsView === 'radar' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
           }`}
         >
@@ -41,7 +41,7 @@ export const WeeklySetsHeader: React.FC<WeeklySetsHeaderProps> = ({
           onClick={() => setWeeklySetsView('heatmap')}
           title="Heatmap"
           aria-label="Heatmap"
-          className={`w-6 h-5 flex items-center justify-center rounded ${
+          className={`w-6 h-5 flex items-center justify-center rounded cursor-pointer ${
             weeklySetsView === 'heatmap'
               ? 'bg-cyan-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -57,7 +57,7 @@ export const WeeklySetsHeader: React.FC<WeeklySetsHeaderProps> = ({
           onClick={() => setMuscleCompQuick('all')}
           title="All"
           aria-label="All"
-          className={`w-6 h-5 flex items-center justify-center rounded ${
+          className={`w-6 h-5 flex items-center justify-center rounded cursor-pointer ${
             muscleCompQuick === 'all'
               ? 'bg-cyan-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -70,7 +70,7 @@ export const WeeklySetsHeader: React.FC<WeeklySetsHeaderProps> = ({
           onClick={() => setMuscleCompQuick('7d')}
           title="Last week"
           aria-label="Last week"
-          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none whitespace-nowrap ${
+          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
             muscleCompQuick === '7d' ? 'bg-cyan-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
           }`}
         >
@@ -80,7 +80,7 @@ export const WeeklySetsHeader: React.FC<WeeklySetsHeaderProps> = ({
           onClick={() => setMuscleCompQuick('30d')}
           title="Last month"
           aria-label="Last month"
-          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none whitespace-nowrap ${
+          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
             muscleCompQuick === '30d'
               ? 'bg-cyan-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -92,7 +92,7 @@ export const WeeklySetsHeader: React.FC<WeeklySetsHeaderProps> = ({
           onClick={() => setMuscleCompQuick('365d')}
           title="Last year"
           aria-label="Last year"
-          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none ${
+          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none cursor-pointer ${
             muscleCompQuick === '365d'
               ? 'bg-cyan-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'

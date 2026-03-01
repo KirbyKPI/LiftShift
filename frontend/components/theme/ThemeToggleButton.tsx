@@ -51,7 +51,7 @@ export const ThemeToggleButton: React.FC<{ className?: string; compact?: boolean
       onClick={cycleMode}
       className={
         className ??
-        `inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${compact ? 'h-9 w-9' : 'h-10 w-10'} bg-transparent border border-black/70 text-slate-200 hover:border-white hover:text-white hover:bg-white/5 transition-all duration-200`
+        `inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${compact ? 'h-9 w-9' : 'h-10 w-10'} bg-transparent border border-black/70 text-slate-200 hover:border-white hover:text-white hover:bg-white/5 transition-all duration-200`
       }
       title={title}
       aria-label={title}

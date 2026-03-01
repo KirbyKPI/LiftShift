@@ -128,7 +128,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               onClick={() => setViewMode('all')}
               title="All"
               aria-label="All"
-              className={`px-2 py-1 rounded text-[10px] font-bold ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+              className={`px-2 py-1 rounded text-[10px] font-bold cursor-pointer ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
             >
               <Infinity className="w-3 h-3" />
             </button>
@@ -136,7 +136,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               onClick={() => setViewMode('weekly')}
               title="Last Week"
               aria-label="Last Week"
-              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${viewMode === 'weekly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap cursor-pointer ${viewMode === 'weekly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
             >
               lst wk
             </button>
@@ -144,7 +144,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               onClick={() => setViewMode('monthly')}
               title="Last Month"
               aria-label="Last Month"
-              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${viewMode === 'monthly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap cursor-pointer ${viewMode === 'monthly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
             >
               lst mo
             </button>
@@ -152,7 +152,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               onClick={() => setViewMode('yearly')}
               title="Last Year"
               aria-label="Last Year"
-              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${viewMode === 'yearly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap cursor-pointer ${viewMode === 'yearly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
             >
               lst yr
             </button>
@@ -261,7 +261,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               onClick={() => setShowUnilateral(!showUnilateral)}
               title={showUnilateral ? 'Hide L/R split' : 'Show L/R split'}
               aria-label={showUnilateral ? 'Hide L/R split' : 'Show L/R split'}
-              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 ${showUnilateral
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 cursor-pointer ${showUnilateral
                 ? 'bg-blue-600 text-white border-transparent'
                 : 'text-slate-500 hover:text-slate-300 hover:bg-black/60 border border-slate-700/50'
                 }`}
@@ -275,7 +275,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               onClick={() => setViewMode('all')}
               title="All"
               aria-label="All"
-              className={`px-2 py-1 rounded text-[10px] font-bold ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+              className={`px-2 py-1 rounded text-[10px] font-bold cursor-pointer ${viewMode === 'all' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
             >
               <Infinity className="w-3 h-3" />
             </button>
@@ -283,7 +283,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               onClick={() => setViewMode('weekly')}
               title="Last Week"
               aria-label="Last Week"
-              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${viewMode === 'weekly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap cursor-pointer ${viewMode === 'weekly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
             >
               lst wk
             </button>
@@ -291,7 +291,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               onClick={() => setViewMode('monthly')}
               title="Last Month"
               aria-label="Last Month"
-              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${viewMode === 'monthly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap cursor-pointer ${viewMode === 'monthly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
             >
               lst mo
             </button>
@@ -299,7 +299,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               onClick={() => setViewMode('yearly')}
               title="Last Year"
               aria-label="Last Year"
-              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap ${viewMode === 'yearly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
+              className={`px-2 py-1 rounded text-[9px] font-bold whitespace-nowrap cursor-pointer ${viewMode === 'yearly' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300 hover:bg-black/60'}`}
             >
               lst yr
             </button>

@@ -64,7 +64,7 @@ export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProp
               key={ex.name}
               onClick={() => onExerciseClick?.(ex.name)}
               type="button"
-              className="group relative w-full text-left rounded-lg bg-black/50 p-2 transition-all focus:outline-none border border-transparent hover:border-slate-600/40"
+              className="group relative w-full text-left rounded-lg bg-black/50 p-2 transition-all focus:outline-none border border-transparent hover:border-slate-600/40 cursor-pointer"
               title={ex.name}
             >
               <div className="grid grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr_5.25rem] items-stretch gap-2">
@@ -139,7 +139,7 @@ export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProp
         {hasMore && (
           <button
             onClick={handleShowMore}
-            className="w-full py-2 mb-3 flex items-center justify-center gap-1 text-xs text-slate-400 hover:text-white transition-colors border border-dashed border-slate-700 rounded-lg hover:border-slate-500"
+            className="w-full py-2 mb-3 flex items-center justify-center gap-1 text-xs text-slate-400 hover:text-white transition-colors border border-dashed border-slate-700 rounded-lg hover:border-slate-500 cursor-pointer"
           >
             <ChevronDown className="w-3 h-3" />
             Show {Math.min(LAZY_LOAD_INCREMENT, contributingExercises.length - displayCount)} more

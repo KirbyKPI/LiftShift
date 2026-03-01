@@ -35,7 +35,7 @@ export const MuscleTrendHeader: React.FC<MuscleTrendHeaderProps> = ({
           onClick={() => setMuscleGrouping('groups')}
           title="Groups"
           aria-label="Groups"
-          className={`w-5 h-5 flex items-center justify-center rounded ${
+          className={`w-5 h-5 flex items-center justify-center rounded cursor-pointer ${
             muscleGrouping === 'groups'
               ? 'bg-blue-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -48,7 +48,7 @@ export const MuscleTrendHeader: React.FC<MuscleTrendHeaderProps> = ({
           onClick={() => setMuscleGrouping('muscles')}
           title="Muscles"
           aria-label="Muscles"
-          className={`w-5 h-5 flex items-center justify-center rounded ${
+          className={`w-5 h-5 flex items-center justify-center rounded cursor-pointer ${
             muscleGrouping === 'muscles'
               ? 'bg-blue-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -64,7 +64,7 @@ export const MuscleTrendHeader: React.FC<MuscleTrendHeaderProps> = ({
           onClick={() => setMusclePeriod('all')}
           title="All"
           aria-label="All"
-          className={`w-5 h-5 flex items-center justify-center rounded ${
+          className={`w-5 h-5 flex items-center justify-center rounded cursor-pointer ${
             musclePeriod === 'all'
               ? 'bg-purple-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -77,7 +77,7 @@ export const MuscleTrendHeader: React.FC<MuscleTrendHeaderProps> = ({
           onClick={() => setMusclePeriod('weekly')}
           title="Last Week"
           aria-label="Last Week"
-          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none whitespace-nowrap ${
+          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
             musclePeriod === 'weekly'
               ? 'bg-purple-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -89,7 +89,7 @@ export const MuscleTrendHeader: React.FC<MuscleTrendHeaderProps> = ({
           onClick={() => setMusclePeriod('monthly')}
           title="Last Month"
           aria-label="Last Month"
-          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none whitespace-nowrap ${
+          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
             musclePeriod === 'monthly'
               ? 'bg-purple-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -101,7 +101,7 @@ export const MuscleTrendHeader: React.FC<MuscleTrendHeaderProps> = ({
           onClick={() => setMusclePeriod('yearly')}
           title="Last Year"
           aria-label="Last Year"
-          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none whitespace-nowrap ${
+          className={`px-1 h-5 flex items-center justify-center rounded text-[8px] font-bold leading-none whitespace-nowrap cursor-pointer ${
             musclePeriod === 'yearly'
               ? 'bg-purple-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -116,7 +116,7 @@ export const MuscleTrendHeader: React.FC<MuscleTrendHeaderProps> = ({
           onClick={() => setMuscleTrendView('stackedBar')}
           title="Stacked"
           aria-label="Stacked"
-          className={`w-5 h-5 flex items-center justify-center rounded ${
+          className={`w-5 h-5 flex items-center justify-center rounded cursor-pointer ${
             muscleTrendView === 'stackedBar'
               ? 'bg-emerald-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
@@ -129,7 +129,7 @@ export const MuscleTrendHeader: React.FC<MuscleTrendHeaderProps> = ({
           onClick={() => setMuscleTrendView('area')}
           title="Area"
           aria-label="Area"
-          className={`w-5 h-5 flex items-center justify-center rounded ${
+          className={`w-5 h-5 flex items-center justify-center rounded cursor-pointer ${
             muscleTrendView === 'area'
               ? 'bg-emerald-600 text-white'
               : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'

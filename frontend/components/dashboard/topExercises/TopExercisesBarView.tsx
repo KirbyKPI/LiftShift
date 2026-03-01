@@ -118,7 +118,7 @@ export const TopExercisesBarView: React.FC<TopExercisesBarViewProps> = ({
                     key={exercise.name}
                     type="button"
                     onClick={() => onExerciseClick?.(exercise.name)}
-                    className="w-full min-w-0 text-left"
+                    className="w-full min-w-0 text-left cursor-pointer"
                     title={`View ${exercise.name}`}
                   >
                     <div className="hidden sm:flex items-center gap-2 min-w-0">

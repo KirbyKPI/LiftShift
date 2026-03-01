@@ -90,7 +90,7 @@ export const MuscleAnalysisDetailPanel: React.FC<MuscleAnalysisDetailPanelProps>
         {selectedMuscle && (
           <button
             onClick={clearSelection}
-            className="p-1.5 hover:bg-black/60 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-black/60 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-slate-400" />
           </button>

@@ -16,8 +16,6 @@ interface ExerciseOverviewCardProps {
   selectedExerciseHeadlessVolumes: Map<string, number>;
   selectedExerciseHeadlessMaxVolume: number;
   volumeThresholds: MuscleVolumeThresholds;
-  exerciseBodyMapHoverMeta: { name: string; role: string } | null;
-  onBodyMapHover: (muscleId: string | null) => void;
 }
 
 export const ExerciseOverviewCard: React.FC<ExerciseOverviewCardProps> = ({
@@ -28,8 +26,6 @@ export const ExerciseOverviewCard: React.FC<ExerciseOverviewCardProps> = ({
   selectedExerciseHeadlessVolumes,
   selectedExerciseHeadlessMaxVolume,
   volumeThresholds,
-  exerciseBodyMapHoverMeta,
-  onBodyMapHover,
 }) => {
   return (
     <div className="flex items-center gap-3 shrink-0 rounded-xl p-3 w-full lg:w-fit lg:self-start max-w-full">
@@ -43,28 +39,12 @@ export const ExerciseOverviewCard: React.FC<ExerciseOverviewCardProps> = ({
           volumeThresholds={volumeThresholds}
           useExerciseColors
           compact
-          interactive
           gender={bodyMapGender}
           viewMode="headless"
           stroke={{ width: 5, color: '#484a68', opacity: 0.8 }}
-          onPartHover={(muscleId) => onBodyMapHover(muscleId)}
         />
 
-        {exerciseBodyMapHoverMeta && (
-          <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-black/90 border border-slate-700/50 rounded-md px-2 py-1 shadow-xl pointer-events-none z-20 max-w-[180px]">
-            <div className="font-semibold text-[10px] text-center whitespace-nowrap text-white">
-              {exerciseBodyMapHoverMeta.name}
-            </div>
-            {exerciseBodyMapHoverMeta.role ? (
-              <div className="text-[9px] text-center font-semibold whitespace-nowrap text-slate-200">
-                {exerciseBodyMapHoverMeta.role}
-              </div>
-            ) : null}
-            <div className="text-[8px] text-center text-slate-400 mt-0.5 leading-tight">
-              {exerciseBodyMapHoverMeta.zoneLabel}: {exerciseBodyMapHoverMeta.zoneExplanation}
-            </div>
-          </div>
-        )}
+
       </div>
 
       {/* Middle content - Flexible width */}

@@ -48,13 +48,13 @@ export const ExerciseViewHeader: React.FC<ExerciseViewHeaderProps> = ({
           <span className="text-xs text-slate-200 font-semibold whitespace-nowrap">
             {trainingStructure.activeCount} active exercises
           </span>
-          <button type="button" onClick={() => toggle('overload')} className={chipCls('overload', 'good')}>
+          <button type="button" onClick={() => toggle('overload')} className={`${chipCls('overload', 'good')} cursor-pointer`}>
             {trainingStructure.overloadCount} Gaining
           </button>
-          <button type="button" onClick={() => toggle('stagnant')} className={chipCls('stagnant', 'warn')}>
+          <button type="button" onClick={() => toggle('stagnant')} className={`${chipCls('stagnant', 'warn')} cursor-pointer`}>
             {trainingStructure.plateauCount} Plateauing
           </button>
-          <button type="button" onClick={() => toggle('regression')} className={chipCls('regression', 'bad')}>
+          <button type="button" onClick={() => toggle('regression')} className={`${chipCls('regression', 'bad')} cursor-pointer`}>
             {trainingStructure.regressionCount} Losing
           </button>
         </div>
@@ -73,28 +73,28 @@ export const ExerciseViewHeader: React.FC<ExerciseViewHeaderProps> = ({
               <button
                 type="button"
                 onClick={() => setTrendFilter(null)}
-                className={`w-full text-center text-[9px] px-2 py-1 rounded font-bold border whitespace-nowrap transition-all duration-200 ${trendFilter === null ? 'bg-slate-500/20 text-slate-200 border-slate-400/60 ring-2 ring-slate-500/25' : 'bg-slate-500/10 text-slate-300 border-slate-500/25 hover:border-slate-400/45'}`}
+                className={`w-full text-center text-[9px] px-2 py-1 rounded font-bold border whitespace-nowrap transition-all duration-200 cursor-pointer ${trendFilter === null ? 'bg-slate-500/20 text-slate-200 border-slate-400/60 ring-2 ring-slate-500/25' : 'bg-slate-500/10 text-slate-300 border-slate-500/25 hover:border-slate-400/45'}`}
               >
                 {trainingStructure.activeCount} active
               </button>
               <button
                 type="button"
                 onClick={() => setTrendFilter(trendFilter === 'overload' ? null : 'overload')}
-                className={`w-full text-center text-[9px] px-2 py-1 rounded font-bold border whitespace-nowrap transition-all duration-200 ${trendFilter === 'overload' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/60 ring-2 ring-emerald-500/25' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25 hover:border-emerald-400/45'}`}
+                className={`w-full text-center text-[9px] px-2 py-1 rounded font-bold border whitespace-nowrap transition-all duration-200 cursor-pointer ${trendFilter === 'overload' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/60 ring-2 ring-emerald-500/25' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25 hover:border-emerald-400/45'}`}
               >
                 {trainingStructure.overloadCount} Gaining
               </button>
               <button
                 type="button"
                 onClick={() => setTrendFilter(trendFilter === 'stagnant' ? null : 'stagnant')}
-                className={`w-full text-center text-[9px] px-2 py-1 rounded font-bold border whitespace-nowrap transition-all duration-200 ${trendFilter === 'stagnant' ? 'bg-amber-500/20 text-amber-200 border-amber-400/60 ring-2 ring-amber-500/25' : 'bg-amber-500/10 text-amber-300 border-amber-500/25 hover:border-amber-400/45'}`}
+                className={`w-full text-center text-[9px] px-2 py-1 rounded font-bold border whitespace-nowrap transition-all duration-200 cursor-pointer ${trendFilter === 'stagnant' ? 'bg-amber-500/20 text-amber-200 border-amber-400/60 ring-2 ring-amber-500/25' : 'bg-amber-500/10 text-amber-300 border-amber-500/25 hover:border-amber-400/45'}`}
               >
                 {trainingStructure.plateauCount} Plateauing
               </button>
               <button
                 type="button"
                 onClick={() => setTrendFilter(trendFilter === 'regression' ? null : 'regression')}
-                className={`w-full text-center text-[9px] px-2 py-1 rounded font-bold border whitespace-nowrap transition-all duration-200 ${trendFilter === 'regression' ? 'bg-rose-500/20 text-rose-200 border-rose-400/60 ring-2 ring-rose-500/25' : 'bg-rose-500/10 text-rose-300 border-rose-500/25 hover:border-rose-400/45'}`}
+                className={`w-full text-center text-[9px] px-2 py-1 rounded font-bold border whitespace-nowrap transition-all duration-200 cursor-pointer ${trendFilter === 'regression' ? 'bg-rose-500/20 text-rose-200 border-rose-400/60 ring-2 ring-rose-500/25' : 'bg-rose-500/10 text-rose-300 border-rose-500/25 hover:border-rose-400/45'}`}
               >
                 {trainingStructure.regressionCount} Losing
               </button>

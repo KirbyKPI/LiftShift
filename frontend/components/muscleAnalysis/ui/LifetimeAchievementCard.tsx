@@ -15,6 +15,7 @@ import {
 /** Format weeks to human-readable string */
 function formatEta(weeks: number | null): string {
   if (weeks === null || weeks <= 0) return 'Reached';
+  if (weeks === Infinity) return '∞ yrs';
   if (weeks <= 1) return '~1 wk';
   if (weeks < 6) return `~${weeks} wks`;
   const months = Math.round(weeks / 4.33);
@@ -112,8 +113,18 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
   }, [muscleData]);
 
   const handleMouseEnter = (e: React.MouseEvent, m: typeof muscleData[0]) => {
-    const timeText = m.weeksToNext ? formatEta(m.weeksToNext) : m.nextTier ? 'Max tier' : '';
-    const etaText = timeText && m.nextTier ? `${timeText} to ${m.nextTier.label}` : timeText;
+    let timeText = '';
+    let etaText = '';
+    
+    if (!m.nextTier) {
+      timeText = 'Max tier';
+    } else if (m.weeksToNext === Infinity) {
+      timeText = '∞ yrs';
+      etaText = `∞ yrs to ${m.nextTier.label}`;
+    } else if (m.weeksToNext) {
+      timeText = formatEta(m.weeksToNext);
+      etaText = `${timeText} to ${m.nextTier.label}`;
+    }
     
     showTooltip(e, {
       title: m.name,
@@ -192,7 +203,7 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
             return (
               <div
                 key={m.muscleId}
-                className="flex items-center gap-2 rounded px-1 py-0.5 -mx-1 group relative lg:cursor-pointer"
+                className="flex items-center gap-2 rounded px-1 py-0.5 -mx-1 group relative cursor-pointer"
                 onClick={() => {
                   if (window.innerWidth >= 1024) {
                     onMuscleClick?.(m.muscleId);
@@ -208,7 +219,7 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
                 >
                   {m.name}
                 </span>
-                <div className="w-[45%] lg:w-[55%]">
+                <div className="w-[43%] lg:w-[55%]">
                   <ProgressBar percent={m.achievement} color={color} />
                 </div>
                 <span
@@ -219,13 +230,13 @@ export const LifetimeAchievementCard: React.FC<LifetimeAchievementCardProps> = (
                   {Math.round(m.achievement)}%
                 </span>
                 <span
-                  className={`text-[9px] flex items-center gap-1 w-[25%] lg:w-[12%] flex-shrink-0 ${m.tier.color}`}
+                  className={`text-[9px] flex items-center gap-1 w-[20%] lg:w-[12%] flex-shrink-0 ${m.tier.color}`}
                 >
                   <span className="truncate">{m.tier.label}</span>
                   <TierIcon tierKey={m.tier.key} />
                 </span>
                 {m.weeksToNext && (
-                  <span className="text-[9px] text-slate-500 w-[5%] lg:w-[5%] flex-shrink-0">
+                  <span className="text-[9px] text-slate-500 w-[12%] lg:w-[5%] flex-shrink-0">
                     {formatEta(m.weeksToNext)}
                   </span>
                 )}

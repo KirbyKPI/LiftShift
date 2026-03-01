@@ -230,7 +230,7 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
         </div>
         <div className="flex items-center gap-2">
           {selectedMuscle && (
-            <button onClick={clearSelection} className="p-1 hover:bg-black/60 rounded-lg transition-colors">
+            <button onClick={clearSelection} className="p-1 hover:bg-black/60 rounded-lg transition-colors cursor-pointer">
               <X className="w-4 h-4 text-slate-400" />
             </button>
           )}
