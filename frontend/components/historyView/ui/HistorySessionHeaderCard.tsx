@@ -10,7 +10,7 @@ import { formatRelativeTime } from '../../../utils/date/dateUtils';
 import { parseHevyDateString } from '../../../utils/date/parseHevyDateString';
 import { FANCY_FONT } from '../../../utils/ui/uiConstants';
 import { SessionDeltaBadge } from './SessionDeltaBadge';
-import { HistorySessionBodyMap } from './HistorySessionBodyMap';
+import { HistorySessionBodyMap, MuscleSetsList } from './HistorySessionBodyMap';
 
 interface HistorySessionHeaderCardProps {
   session: Session;
@@ -61,7 +61,7 @@ export const HistorySessionHeaderCard: React.FC<HistorySessionHeaderCardProps> =
         if (el?.closest('button,a,input,select,textarea,[data-no-toggle]')) return;
         toggleCollapsed();
       }}
-      className="border border-slate-700/50 rounded-2xl p-5 sm:p-7 sm:min-h-[168px] flex flex-row justify-between items-stretch gap-2 sm:gap-6 shadow-xl relative overflow-visible group transition-all duration-300 hover:border-slate-600/50 cursor-pointer active:scale-[0.99]"
+      className="border border-slate-700/50 rounded-2xl p-5 sm:p-7 sm:min-h-[168px] flex flex-row justify-between items-stretch gap-2 sm:gap-6 shadow-xl relative overflow-visible group hover:border-slate-600/50 cursor-pointer "
       style={{ backgroundColor: 'rgb(var(--panel-rgb) / 0.78)' }}
     >
       <div
@@ -72,7 +72,7 @@ export const HistorySessionHeaderCard: React.FC<HistorySessionHeaderCardProps> =
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none group-hover:bg-blue-500/10 transition-all duration-700"></div>
 
       {sessionHeatmapHasData && (
-        <div className={`relative z-10 w-full sm:hidden grid grid-cols-3 gap-x-3 gap-y-1 transition-all duration-300 ${isCollapsed ? 'grid-rows-[auto_auto]' : 'grid-rows-[auto_auto_1.75rem_1.75rem_1.75rem_1.75rem]'}`}>
+        <div className={`relative z-10 w-full sm:hidden grid grid-cols-3 gap-x-3 gap-y-1 transition-all duration-300 ${isCollapsed ? 'grid-rows-[auto_auto]' : 'grid-rows-[auto_auto_1.75rem_1.75rem_1.75rem_1.75rem_1.75rem_1.75rem_1.75rem]'}`}>
           <div className="col-span-3 relative flex items-center justify-between gap-2 min-w-0">
             <h3
               className="text-base text-slate-200 tracking-tight truncate capitalize"
@@ -140,6 +140,10 @@ export const HistorySessionHeaderCard: React.FC<HistorySessionHeaderCardProps> =
               <div className="col-span-1 row-start-6 h-7 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap transition-all duration-300">
                 <Timer className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" aria-hidden />
                 <span>{sessionDurationText ?? '—'}</span>
+              </div>
+
+              <div className="col-span-3 row-start-8 flex items-center transition-all duration-300">
+                <MuscleSetsList headlessVolumes={sessionHeadlessVolumes} />
               </div>
 
               <div
@@ -218,6 +222,10 @@ export const HistorySessionHeaderCard: React.FC<HistorySessionHeaderCardProps> =
               </span>
             )}
           </span>
+
+          <div className="pl-1 pt-1">
+            <MuscleSetsList headlessVolumes={sessionHeadlessVolumes} />
+          </div>
         </div>
       </div>
 
