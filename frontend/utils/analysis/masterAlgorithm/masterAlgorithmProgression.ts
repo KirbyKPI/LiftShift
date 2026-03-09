@@ -33,16 +33,16 @@ const PROMOTE_MESSAGES = [
 ] as const;
 
 const PROMOTE_TOOLTIPS = [
-  'Next: Pick ~{upDisplay}, target {targetReps} reps across all sets',
-  'Move up: Try ~{upDisplay}, aim for {targetReps} reps',
-  'Ready for more: Use ~{upDisplay} and target {targetReps} reps',
-  'Level up: Switch to ~{upDisplay}, hit {targetReps} reps',
-  'Add weight: Go to ~{upDisplay}, aim for {targetReps} reps',
-  'Progress time: Try ~{upDisplay} for {targetReps} reps',
-  'Next step: ~{upDisplay}, {targetReps} reps target',
-  'Ready: Use ~{upDisplay}, get {targetReps} reps',
-  'Advance: Pick ~{upDisplay}, lock in {targetReps} reps',
-  'Push forward: ~{upDisplay}, {targetReps} reps goal',
+  'Next session: Use ~{upDisplay}, aim for {targetReps}+ reps across all sets, then move up again',
+  'Progress: Try ~{upDisplay}, get {targetReps}+ reps on all sets, then add more weight',
+  'Advance: Use ~{upDisplay} for {targetReps}+ reps on each set, then increase weight',
+  'Level up: Switch to ~{upDisplay}, hit {targetReps}+ reps on all sets, then add weight',
+  'Add weight: Go to ~{upDisplay}, aim for {targetReps}+ reps consistently, then progress',
+  'Push forward: Try ~{upDisplay} for {targetReps}+ reps on each set, then increase load',
+  'Next step: Use ~{upDisplay}, lock in {targetReps}+ reps per set, then add weight',
+  'Ready: Try ~{upDisplay}, hit {targetReps}+ reps on all sets, then go heavier',
+  'Advance: Pick ~{upDisplay}, get {targetReps}+ reps every set, then add load',
+  'Move up: Use ~{upDisplay}, achieve {targetReps}+ reps across sets, then increase',
 ] as const;
 
 const DEMOTE_HEAVY_MESSAGES = [
@@ -61,14 +61,14 @@ const DEMOTE_HEAVY_MESSAGES = [
 ] as const;
 
 const DEMOTE_HEAVY_TOOLTIPS = [
-  'Next: Pick ~{downDisplay}, target {rebuildTarget} reps across all sets',
-  'Drop down: Try ~{downDisplay}, aim for {rebuildTarget} reps',
-  'Lighter load: Use ~{downDisplay} and target {rebuildTarget} reps',
-  'Scale back: Go to ~{downDisplay}, hit {rebuildTarget} reps',
-  'Reduce weight: Try ~{downDisplay} for {rebuildTarget} reps',
-  'Step down: Use ~{downDisplay}, {rebuildTarget} reps goal',
-  'Come down: Pick ~{downDisplay}, lock in {rebuildTarget} reps',
-  'Lighter: ~{downDisplay}, {rebuildTarget} reps target',
+  'Next: Use ~{downDisplay}, aim for {rebuildTarget}+ reps across all sets, then rebuild',
+  'Drop down: Try ~{downDisplay}, get {rebuildTarget}+ reps on all sets before adding weight',
+  'Lighter load: Use ~{downDisplay} and target {rebuildTarget}+ reps on each set',
+  'Scale back: Go to ~{downDisplay}, hit {rebuildTarget}+ reps consistently, then progress',
+  'Reduce weight: Try ~{downDisplay} for {rebuildTarget}+ reps on each set, then increase',
+  'Step down: Use ~{downDisplay}, achieve {rebuildTarget}+ reps per set before adding load',
+  'Come down: Pick ~{downDisplay}, lock in {rebuildTarget}+ reps on all sets, then advance',
+  'Lighter: Use ~{downDisplay}, get {rebuildTarget}+ reps across sets before progressing',
 ] as const;
 
 const DEMOTE_INCONSISTENT_MESSAGES = [
@@ -87,14 +87,14 @@ const DEMOTE_INCONSISTENT_MESSAGES = [
 ] as const;
 
 const DEMOTE_INCONSISTENT_TOOLTIPS = [
-  'Next: Pick ~{preferredWeight}, target {targetReps} reps across all sets',
-  'Stabilize: Try ~{preferredWeight}, aim for {targetReps} reps',
-  'Even out: Use ~{preferredWeight} and target {targetReps} reps',
-  'Consistency: Go to ~{preferredWeight}, hit {targetReps} reps',
-  'Uniform output: Try ~{preferredWeight} for {targetReps} reps',
-  'Steady: Use ~{preferredWeight}, {targetReps} reps goal',
-  'Even performance: Pick ~{preferredWeight}, lock in {targetReps} reps',
-  'Converge: ~{preferredWeight}, {targetReps} reps target',
+  'Next: Use ~{preferredWeight}, aim for {targetReps}+ reps across all sets, then progress',
+  'Stabilize: Try ~{preferredWeight}, get {targetReps}+ reps on each set, then add weight',
+  'Even out: Use ~{preferredWeight} and target {targetReps}+ reps on every set',
+  'Consistency: Go to ~{preferredWeight}, hit {targetReps}+ reps on all sets before advancing',
+  'Uniform output: Try ~{preferredWeight} for {targetReps}+ reps on each set, then increase',
+  'Steady: Use ~{preferredWeight}, achieve {targetReps}+ reps per set before adding load',
+  'Even performance: Pick ~{preferredWeight}, lock in {targetReps}+ reps on all sets, then progress',
+  'Converge: Use ~{preferredWeight}, get {targetReps}+ reps across sets before moving up',
 ] as const;
 
 export interface AnalyzeProgressionOptions {
