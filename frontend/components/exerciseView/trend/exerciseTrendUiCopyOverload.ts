@@ -23,7 +23,7 @@ export const getOverloadCopy = (seedBase: string): TrendCopy => {
     'Solid work! Strength is trending upward. Keep that momentum.',
     'Good progress! Those reps are adding up nicely.',
     'Looking good! The strength train is chugging along.',
-    "Gains are happening - keep doing what you're doing.",
+    "Gains are happening, keep doing what you're doing.",
     "Strength is building! Don't mess with success.",
     "You're making progress! The trend is your friend.",
     'Hello, improvement! Nice to see you moving forward.',
@@ -37,7 +37,7 @@ export const getOverloadCopy = (seedBase: string): TrendCopy => {
 
   const subtext = pickDeterministic(`${seedBase}|sub`, [
     'Technique still matters, champ. Control those reps and show off your form.',
-    'Progress is progress! Don\'t get sloppy - small beats big every time.',
+    'Progress is progress! Don\'t get sloppy, small beats big every time.',
     'Keep this momentum. Add reps slowly or make those eccentrics count.',
     'Nice work! If the bar feels light, maybe it\'s time for the next jump.',
     'Stay consistent! Master this range before getting too ambitious.',
@@ -50,7 +50,7 @@ export const getOverloadCopy = (seedBase: string): TrendCopy => {
     "Recovery is your secret weapon. Don't sabotage with poor sleep.",
     'Film yourself improving. Future you will appreciate the journey.',
     'Hold the standard: same setup, same depth, cleaner reps. Let strength accumulate.',
-    'Add difficulty with intent: +1 rep, +1 set, or a small load jump — not all at once.',
+    'Add difficulty with intent: +1 rep, +1 set, or a small load jump, not all at once.',
     'Keep sessions repeatable. The goal is momentum, not chaos.',
     "Ride the wave: keep the effort consistent and don't force max attempts.",
   ] as const);

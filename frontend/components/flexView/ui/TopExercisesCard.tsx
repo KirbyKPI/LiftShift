@@ -34,7 +34,7 @@ export const TopExercisesCard: React.FC<{
               isDark ? 'border-slate-800' : 'border-slate-200'
             } rounded-lg`}
           >
-            Building baseline — log a few workouts to see your top exercises.
+            Building baseline, log a few workouts to see your top exercises.
           </div>
         ) : (
           <div className="w-full flex-1 flex flex-col justify-center gap-3 px-1 sm:px-2 overflow-x-hidden">

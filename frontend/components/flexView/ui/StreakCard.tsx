@@ -75,7 +75,7 @@ export const StreakCard: React.FC<{
         </div>
 
         <p className={`text-base ${textSecondary} max-w-xs`}>
-          was your longest streak — keep that fire burning!
+          was your longest streak, keep that fire burning!
         </p>
 
         {streakInfo.currentStreak > 0 && (

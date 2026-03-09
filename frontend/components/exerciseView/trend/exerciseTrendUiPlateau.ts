@@ -53,10 +53,10 @@ export const getPlateauAdvice = (
   const description = (() => {
     if (!hasStaticPlateau) {
       return pickDeterministic(`${seedBase}|desc`, [
-        "Your recent sessions aren't improving yet. This is a normal phase — time for a small, deliberate push.",
+        "Your recent sessions aren't improving yet. This is a normal phase, time for a small, deliberate push.",
         'The trend is basically flat lately. Keep technique consistent and add one small progression lever.',
         'No clear progress (or just a tiny dip). Treat this as feedback: recover well and progress slowly.',
-        "You're repeating similar performance. That's fine — now choose a micro-goal and beat it next session.",
+        "You're repeating similar performance. That's fine, now choose a micro-goal and beat it next session.",
         `Output has been steady for ${sessionsAtPlateau}+ sessions. A small nudge (reps, load, rest) usually breaks it.`,
       ] as const);
     }
@@ -72,7 +72,7 @@ export const getPlateauAdvice = (
       `Both load (${plateauWeight}${weightUnit}) and reps (${minReps}-${maxReps}) are consistent. Your comfort zone is showing.`,
       `Same old: ${minReps}-${maxReps} reps. Progress is taking a coffee break.`,
       `Strength is stable at ${plateauWeight}${weightUnit}. Time to introduce a new stimulus!`,
-      `Consistent pattern: ${plateauWeight}${weightUnit} × ${minReps}-${maxReps}. Great control — now chase growth.`,
+      `Consistent pattern: ${plateauWeight}${weightUnit} × ${minReps}-${maxReps}. Great control, now chase growth.`,
       'This looks like a true plateau: consistent output, limited change. Perfect moment for a small, strategic push.',
     ] as const);
   })();
@@ -92,7 +92,7 @@ export const getPlateauAdvice = (
               "Pick one lever: +1 rep somewhere, or a small load bump next session. Don't change everything at once.",
               'Lock your technique and chase a micro-win: +1 rep total or a small load increase when reps are stable.',
               'If this feels easy, progress. If it feels grindy, recover and repeat the same load cleanly once more.',
-              'Small changes work: slightly more reps, slightly more load, or slightly more rest — choose one.',
+              'Small changes work: slightly more reps, slightly more load, or slightly more rest, choose one.',
             ]
       );
     }

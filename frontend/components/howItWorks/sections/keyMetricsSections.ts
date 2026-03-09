@@ -67,7 +67,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
           tone: 'note',
           title: 'What a PR does (and doesn’t) mean',
           text:
-            'A PR is a good progress signal, but it doesn’t automatically mean your program is perfect — and not hitting PRs every week doesn’t mean you’re failing. Use PRs alongside volume, consistency, and trends.',
+            'A PR is a good progress signal, but it doesn’t automatically mean your program is perfect, and not hitting PRs every week doesn’t mean you’re failing. Use PRs alongside volume, consistency, and trends.',
         },
       ],
     },
@@ -223,7 +223,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'For muscle analysis, LiftShift turns each exercise into “muscle work” based on which muscles the movement trains. It uses rolling 7-day windows so “weekly volume” matches how bodies adapt — not just calendar weeks.',
+            'For muscle analysis, LiftShift turns each exercise into “muscle work” based on which muscles the movement trains. It uses rolling 7-day windows so “weekly volume” matches how bodies adapt, not just calendar weeks.',
         },
         {
           type: 'p',

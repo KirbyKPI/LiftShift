@@ -15,7 +15,7 @@ export const AI_PRIVACY_SECTIONS: HowItWorksSection[] = [
         tone: 'note',
         title: 'What this export is for',
         text:
-          'Use it when you want a second opinion: training plan ideas, weak points, or patterns you may not notice. It is a convenience feature — your charts still work without it.',
+          'Use it when you want a second opinion: training plan ideas, weak points, or patterns you may not notice. It is a convenience feature, your charts still work without it.',
       },
     ],
   },

@@ -20,7 +20,7 @@ export const getRegressionCopy = (seedBase: string): TrendCopy => {
     'Strength took a dip. This is your body\'s way of saying "take it easy".',
     'Reps are trending down. Could be fatigue, stress, or just an off day.',
     'Strength is slipping. Common causes include life, stress, or needing rest.',
-    "Performance is down. Don't panic - this is your body asking for a break.",
+    "Performance is down. Don't panic, this is your body asking for a break.",
     "Things are dipping a bit. Time to adjust before it becomes a problem.",
     'Small regression happens. Use it as an excuse to perfect your form.',
     "Your recent output is lower than your usual. That's a recovery signal, not a character flaw.",

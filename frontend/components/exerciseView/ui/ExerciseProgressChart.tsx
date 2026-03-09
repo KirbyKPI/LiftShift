@@ -310,7 +310,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
       <div className="w-full flex-1 min-h-0">
         {chartData.length === 0 ? (
           <div className="w-full h-full min-h-[260px] flex items-center justify-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-lg px-4 sm:px-0 text-center">
-            Building history — log a few more sessions to see Strength Progression.
+            Building history, log a few more sessions to see Strength Progression.
           </div>
         ) : (
           <LazyRender className="w-full h-full" placeholder={<ChartSkeleton className="h-full min-h-[260px]" />}>

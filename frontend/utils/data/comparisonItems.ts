@@ -45,7 +45,7 @@ export const COMPARISON_ITEMS: Record<string, ComparisonItem> = {
   'Chicken_whole_skinned.svg': {
     weight: 1.8,
     label: 'Chickens',
-    description: 'Meal prep meets big volume—don’t drop your protein.',
+    description: 'Meal prep meets big volume,don’t drop your protein.',
   },
   'Decorated-Elephant.svg': {
     weight: 5400.0,
@@ -55,12 +55,12 @@ export const COMPARISON_ITEMS: Record<string, ComparisonItem> = {
   'Donald-Trump.svg': {
     weight: 102.0,
     label: 'Loud Guys in Suits',
-    description: 'Tremendous lift. Really tremendous. Believe me.\nGreat guy, great compression tee , very strong, the best fit.',
+    description: 'Tremendous lift. Really tremendous. Believe me.\nGreat guy, great compression tee, very strong, the best fit.',
   },
   'Egyptian-pyramids.svg': {
     weight: 6000000.0,
     label: 'Pyramids',
-    description: 'Civilization-level volume—ancient engineers approve.',
+    description: 'Civilization-level volume,ancient engineers approve.',
   },
   'Egyptian-sphinx.svg': {
     weight: 2000000.0,
@@ -70,7 +70,7 @@ export const COMPARISON_ITEMS: Record<string, ComparisonItem> = {
   'F15jet.svg': {
     weight: 12700.0,
     label: 'F-15 Fighter Jets',
-    description: 'Not a lift, a launch—air superiority achieved.',
+    description: 'Not a lift, a launch,air superiority achieved.',
   },
   'Female-Bodybuilder-flexing-sillhuite.svg': {
     weight: 72.0,
@@ -85,17 +85,17 @@ export const COMPARISON_ITEMS: Record<string, ComparisonItem> = {
   'Gorilla.svg': {
     weight: 160.0,
     label: 'Gorillas',
-    description: 'Silverback strength borrowed—avoid eye contact mid-rep.',
+    description: 'Silverback strength borrowed,avoid eye contact mid-rep.',
   },
   'Muscular-Putin.svg': {
     weight: 98.0,
     label: 'Bodybuilder Putins',
-    description: 'Heavy stare, heavier weight—soundtrack required.',
+    description: 'Heavy stare, heavier weight,soundtrack required.',
   },
   'Statue-Of-Liberty.svg': {
     weight: 204000.0,
     label: 'Statues of Liberty',
-    description: 'Torch up, core tight—liberty for your stabilizers.',
+    description: 'Torch up, core tight,liberty for your stabilizers.',
   },
   'Taj-Mahal-Illustration.svg': {
     weight: 200000.0,

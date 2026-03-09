@@ -9,7 +9,7 @@ export const INTRO_SECTIONS: HowItWorksSection[] = [
       {
         type: 'p',
         text:
-          'LiftShift turns your workout log into clear, useful insights: what changed, what is improving, what is stuck, and what to do next — without you building spreadsheets.',
+          'LiftShift turns your workout log into clear, useful insights: what changed, what is improving, what is stuck, and what to do next, without you building spreadsheets.',
       },
       {
         type: 'ul',
@@ -24,7 +24,7 @@ export const INTRO_SECTIONS: HowItWorksSection[] = [
         tone: 'note',
         title: 'Privacy model (simple version)',
         text:
-          'Most analytics run locally in your browser. When you use login / API-key syncing, LiftShift uses your credentials only to retrieve your workout data — the analysis is still done on your device.',
+          'Most analytics run locally in your browser. When you use login / API-key syncing, LiftShift uses your credentials only to retrieve your workout data, the analysis is still done on your device.',
       },
     ],
   },
