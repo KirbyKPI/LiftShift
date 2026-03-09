@@ -346,6 +346,16 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
                     <stop key={idx} offset={`${stop.offset * 100}%`} stopColor={stop.color} stopOpacity={1} />
                   ))}
                 </linearGradient>
+                <linearGradient id="zoneAreaTopFadeMask" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity={1} />
+                    <stop offset="40%" stopColor="#ffffff" stopOpacity={0.6} />
+                    <stop offset="60%" stopColor="#ffffff" stopOpacity={0.4} />
+                    <stop offset="80%" stopColor="#ffffff" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+                </linearGradient>
+                <mask id="zoneAreaTopFadeMaskDef" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+                  <rect x="0" y="0" width="1" height="1" fill="url(#zoneAreaTopFadeMask)" />
+                </mask>
               </defs>
               <XAxis
                 dataKey="timestamp"
@@ -378,9 +388,18 @@ export const MuscleAnalysisGraphPanel: React.FC<MuscleAnalysisGraphPanelProps> =
               <Area
                 type="monotone"
                 dataKey="sets"
+                stroke="none"
+                fill="url(#zoneGradient)"
+                mask="url(#zoneAreaTopFadeMaskDef)"
+                isAnimationActive={false}
+              />
+              <Area
+                type="monotone"
+                dataKey="sets"
                 stroke="#94a3b8"
                 strokeWidth={2}
-                fill="url(#zoneGradient)"
+                fill="none"
+                isAnimationActive={false}
               />
               </AreaChart>
             </ResponsiveContainer>

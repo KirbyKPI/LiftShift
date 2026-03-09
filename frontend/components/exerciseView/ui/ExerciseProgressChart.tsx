@@ -326,13 +326,25 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
                       <stop key={idx} offset={`${stop.offset * 100}%`} stopColor={stop.color} stopOpacity={isDarkMode ? 0.2 : 0.5} />
                     ))}
                   </linearGradient>
+                  <linearGradient id="areaTopFadeMask" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity={1} />
+                    <stop offset="40%" stopColor="#ffffff" stopOpacity={0.6} />
+                    <stop offset="60%" stopColor="#ffffff" stopOpacity={0.4} />
+                    <stop offset="80%" stopColor="#ffffff" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+                  </linearGradient>
+                  <mask id="areaTopFadeMaskDef" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+                    <rect x="0" y="0" width="1" height="1" fill="url(#areaTopFadeMask)" />
+                  </mask>
                   <linearGradient id="colorLeftRM" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.25} />
+                    <stop offset="60%" stopColor="#06b6d4" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="#06b6d4" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorRightRM" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.25} />
+                    <stop offset="60%" stopColor="#8b5cf6" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border-rgb) / 0.35)" vertical={false} />
@@ -362,9 +374,20 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
                     <Area
                       type="monotone"
                       dataKey={isBodyweightLike ? 'reps' : 'oneRepMax'}
+                      stroke="none"
+                      fill="url(#color1RM)"
+                      mask="url(#areaTopFadeMaskDef)"
+                      dot={false}
+                      activeDot={false}
+                      isAnimationActive={true}
+                      animationDuration={1000}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey={isBodyweightLike ? 'reps' : 'oneRepMax'}
                       stroke="#175c0f"
                       strokeWidth={2.5}
-                      fill="url(#color1RM)"
+                      fill="none"
                       dot={<StrengthProgressionValueDot
                         valueKey={isBodyweightLike ? 'reps' : 'oneRepMax'}
                         unit={isBodyweightLike ? undefined : weightUnit}
@@ -415,6 +438,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
                       stroke="#06b6d4"
                       strokeWidth={2.5}
                       fill="url(#colorLeftRM)"
+                      mask="url(#areaTopFadeMaskDef)"
                       dot={false}
                       activeDot={{ r: 5, strokeWidth: 0, fill: '#06b6d4' }}
                       isAnimationActive={true}
@@ -428,6 +452,7 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
                       stroke="#8b5cf6"
                       strokeWidth={2.5}
                       fill="url(#colorRightRM)"
+                      mask="url(#areaTopFadeMaskDef)"
                       dot={false}
                       activeDot={{ r: 5, strokeWidth: 0, fill: '#8b5cf6' }}
                       isAnimationActive={true}
