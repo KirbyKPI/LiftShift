@@ -39,6 +39,17 @@ const toNumber = (v: unknown, fallback = 0): number => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+const normalizeSetType = (value: unknown): string => {
+  const s = String(value ?? '').toLowerCase();
+
+  if (s === '0') return 'normal';
+  if (s === '1') return 'warmup';
+  if (s === '2') return 'right';
+  if (s === '3') return 'left';
+
+  return 'normal';
+};
+
 export const mapLyfataWorkoutsToWorkoutSets = (
   workouts: LyfatGetWorkoutsResponse['workouts'],
   summaries: LyfatGetWorkoutSummaryResponse['workouts'] = []
@@ -76,7 +87,8 @@ export const mapLyfataWorkoutsToWorkoutSets = (
       const exercise_notes = '';
       const superset_id = '';
 
-      for (const s of ex.sets ?? []) {
+      const setsForExercise = [...(ex.sets ?? [])].reverse();
+      setsForExercise.forEach((s, setIdx) => {
         out.push({
           title,
           start_time,
@@ -86,15 +98,15 @@ export const mapLyfataWorkoutsToWorkoutSets = (
           exercise_index: exerciseIndex,
           superset_id,
           exercise_notes,
-          set_index: 0, // Lyfta doesn't provide index
-          set_type: 'normal',
+          set_index: (ex.sets?.length ?? 1) - 1 - setIdx,
+          set_type: normalizeSetType(s.set_type_id),
           weight_kg: toNumber(s.weight, 0),
           reps: toNumber(s.reps, 0),
-          distance_km: 0,
-          duration_seconds: ex.exercise_rest_time ?? 0,
-          rpe: null,
+          distance_km: toNumber(s.distance, 0),
+          duration_seconds: toNumber(s.duration, ex.exercise_rest_time ?? 0),
+          rpe: s.rir ? toNumber(s.rir, 0) > 0 ? 10 - toNumber(s.rir, 0) : null : null,
         });
-      }
+      });
     }
   }
 

@@ -45,7 +45,14 @@ export interface LyfatGetWorkoutsResponse {
         id: string;
         weight: string;
         reps: string;
+        rir?: string;
+        duration?: string;
+        distance?: string;
+        set_type_id?: string;
         is_completed: boolean;
+        record_type?: string;
+        record_level?: string;
+        record_value?: string;
       }>;
     }>;
   }>;
