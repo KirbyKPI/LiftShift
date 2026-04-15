@@ -1,11 +1,8 @@
-import { format } from 'date-fns';
 import type { HevyWorkout, WorkoutSetDTO } from './types';
-
-const DATE_FORMAT_HEVY = 'd MMM yyyy, HH:mm';
 
 const formatEpochSeconds = (epochSeconds: number | undefined): string => {
   if (!epochSeconds || !Number.isFinite(epochSeconds)) return '';
-  return format(new Date(epochSeconds * 1000), DATE_FORMAT_HEVY);
+  return new Date(epochSeconds * 1000).toISOString();
 };
 
 const toNumber = (v: unknown, fallback = 0): number => {

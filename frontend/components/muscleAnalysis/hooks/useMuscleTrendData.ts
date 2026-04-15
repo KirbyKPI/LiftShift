@@ -11,6 +11,7 @@ import type { ExerciseAsset } from '../../../utils/data/exerciseAssets';
 import { computationCache } from '../../../utils/storage/computationCache';
 import { muscleCacheKeys } from '../../../utils/storage/cacheKeys';
 import { getTrainingLevel, getVolumeThresholds, type TrainingLevel } from '../../../utils/muscle/hypertrophy/muscleParams';
+import { parseHevyDateString } from '../../../utils/date/parseHevyDateString';
 
 interface UseMuscleTrendDataParams {
   data: WorkoutSet[];
@@ -47,7 +48,8 @@ export const useMuscleTrendData = ({
     // Find earliest workout date
     let earliestDate: Date | null = null;
     for (const set of data) {
-      const date = new Date(set.start_time);
+      const date = set.parsedDate ?? parseHevyDateString(set.start_time ?? '');
+      if (!date) continue;
       if (!earliestDate || date < earliestDate) {
         earliestDate = date;
       }

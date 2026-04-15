@@ -1,13 +1,11 @@
-import { format, isValid, parseISO } from 'date-fns';
+import { isValid, parseISO } from 'date-fns';
 import type { HevyProWorkout, WorkoutSetDTO } from './types';
-
-const DATE_FORMAT_HEVY = 'd MMM yyyy, HH:mm';
 
 const formatIsoDate = (iso: string | undefined): string => {
   if (!iso) return '';
   try {
     const d = parseISO(iso);
-    return isValid(d) ? format(d, DATE_FORMAT_HEVY) : '';
+    return isValid(d) ? d.toISOString() : '';
   } catch {
     return '';
   }

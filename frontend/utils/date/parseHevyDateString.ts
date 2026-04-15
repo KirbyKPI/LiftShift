@@ -7,6 +7,13 @@ export const parseHevyDateString = (value: string): Date | undefined => {
     const s = String(value).trim();
     if (!s) return undefined;
 
+    // Prefer the native parser for ISO 8601 strings that already encode an offset.
+    // That preserves the original instant instead of reinterpreting the wall time.
+    if (/[Tt]/.test(s) && (/[Zz]$/.test(s) || /[+-]\d{2}:\d{2}$/.test(s))) {
+      const isoDate = new Date(s);
+      if (isPlausibleDate(isoDate)) return isoDate;
+    }
+
     const normalizeTwoDigitYearIfNeeded = (d: Date): Date => {
       const y = d.getFullYear();
       // date-fns parses 2-digit years using the reference date's century.

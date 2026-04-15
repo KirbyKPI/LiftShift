@@ -1,15 +1,12 @@
-import { format } from 'date-fns';
 import type { WorkoutSetDTO } from './types';
 import type { LyfatGetWorkoutsResponse, LyfatGetWorkoutSummaryResponse } from './lyfta';
-
-const DATE_FORMAT_LYFTA = 'd MMM yyyy, HH:mm';
 
 const parseDate = (dateStr: string | undefined): string => {
   if (!dateStr) return '';
   try {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return '';
-    return format(date, DATE_FORMAT_LYFTA);
+    return date.toISOString();
   } catch {
     return '';
   }
@@ -76,7 +73,7 @@ export const mapLyfataWorkoutsToWorkoutSets = (
     if (durationMinutes > 0 && w.workout_perform_date) {
       const startDate = new Date(w.workout_perform_date);
       if (!isNaN(startDate.getTime())) {
-        end_time = format(new Date(startDate.getTime() + durationMinutes * 60 * 1000), DATE_FORMAT_LYFTA);
+        end_time = new Date(startDate.getTime() + durationMinutes * 60 * 1000).toISOString();
       }
     }
     
