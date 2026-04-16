@@ -27,6 +27,11 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
+  "include": [
+    "frontend/**/*",
+    "*.ts",
+    "*.tsx"
+  ],
   "exclude": [
     "backend",
     "node_modules",
