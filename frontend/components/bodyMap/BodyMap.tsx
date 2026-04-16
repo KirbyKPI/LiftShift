@@ -36,6 +36,7 @@ interface BodyMapProps {
   variant?: BodyMapVariant;
   warpParams?: BodyWarpParams;
   stroke?: Partial<BodyMapStrokeConfig>;
+  viewMode?: 'original' | 'headless';
 }
 
 // Hover and selection highlight colors (theme-driven)
