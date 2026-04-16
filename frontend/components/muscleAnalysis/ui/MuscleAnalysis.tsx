@@ -29,6 +29,7 @@ interface MuscleAnalysisProps {
   stickyHeader?: boolean;
   bodyMapGender?: BodyMapGender;
   now?: Date;
+  secondarySetMultiplier?: number;
 }
 
 export const MuscleAnalysis: React.FC<MuscleAnalysisProps> = ({
@@ -43,6 +44,7 @@ export const MuscleAnalysis: React.FC<MuscleAnalysisProps> = ({
   stickyHeader = false,
   bodyMapGender = 'male',
   now,
+  secondarySetMultiplier = 0.5,
 }) => {
   const [weeklySetsChartView, setWeeklySetsChartView] = useState<'heatmap' | 'radar'>('heatmap');
   const [hoverTooltip, setHoverTooltip] = useState<TooltipData | null>(null);
@@ -77,6 +79,7 @@ export const MuscleAnalysis: React.FC<MuscleAnalysisProps> = ({
     lifetimeData,
     weeklySetsWindow,
     now,
+    secondarySetMultiplier,
   });
 
   // Prefetch History view data after 3 seconds on Muscle Analysis
@@ -108,6 +111,7 @@ export const MuscleAnalysis: React.FC<MuscleAnalysisProps> = ({
     weeklySetsWindow,
     selectedMuscle,
     filterCacheKey,
+    secondarySetMultiplier,
   });
 
   const {
@@ -136,6 +140,7 @@ export const MuscleAnalysis: React.FC<MuscleAnalysisProps> = ({
     windowedGroupVolumes,
     muscleVolumes,
     filterCacheKey,
+    secondarySetMultiplier,
   });
   const {
     handleMuscleClick,
@@ -239,6 +244,7 @@ export const MuscleAnalysis: React.FC<MuscleAnalysisProps> = ({
             volumeThresholds={volumeThresholds}
             onExerciseClick={onExerciseClick}
             bodyMapGender={bodyMapGender}
+            secondarySetMultiplier={secondarySetMultiplier}
           />
         </div>
 

@@ -84,15 +84,16 @@ export type { VolumePeriod };
 export const getMuscleVolumeTimeSeries = (
   data: WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  period: 'weekly' | 'monthly' | 'daily' | 'yearly' = 'weekly'
+  period: 'weekly' | 'monthly' | 'daily' | 'yearly' = 'weekly',
+  secondarySetMultiplier: number = 0.5
 ): MuscleTimeSeriesResult => {
   // Daily uses the old simple aggregation (no rolling needed)
   if (period === 'daily') {
-    return buildSimpleDailyTimeSeries(data, assetsMap, true);
+    return buildSimpleDailyTimeSeries(data, assetsMap, true, secondarySetMultiplier);
   }
 
   // Weekly/Monthly/Yearly use rolling window calculations
-  return getMuscleVolumeTimeSeriesRolling(data, assetsMap, period as VolumePeriod, true);
+  return getMuscleVolumeTimeSeriesRolling(data, assetsMap, period as VolumePeriod, true, secondarySetMultiplier);
 };
 
 /**
@@ -109,19 +110,21 @@ export const getMuscleVolumeTimeSeries = (
 export const getMuscleVolumeTimeSeriesDetailed = (
   data: WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  period: 'weekly' | 'monthly' | 'daily' | 'yearly' = 'weekly'
+  period: 'weekly' | 'monthly' | 'daily' | 'yearly' = 'weekly',
+  secondarySetMultiplier: number = 0.5
 ): MuscleTimeSeriesResult => {
   if (period === 'daily') {
-    return buildSimpleDailyTimeSeries(data, assetsMap, false);
+    return buildSimpleDailyTimeSeries(data, assetsMap, false, secondarySetMultiplier);
   }
 
-  return getMuscleVolumeTimeSeriesRolling(data, assetsMap, period as VolumePeriod, false);
+  return getMuscleVolumeTimeSeriesRolling(data, assetsMap, period as VolumePeriod, false, secondarySetMultiplier);
 };
 
 export const getMuscleVolumeTimeSeriesCalendar = (
   data: WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  period: 'weekly' | 'monthly' | 'daily' | 'yearly' = 'weekly'
+  period: 'weekly' | 'monthly' | 'daily' | 'yearly' = 'weekly',
+  secondarySetMultiplier: number = 0.5
 ): MuscleTimeSeriesResult => {
   const lowerMap = getLowerMap(assetsMap);
   const result = buildTimeSeries<WorkoutSet>(data, period as TimePeriod, (set) => {
@@ -129,7 +132,7 @@ export const getMuscleVolumeTimeSeriesCalendar = (
     const name = set.exercise_title || '';
     const asset = lookupAsset(name, assetsMap, lowerMap);
     if (!asset) return {};
-    const contributions = getMuscleContributionsFromAsset(asset, true);
+    const contributions = getMuscleContributionsFromAsset(asset, true, { secondarySetMultiplier });
     if (contributions.length === 0) return {};
     const out: Record<string, number> = {};
     for (const c of contributions) {
@@ -143,7 +146,8 @@ export const getMuscleVolumeTimeSeriesCalendar = (
 export const getMuscleVolumeTimeSeriesDetailedCalendar = (
   data: WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  period: 'weekly' | 'monthly' | 'daily' | 'yearly' = 'weekly'
+  period: 'weekly' | 'monthly' | 'daily' | 'yearly' = 'weekly',
+  secondarySetMultiplier: number = 0.5
 ): MuscleTimeSeriesResult => {
   const lowerMap = getLowerMap(assetsMap);
   const result = buildTimeSeries<WorkoutSet>(data, period as TimePeriod, (set) => {
@@ -151,7 +155,7 @@ export const getMuscleVolumeTimeSeriesDetailedCalendar = (
     const name = set.exercise_title || '';
     const asset = lookupAsset(name, assetsMap, lowerMap);
     if (!asset) return {};
-    const contributions = getMuscleContributionsFromAsset(asset, false);
+    const contributions = getMuscleContributionsFromAsset(asset, false, { secondarySetMultiplier });
     if (contributions.length === 0) return {};
     const out: Record<string, number> = {};
     for (const c of contributions) {
@@ -174,9 +178,10 @@ export const getMuscleVolumeTimeSeriesDetailedCalendar = (
 export const getDetailedMuscleCompositionLatest = (
   data: WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  period: 'weekly' | 'monthly' | 'yearly' = 'weekly'
+  period: 'weekly' | 'monthly' | 'yearly' = 'weekly',
+  secondarySetMultiplier: number = 0.5
 ): MuscleCompositionResult => {
-  const latestVolume = getLatestRollingWeeklyVolume(data, assetsMap, false);
+  const latestVolume = getLatestRollingWeeklyVolume(data, assetsMap, false, secondarySetMultiplier);
 
   if (!latestVolume) {
     return { data: [], label: '' };

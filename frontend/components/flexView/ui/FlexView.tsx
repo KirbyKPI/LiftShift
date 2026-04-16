@@ -27,6 +27,7 @@ interface FlexViewProps {
   bodyMapGender?: BodyMapGender;
   /** Reference date for relative time calculations. Pass from App for centralized date mode control. */
   now?: Date;
+  secondarySetMultiplier?: number;
 }
 
 export const FlexView: React.FC<FlexViewProps> = ({
@@ -38,6 +39,7 @@ export const FlexView: React.FC<FlexViewProps> = ({
   stickyHeader = false,
   bodyMapGender = 'male',
   now,
+  secondarySetMultiplier = 0.5,
 }) => {
   const { mode } = useTheme();
   const cardTheme: CardTheme = mode === 'light' ? 'light' : 'dark';
@@ -46,13 +48,14 @@ export const FlexView: React.FC<FlexViewProps> = ({
   const { assetLookup, exerciseMuscleData } = useFlexAssets();
   const effectiveNow = useMemo(() => now ?? getEffectiveNowFromWorkoutData(data), [now, data]);
 
-  const ytdHeadlessHeatmap = useFlexHeadlessHeatmap(data, effectiveNow, exerciseMuscleData);
+  const ytdHeadlessHeatmap = useFlexHeadlessHeatmap(data, effectiveNow, exerciseMuscleData, secondarySetMultiplier);
   const stats = useFlexStats({
     data,
     weightUnit,
     dailySummaries: dailySummariesProp,
     assetLookup,
     effectiveNow,
+    secondarySetMultiplier,
   });
 
   const { streakInfo, prInsights, topPRExercises } = useFlexInsights({

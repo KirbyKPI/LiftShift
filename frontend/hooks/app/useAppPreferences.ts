@@ -14,6 +14,8 @@ import {
   ExerciseTrendMode,
   getExerciseTrendMode,
   saveExerciseTrendMode,
+  getSecondarySetMultiplier,
+  saveSecondarySetMultiplier,
 } from '../../utils/storage/localStorage';
 import { BodyMapGender } from '../../components/bodyMap/BodyMap';
 
@@ -37,6 +39,10 @@ export interface UseAppPreferencesReturn {
   // Exercise trend mode
   exerciseTrendMode: ExerciseTrendMode;
   setExerciseTrendMode: (mode: ExerciseTrendMode) => void;
+
+  // Secondary set multiplier
+  secondarySetMultiplier: number;
+  setSecondarySetMultiplier: (value: number) => void;
 }
 
 export function useAppPreferences(): UseAppPreferencesReturn {
@@ -46,6 +52,7 @@ export function useAppPreferences(): UseAppPreferencesReturn {
   const [bodyMapGender, setBodyMapGenderState] = useState<BodyMapGender>(() => getBodyMapGender());
   const [dateMode, setDateModeState] = useState<DateMode>(() => getDateMode());
   const [exerciseTrendMode, setExerciseTrendModeState] = useState<ExerciseTrendMode>(() => getExerciseTrendMode());
+  const [secondarySetMultiplier, setSecondarySetMultiplierState] = useState<number>(() => getSecondarySetMultiplier());
 
   // Persist weight unit
   useEffect(() => {
@@ -69,6 +76,11 @@ export function useAppPreferences(): UseAppPreferencesReturn {
     saveExerciseTrendMode(exerciseTrendMode);
   }, [exerciseTrendMode]);
 
+  // Persist secondary set multiplier
+  useEffect(() => {
+    saveSecondarySetMultiplier(secondarySetMultiplier);
+  }, [secondarySetMultiplier]);
+
   // Apply CSS variables - always use multicolor
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -88,5 +100,7 @@ export function useAppPreferences(): UseAppPreferencesReturn {
     setDateMode: setDateModeState,
     exerciseTrendMode,
     setExerciseTrendMode: setExerciseTrendModeState,
+    secondarySetMultiplier,
+    setSecondarySetMultiplier: setSecondarySetMultiplierState,
   };
 }

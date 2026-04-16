@@ -49,40 +49,41 @@ export const prefetchMuscleData = (
   filterCacheKey: string,
   data: WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset> | null,
-  effectiveNow: Date
+  effectiveNow: Date,
+  secondarySetMultiplier: number = 0.5
 ): void => {
   if (!assetsMap) return;
 
   try {
     // Prefetch weekly sets for muscles mode (30d window is default)
     computationCache.getOrCompute(
-      muscleCacheKeys.weeklySets(filterCacheKey, '30d', 'muscles'),
+      muscleCacheKeys.weeklySets(filterCacheKey, '30d', 'muscles', secondarySetMultiplier),
       data,
-      () => computeWeeklySetsDashboardData(data, assetsMap, effectiveNow, '30d', 'muscles'),
+      () => computeWeeklySetsDashboardData(data, assetsMap, effectiveNow, '30d', 'muscles', secondarySetMultiplier),
       { ttl: PREFETCH_TTL }
     );
 
     // Prefetch weekly sets for groups mode
     computationCache.getOrCompute(
-      muscleCacheKeys.weeklySets(filterCacheKey, '30d', 'groups'),
+      muscleCacheKeys.weeklySets(filterCacheKey, '30d', 'groups', secondarySetMultiplier),
       data,
-      () => computeWeeklySetsDashboardData(data, assetsMap, effectiveNow, '30d', 'groups'),
+      () => computeWeeklySetsDashboardData(data, assetsMap, effectiveNow, '30d', 'groups', secondarySetMultiplier),
       { ttl: PREFETCH_TTL }
     );
 
     // Prefetch muscle series for groups (used in trend charts)
     computationCache.getOrCompute(
-      muscleCacheKeys.muscleSeries(filterCacheKey, 'groups'),
+      muscleCacheKeys.muscleSeries(filterCacheKey, 'groups', secondarySetMultiplier),
       data,
-      () => getMuscleVolumeTimeSeries(data, assetsMap, 'weekly'),
+      () => getMuscleVolumeTimeSeries(data, assetsMap, 'weekly', secondarySetMultiplier),
       { ttl: PREFETCH_TTL }
     );
 
     // Prefetch muscle series for muscles
     computationCache.getOrCompute(
-      muscleCacheKeys.muscleSeries(filterCacheKey, 'muscles'),
+      muscleCacheKeys.muscleSeries(filterCacheKey, 'muscles', secondarySetMultiplier),
       data,
-      () => getMuscleVolumeTimeSeries(data, assetsMap, 'weekly'),
+      () => getMuscleVolumeTimeSeries(data, assetsMap, 'weekly', secondarySetMultiplier),
       { ttl: PREFETCH_TTL }
     );
   } catch (e) {

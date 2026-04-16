@@ -47,10 +47,11 @@ export const getExerciseSpanDays = (
 
 export const buildExerciseMuscleTargets = (
   selectedStats: ExerciseStats | undefined,
-  exerciseMuscleData: Map<string, ExerciseMuscleData>
+  exerciseMuscleData: Map<string, ExerciseMuscleData>,
+  secondarySetMultiplier: number = 0.5
 ): ExerciseMuscleTargets => {
   const exData = selectedStats ? lookupExerciseMuscleData(selectedStats.name, exerciseMuscleData) : undefined;
-  const { volumes, maxVolume } = getExerciseMuscleVolumes(exData);
+  const { volumes, maxVolume } = getExerciseMuscleVolumes(exData, secondarySetMultiplier);
 
   const aggregated = new Map<string, { sets: number }>();
   volumes.forEach((sets, svgId) => {

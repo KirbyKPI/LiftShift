@@ -58,7 +58,8 @@ export const computeWeeklySetsDashboardData = (
   assetsMap: Map<string, ExerciseAsset>,
   now: Date,
   window: WeeklySetsWindow,
-  grouping: WeeklySetsGrouping
+  grouping: WeeklySetsGrouping,
+  secondarySetMultiplier: number = 0.5
 ): WeeklySetsDashboardResult => {
   const windowStart = getWindowStart(data, now, window);
   if (!windowStart) {
@@ -85,7 +86,7 @@ export const computeWeeklySetsDashboardData = (
 
     const primaryGroup = normalizeMuscleGroup(asset.primary_muscle);
     const useGroups = grouping === 'groups' || primaryGroup === 'Full Body';
-    const contributions = getMuscleContributionsFromAsset(asset, useGroups);
+    const contributions = getMuscleContributionsFromAsset(asset, useGroups, { secondarySetMultiplier });
     if (contributions.length === 0) continue;
 
     for (const c of contributions) {

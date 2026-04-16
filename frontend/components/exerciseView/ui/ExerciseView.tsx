@@ -35,6 +35,7 @@ interface ExerciseViewProps {
   bodyMapGender?: 'male' | 'female';
   stickyHeader?: boolean;
   now?: Date;
+  secondarySetMultiplier?: number;
 }
 
 export const ExerciseView: React.FC<ExerciseViewProps> = ({
@@ -50,6 +51,7 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
   bodyMapGender = 'male',
   stickyHeader = false,
   now,
+  secondarySetMultiplier = 0.5,
 }) => {
   const computedEffectiveNow = useMemo(() => computeEffectiveNowFromStats(stats), [stats]);
   const effectiveNow = useMemo(() => resolveEffectiveNow(computedEffectiveNow, now), [computedEffectiveNow, now]);
@@ -136,11 +138,11 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
     if (!assetsMap || filteredData.length === 0) return;
     
     const timer = setTimeout(() => {
-      prefetchMuscleData(filterCacheKey, filteredData, assetsMap, effectiveNow);
+      prefetchMuscleData(filterCacheKey, filteredData, assetsMap, effectiveNow, secondarySetMultiplier);
     }, 3000);
     
     return () => clearTimeout(timer);
-  }, [filterCacheKey, filteredData, assetsMap, effectiveNow]);
+  }, [filterCacheKey, filteredData, assetsMap, effectiveNow, secondarySetMultiplier]);
 
   const selectedSessions = useMemo(() => {
     if (!selectedStats) return [] as ExerciseSessionEntry[];
@@ -151,8 +153,8 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
   }, [selectedStats, summarizedHistoryByName]);
 
   const selectedExerciseMuscleInfo = useMemo<ExerciseMuscleTargets>(() => {
-    return buildExerciseMuscleTargets(selectedStats, exerciseMuscleData);
-  }, [selectedStats, exerciseMuscleData]);
+    return buildExerciseMuscleTargets(selectedStats, exerciseMuscleData, secondarySetMultiplier);
+  }, [selectedStats, exerciseMuscleData, secondarySetMultiplier]);
 
   const selectedExerciseHeadlessVolumes = useMemo(() => {
     return toHeadlessVolumeMap(selectedExerciseMuscleInfo.volumes);

@@ -81,8 +81,9 @@ export const computeWindowedExerciseBreakdown = (params: {
   end: Date;
   grouping: WindowedBreakdownGrouping;
   selectedSubjects?: readonly string[] | null;
+  secondarySetMultiplier?: number;
 }): WindowedExerciseBreakdown => {
-  const { data, assetsMap, start, end, grouping, selectedSubjects } = params;
+  const { data, assetsMap, start, end, grouping, selectedSubjects, secondarySetMultiplier = 0.5 } = params;
 
   const lookup = createExerciseAssetLookup(assetsMap);
   const lookupAsset: LookupAsset = (name: string) => lookup.getAsset(name);
@@ -135,8 +136,8 @@ export const computeWindowedExerciseBreakdown = (params: {
         }
         for (const g of secondaryGroups) {
           if (!isSelectedHit(selected, g)) continue;
-          inc += 0.5;
-          sInc += 0.5;
+          inc += secondarySetMultiplier;
+          sInc += secondarySetMultiplier;
         }
       }
 
@@ -165,8 +166,8 @@ export const computeWindowedExerciseBreakdown = (params: {
 
     for (const svgId of secondarySvgIds) {
       if (!isSelectedHit(selected, svgId)) continue;
-      inc += 0.5;
-      sInc += 0.5;
+      inc += secondarySetMultiplier;
+      sInc += secondarySetMultiplier;
     }
 
     if (inc <= 0) continue;

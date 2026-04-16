@@ -14,7 +14,8 @@ import type { FlexHeadlessHeatmap } from '../utils/flexViewTypes';
 export const useFlexHeadlessHeatmap = (
   data: WorkoutSet[],
   effectiveNow: Date,
-  exerciseMuscleData: Map<string, ExerciseMuscleData>
+  exerciseMuscleData: Map<string, ExerciseMuscleData>,
+  secondarySetMultiplier: number = 0.5
 ): FlexHeadlessHeatmap =>
   useMemo(() => {
     const ytdStart = new Date(effectiveNow.getFullYear(), 0, 1);
@@ -41,7 +42,7 @@ export const useFlexHeadlessHeatmap = (
 
       const exerciseTitle = s.exercise_title || '';
       const exData = getExerciseData(exerciseTitle);
-      const { volumes } = getExerciseMuscleVolumes(exData);
+      const { volumes } = getExerciseMuscleVolumes(exData, secondarySetMultiplier);
 
       volumes.forEach((w, svgId) => {
         detailed.set(svgId, (detailed.get(svgId) || 0) + w);
@@ -57,4 +58,4 @@ export const useFlexHeadlessHeatmap = (
 
     const maxVolume = Math.max(1, ...Array.from(weeklyVolumes.values()));
     return { volumes: weeklyVolumes, maxVolume };
-  }, [data, effectiveNow, exerciseMuscleData]);
+  }, [data, effectiveNow, exerciseMuscleData, secondarySetMultiplier]);

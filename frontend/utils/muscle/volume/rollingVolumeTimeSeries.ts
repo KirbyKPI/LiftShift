@@ -19,9 +19,10 @@ import type { VolumeTimeSeriesEntry, VolumeTimeSeriesResult } from './rollingVol
 export function buildRollingWeeklyTimeSeries(
   data: readonly WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  useGroups: boolean
+  useGroups: boolean,
+  secondarySetMultiplier: number = 0.5
 ): VolumeTimeSeriesResult {
-  const dailyVolumes = computeDailyMuscleVolumes(data, assetsMap, useGroups);
+  const dailyVolumes = computeDailyMuscleVolumes(data, assetsMap, useGroups, secondarySetMultiplier);
   const breakDates = identifyBreakPeriods(dailyVolumes);
   const rollingVolumes = computeRollingWeeklyVolumes(dailyVolumes, breakDates);
 
@@ -67,9 +68,10 @@ export function buildPeriodAverageTimeSeries(
   data: readonly WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
   periodType: 'monthly' | 'yearly',
-  useGroups: boolean
+  useGroups: boolean,
+  secondarySetMultiplier: number = 0.5
 ): VolumeTimeSeriesResult {
-  const dailyVolumes = computeDailyMuscleVolumes(data, assetsMap, useGroups);
+  const dailyVolumes = computeDailyMuscleVolumes(data, assetsMap, useGroups, secondarySetMultiplier);
   const breakDates = identifyBreakPeriods(dailyVolumes);
   const rollingVolumes = computeRollingWeeklyVolumes(dailyVolumes, breakDates);
   const periodAverages = computePeriodAverageVolumes(rollingVolumes, periodType);
@@ -110,9 +112,10 @@ export function buildPeriodAverageTimeSeries(
  */
 export function buildRollingWeeklySvgMuscleTimeSeries(
   data: readonly WorkoutSet[],
-  assetsMap: Map<string, ExerciseAsset>
+  assetsMap: Map<string, ExerciseAsset>,
+  secondarySetMultiplier: number = 0.5
 ): VolumeTimeSeriesResult {
-  const dailyVolumes = computeDailySvgMuscleVolumes(data, assetsMap);
+  const dailyVolumes = computeDailySvgMuscleVolumes(data, assetsMap, secondarySetMultiplier);
   const breakDates = identifyBreakPeriods(dailyVolumes);
   const rollingVolumes = computeRollingWeeklyVolumes(dailyVolumes, breakDates);
 
@@ -156,9 +159,10 @@ export function buildRollingWeeklySvgMuscleTimeSeries(
 export function buildPeriodAverageSvgMuscleTimeSeries(
   data: readonly WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  periodType: 'monthly' | 'yearly'
+  periodType: 'monthly' | 'yearly',
+  secondarySetMultiplier: number = 0.5
 ): VolumeTimeSeriesResult {
-  const dailyVolumes = computeDailySvgMuscleVolumes(data, assetsMap);
+  const dailyVolumes = computeDailySvgMuscleVolumes(data, assetsMap, secondarySetMultiplier);
   const breakDates = identifyBreakPeriods(dailyVolumes);
   const rollingVolumes = computeRollingWeeklyVolumes(dailyVolumes, breakDates);
   const periodAverages = computePeriodAverageVolumes(rollingVolumes, periodType);

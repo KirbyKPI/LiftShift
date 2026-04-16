@@ -43,7 +43,8 @@ export const getExerciseMuscleColor = (sets: number): string => {
 
 // Generate muscle volumes for a specific exercise based on its primary/secondary muscles
 export const getExerciseMuscleVolumes = (
-  exerciseData: ExerciseMuscleData | undefined
+  exerciseData: ExerciseMuscleData | undefined,
+  secondarySetMultiplier: number = 0.5
 ): { volumes: Map<string, number>; maxVolume: number } => {
   const volumes = new Map<string, number>();
 
@@ -101,12 +102,12 @@ export const getExerciseMuscleVolumes = (
     }
   }
 
-  // Secondary muscles get 0.5
+  // Secondary muscles get configurable value
   for (const secondary of secondaries) {
     const secondarySvgIds = CSV_TO_SVG_MUSCLE_MAP_LOWERCASE[secondary.toLowerCase()] || [];
     for (const svgId of secondarySvgIds) {
       if (!volumes.has(svgId)) {
-        volumes.set(svgId, 0.5);
+        volumes.set(svgId, secondarySetMultiplier);
       }
     }
   }

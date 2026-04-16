@@ -77,7 +77,8 @@ export function computeDailyKeyedVolumes(
 export function computeDailyMuscleVolumes(
   data: readonly WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  useGroups: boolean
+  useGroups: boolean,
+  secondarySetMultiplier: number = 0.5
 ): DailyMuscleVolume[] {
   const lowerMap = getAssetLowerMap(assetsMap);
 
@@ -86,7 +87,7 @@ export function computeDailyMuscleVolumes(
     const asset = lookupExerciseAsset(exerciseName, assetsMap, lowerMap);
     if (!asset) return null;
 
-    const contributions = getMuscleContributionsFromAsset(asset, useGroups);
+    const contributions = getMuscleContributionsFromAsset(asset, useGroups, { secondarySetMultiplier });
     if (contributions.length === 0) return null;
 
     return contributions.map((c) => ({ key: c.muscle, sets: c.sets }));
@@ -105,7 +106,8 @@ export function computeDailyMuscleVolumes(
  */
 export function computeDailySvgMuscleVolumes(
   data: readonly WorkoutSet[],
-  assetsMap: Map<string, ExerciseAsset>
+  assetsMap: Map<string, ExerciseAsset>,
+  secondarySetMultiplier: number = 0.5
 ): DailyMuscleVolume[] {
   const lowerMap = getAssetLowerMap(assetsMap);
 
@@ -117,7 +119,7 @@ export function computeDailySvgMuscleVolumes(
     const primaryGroup = normalizeMuscleGroup(asset.primary_muscle);
     const useGroupsForContributions = primaryGroup === 'Full Body';
 
-    const contributions = getMuscleContributionsFromAsset(asset, useGroupsForContributions);
+    const contributions = getMuscleContributionsFromAsset(asset, useGroupsForContributions, { secondarySetMultiplier });
     if (contributions.length === 0) return null;
 
     const out: KeyedContribution[] = [];

@@ -27,6 +27,7 @@ interface UseMuscleTrendDataParams {
   windowedGroupVolumes: Map<NormalizedMuscleGroup, number>;
   muscleVolumes: Map<string, number>;
   filterCacheKey: string;
+  secondarySetMultiplier: number;
 }
 
 export const useMuscleTrendData = ({
@@ -40,6 +41,7 @@ export const useMuscleTrendData = ({
   headlessRatesMap,
   muscleVolumes,
   filterCacheKey,
+  secondarySetMultiplier,
 }: UseMuscleTrendDataParams) => {
   // Compute user's training level from data
   const trainingLevel = useMemo(() => {
@@ -115,14 +117,20 @@ export const useMuscleTrendData = ({
 
     // Create a hash of selected keys for cache key
     const selectedKeysHash = selectedSubjectKeys.sort().join(',') || 'all';
-    const cacheKey = muscleCacheKeys.trendData(filterCacheKey, weeklySetsWindow, 'headless', selectedKeysHash);
+    const cacheKey = muscleCacheKeys.trendDataWithMultiplier(
+      filterCacheKey,
+      weeklySetsWindow,
+      'headless',
+      selectedKeysHash,
+      secondarySetMultiplier
+    );
 
     return computationCache.getOrCompute(
       cacheKey,
       data,
       () => {
         // Get daily volumes
-        const dailyVolumes = computeDailySvgMuscleVolumes(data, assetsMap);
+        const dailyVolumes = computeDailySvgMuscleVolumes(data, assetsMap, secondarySetMultiplier);
 
         // Filter to window and calculate cumulative averages
         const windowedDaily = dailyVolumes.filter(d => d.date >= windowStart && d.date <= effectiveNow);
@@ -178,19 +186,25 @@ export const useMuscleTrendData = ({
       },
       { ttl: 10 * 60 * 1000 }
     );
-  }, [assetsMap, data, windowStart, effectiveNow, weeklySetsWindow, selectedSubjectKeys, filterCacheKey]);
+  }, [assetsMap, data, windowStart, effectiveNow, weeklySetsWindow, selectedSubjectKeys, filterCacheKey, secondarySetMultiplier]);
 
   // Compute legend trend data - based on MAX muscle (to show overdrive if any muscle is in overdrive)
   const legendTrendData = useMemo(() => {
     if (!assetsMap || data.length === 0 || !windowStart) return [];
 
-    const cacheKey = muscleCacheKeys.trendData(filterCacheKey, weeklySetsWindow, 'headless', 'all');
+    const cacheKey = muscleCacheKeys.trendDataWithMultiplier(
+      filterCacheKey,
+      weeklySetsWindow,
+      'headless',
+      'all',
+      secondarySetMultiplier
+    );
 
     return computationCache.getOrCompute(
       cacheKey,
       data,
       () => {
-        const dailyVolumes = computeDailySvgMuscleVolumes(data, assetsMap);
+        const dailyVolumes = computeDailySvgMuscleVolumes(data, assetsMap, secondarySetMultiplier);
         const windowedDaily = dailyVolumes.filter(d => d.date >= windowStart && d.date <= effectiveNow);
         if (windowedDaily.length === 0) return [];
 
@@ -227,17 +241,18 @@ export const useMuscleTrendData = ({
       },
       { ttl: 10 * 60 * 1000 }
     );
-  }, [assetsMap, data, windowStart, effectiveNow, weeklySetsWindow, filterCacheKey]);
+  }, [assetsMap, data, windowStart, effectiveNow, weeklySetsWindow, filterCacheKey, secondarySetMultiplier]);
 
   const windowedSelectionBreakdown = useMemo(() => {
     if (!assetsMap || !windowStart) return null;
 
     const selectedKeysHash = selectedSubjectKeys.sort().join(',') || 'all';
-    const cacheKey = muscleCacheKeys.exerciseBreakdown(
+    const cacheKey = muscleCacheKeys.exerciseBreakdownWithMultiplier(
       filterCacheKey,
       windowStart.getTime(),
       'headless',
-      selectedKeysHash
+      selectedKeysHash,
+      secondarySetMultiplier
     );
 
     return computationCache.getOrCompute(
@@ -253,11 +268,12 @@ export const useMuscleTrendData = ({
           end: effectiveNow,
           grouping: 'muscles',
           selectedSubjects: selectedForBreakdown,
+          secondarySetMultiplier,
         });
       },
       { ttl: 10 * 60 * 1000 }
     );
-  }, [assetsMap, windowStart, effectiveNow, selectedSubjectKeys, data, filterCacheKey]);
+  }, [assetsMap, windowStart, effectiveNow, selectedSubjectKeys, data, filterCacheKey, secondarySetMultiplier]);
 
   const contributingExercises = useMemo(() => {
     if (!windowedSelectionBreakdown) return [];

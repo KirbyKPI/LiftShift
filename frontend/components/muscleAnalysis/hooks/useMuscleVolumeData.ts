@@ -21,6 +21,7 @@ export interface UseMuscleVolumeDataProps {
   lifetimeData: WorkoutSet[];
   weeklySetsWindow: WeeklySetsWindow;
   now?: Date;
+  secondarySetMultiplier?: number;
 }
 
 export interface UseMuscleVolumeDataReturn {
@@ -41,6 +42,7 @@ export function useMuscleVolumeData({
   lifetimeData,
   weeklySetsWindow,
   now,
+  secondarySetMultiplier = 0.5,
 }: UseMuscleVolumeDataProps): UseMuscleVolumeDataReturn {
   const [exerciseMuscleData, setExerciseMuscleData] = useState<Map<string, ExerciseMuscleData>>(new Map());
   const [muscleVolume, setMuscleVolume] = useState<Map<string, MuscleVolumeEntry>>(new Map());
@@ -105,8 +107,8 @@ export function useMuscleVolumeData({
       processedData = data.filter(s => s.parsedDate && s.parsedDate >= windowStart);
     }
 
-    calculateMuscleVolume(processedData, exerciseMuscleData).then(setMuscleVolume);
-  }, [data, exerciseMuscleData, windowStart]);
+    calculateMuscleVolume(processedData, exerciseMuscleData, secondarySetMultiplier).then(setMuscleVolume);
+  }, [data, exerciseMuscleData, windowStart, secondarySetMultiplier]);
 
   useEffect(() => {
     if (exerciseMuscleData.size === 0 || lifetimeData.length === 0) {
@@ -114,14 +116,14 @@ export function useMuscleVolumeData({
       return;
     }
 
-    calculateMuscleVolume(lifetimeData, exerciseMuscleData).then((allTimeVolume) => {
+    calculateMuscleVolume(lifetimeData, exerciseMuscleData, secondarySetMultiplier).then((allTimeVolume) => {
       const detailedSets = new Map<string, number>();
       allTimeVolume.forEach((entry, svgId) => {
         detailedSets.set(svgId, entry.sets);
       });
       setLifetimeHeadlessVolumes(toHeadlessVolumeMapSum(detailedSets));
     });
-  }, [lifetimeData, exerciseMuscleData]);
+  }, [lifetimeData, exerciseMuscleData, secondarySetMultiplier]);
 
   return {
     exerciseMuscleData,

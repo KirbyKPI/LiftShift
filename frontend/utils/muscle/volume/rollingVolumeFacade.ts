@@ -26,13 +26,14 @@ export function getMuscleVolumeTimeSeriesRolling(
   data: readonly WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
   period: VolumePeriod = 'weekly',
-  useGroups: boolean = true
+  useGroups: boolean = true,
+  secondarySetMultiplier: number = 0.5
 ): VolumeTimeSeriesResult {
   if (period === 'weekly') {
-    return buildRollingWeeklyTimeSeries(data, assetsMap, useGroups);
+    return buildRollingWeeklyTimeSeries(data, assetsMap, useGroups, secondarySetMultiplier);
   }
 
-  return buildPeriodAverageTimeSeries(data, assetsMap, period, useGroups);
+  return buildPeriodAverageTimeSeries(data, assetsMap, period, useGroups, secondarySetMultiplier);
 }
 
 /**
@@ -53,13 +54,14 @@ export function getMuscleVolumeTimeSeriesRolling(
 export function getSvgMuscleVolumeTimeSeriesRolling(
   data: readonly WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  period: VolumePeriod = 'weekly'
+  period: VolumePeriod = 'weekly',
+  secondarySetMultiplier: number = 0.5
 ): VolumeTimeSeriesResult {
   if (period === 'weekly') {
-    return buildRollingWeeklySvgMuscleTimeSeries(data, assetsMap);
+    return buildRollingWeeklySvgMuscleTimeSeries(data, assetsMap, secondarySetMultiplier);
   }
 
-  return buildPeriodAverageSvgMuscleTimeSeries(data, assetsMap, period);
+  return buildPeriodAverageSvgMuscleTimeSeries(data, assetsMap, period, secondarySetMultiplier);
 }
 
 /**
@@ -74,9 +76,10 @@ export function getSvgMuscleVolumeTimeSeriesRolling(
 export function getLatestRollingWeeklyVolume(
   data: readonly WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  useGroups: boolean = true
+  useGroups: boolean = true,
+  secondarySetMultiplier: number = 0.5
 ): RollingWeeklyVolume | null {
-  const dailyVolumes = computeDailyMuscleVolumes(data, assetsMap, useGroups);
+  const dailyVolumes = computeDailyMuscleVolumes(data, assetsMap, useGroups, secondarySetMultiplier);
   if (dailyVolumes.length === 0) return null;
 
   const breakDates = identifyBreakPeriods(dailyVolumes);
@@ -102,9 +105,10 @@ export function getLatestRollingWeeklyVolume(
  */
 export function getLatestRollingWeeklySvgMuscleVolume(
   data: readonly WorkoutSet[],
-  assetsMap: Map<string, ExerciseAsset>
+  assetsMap: Map<string, ExerciseAsset>,
+  secondarySetMultiplier: number = 0.5
 ): RollingWeeklyVolume | null {
-  const dailyVolumes = computeDailySvgMuscleVolumes(data, assetsMap);
+  const dailyVolumes = computeDailySvgMuscleVolumes(data, assetsMap, secondarySetMultiplier);
   if (dailyVolumes.length === 0) return null;
 
   const breakDates = identifyBreakPeriods(dailyVolumes);

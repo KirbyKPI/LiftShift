@@ -103,6 +103,24 @@ export const saveDateMode = dateModeStorage.set;
 export const getDateMode = dateModeStorage.get;
 export const clearDateMode = dateModeStorage.clear;
 
+// Secondary Set Multiplier
+const secondarySetMultiplierStorage = createStorageManager<number>({
+  key: 'hevy_analytics_secondary_set_multiplier',
+  defaultValue: 0.5,
+  serializer: (v) => String(v),
+  validator: (v) => {
+    if (v === null) return null;
+    const parsed = Number(v);
+    if (!Number.isFinite(parsed)) return null;
+    if (parsed < 0 || parsed > 1) return null;
+    return parsed;
+  },
+});
+
+export const saveSecondarySetMultiplier = secondarySetMultiplierStorage.set;
+export const getSecondarySetMultiplier = secondarySetMultiplierStorage.get;
+export const clearSecondarySetMultiplier = secondarySetMultiplierStorage.clear;
+
 // Time Filter Mode - for UI aggregation hints
 export type TimeFilterMode = 'all' | 'weekly' | 'monthly' | 'yearly';
 

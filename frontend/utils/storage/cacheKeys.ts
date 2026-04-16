@@ -27,14 +27,14 @@ export const cacheKeys = {
  * Dashboard-specific computations
  */
 export const dashboardCacheKeys = {
-  weeklySets: (filterKey: string, window: WeeklySetsWindow, grouping: WeeklySetsGrouping) =>
-    `weeklySets:${VERSION}:${filterKey}:${window}:${grouping}`,
+  weeklySets: (filterKey: string, window: WeeklySetsWindow, grouping: WeeklySetsGrouping, secondaryMultiplier: number = 0.5) =>
+    `weeklySets:${VERSION}:${filterKey}:${window}:${grouping}:sec:${secondaryMultiplier}`,
   
-  muscleSeries: (filterKey: string, mode: 'groups' | 'muscles') =>
-    `muscleSeries:${VERSION}:${filterKey}:${mode}`,
+  muscleSeries: (filterKey: string, mode: 'groups' | 'muscles', secondaryMultiplier: number = 0.5) =>
+    `muscleSeries:${VERSION}:${filterKey}:${mode}:sec:${secondaryMultiplier}`,
   
-  muscleTrendInsight: (filterKey: string, grouping: string, period: string) =>
-    `muscleTrendInsight:${VERSION}:${filterKey}:${grouping}:${period}`,
+  muscleTrendInsight: (filterKey: string, grouping: string, period: string, secondaryMultiplier: number = 0.5) =>
+    `muscleTrendInsight:${VERSION}:${filterKey}:${grouping}:${period}:sec:${secondaryMultiplier}`,
   
   plateauAnalysis: (filterKey: string) => `plateauAnalysis:${VERSION}:${filterKey}`,
   
@@ -79,8 +79,24 @@ export const muscleCacheKeys = {
   trendData: (filterKey: string, window: WeeklySetsWindow, viewMode: string, selectedKeysHash: string) =>
     `muscleTrendData:${VERSION}:${filterKey}:${window}:${viewMode}:${selectedKeysHash}`,
 
+  trendDataWithMultiplier: (
+    filterKey: string,
+    window: WeeklySetsWindow,
+    viewMode: string,
+    selectedKeysHash: string,
+    secondaryMultiplier: number
+  ) => `muscleTrendData:${VERSION}:${filterKey}:${window}:${viewMode}:${selectedKeysHash}:sec:${secondaryMultiplier}`,
+
   exerciseBreakdown: (filterKey: string, windowStart: number | null, viewMode: string, selectedKeysHash: string) =>
     `exerciseBreakdown:${VERSION}:${filterKey}:${windowStart ?? 'all'}:${viewMode}:${selectedKeysHash}`,
+
+  exerciseBreakdownWithMultiplier: (
+    filterKey: string,
+    windowStart: number | null,
+    viewMode: string,
+    selectedKeysHash: string,
+    secondaryMultiplier: number
+  ) => `exerciseBreakdown:${VERSION}:${filterKey}:${windowStart ?? 'all'}:${viewMode}:${selectedKeysHash}:sec:${secondaryMultiplier}`,
 };
 
 /**

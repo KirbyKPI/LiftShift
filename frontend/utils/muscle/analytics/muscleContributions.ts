@@ -6,6 +6,10 @@ export interface MuscleContribution {
   sets: number;
 }
 
+export interface MuscleContributionOptions {
+  secondarySetMultiplier?: number;
+}
+
 const FULL_BODY_GROUPS: readonly NormalizedMuscleGroup[] = [
   'Chest',
   'Back',
@@ -30,9 +34,11 @@ const FULL_BODY_GROUPS: readonly NormalizedMuscleGroup[] = [
  */
 export const getMuscleContributionsFromAsset = (
   asset: ExerciseAsset | undefined | null,
-  useGroups: boolean
+  useGroups: boolean,
+  options?: MuscleContributionOptions
 ): MuscleContribution[] => {
   if (!asset) return [];
+  const secondarySetMultiplier = options?.secondarySetMultiplier ?? 0.5;
   
   const contributions: MuscleContribution[] = [];
   let primaryRaw = String(asset.primary_muscle ?? '').trim();
@@ -102,7 +108,7 @@ export const getMuscleContributionsFromAsset = (
   // Add secondary muscles with 0.5 sets
   if (secondaryRaw && !/^none$/i.test(secondaryRaw)) {
     for (const s of secondaryRaw.split(',')) {
-      addContribution(s, 0.5);
+      addContribution(s, secondarySetMultiplier);
     }
   }
 

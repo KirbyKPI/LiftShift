@@ -25,7 +25,8 @@ export interface WeeklyMuscleVolume {
 
 export const calculateMuscleVolume = async (
   data: WorkoutSet[],
-  exerciseMuscleData: Map<string, ExerciseMuscleData>
+  exerciseMuscleData: Map<string, ExerciseMuscleData>,
+  secondarySetMultiplier: number = 0.5
 ): Promise<Map<string, MuscleVolumeEntry>> => {
   const muscleVolume = new Map<string, MuscleVolumeEntry>();
 
@@ -91,7 +92,7 @@ export const calculateMuscleVolume = async (
     }
 
     // Handle secondary muscles (each counts as 0.5 sets, or 0.25 for L/R sets)
-    const secondaryIncrement = isUnilateralSet(set) ? 0.25 : 0.5;
+    const secondaryIncrement = isUnilateralSet(set) ? (secondarySetMultiplier / 2) : secondarySetMultiplier;
     for (const secondaryMuscle of secondaryMuscles) {
       const secondaryKey = secondaryMuscle.toLowerCase();
       const secondarySvgIds = CSV_TO_SVG_MUSCLE_MAP_LOWERCASE[secondaryKey] ?? [];
@@ -115,7 +116,8 @@ export const computeWeeklyMuscleVolume = async (
   data: WorkoutSet[],
   exerciseMuscleData: Map<string, ExerciseMuscleData>,
   weeksBack: number = 12,
-  now?: Date
+  now?: Date,
+  secondarySetMultiplier: number = 0.5
 ): Promise<WeeklyMuscleVolume[]> => {
   const effectiveNow = now ?? getEffectiveNowFromWorkoutData(data);
   const startDate = subWeeks(startOfWeek(effectiveNow, { weekStartsOn: 1 }), weeksBack - 1);
@@ -135,7 +137,7 @@ export const computeWeeklyMuscleVolume = async (
       return set.parsedDate >= weekStart && set.parsedDate <= weekEnd;
     });
 
-    const muscles = await calculateMuscleVolume(weekData, exerciseMuscleData);
+    const muscles = await calculateMuscleVolume(weekData, exerciseMuscleData, secondarySetMultiplier);
 
     let totalSets = 0;
     muscles.forEach((entry) => {

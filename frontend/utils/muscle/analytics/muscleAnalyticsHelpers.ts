@@ -6,6 +6,7 @@ import { formatDayContraction } from '../../date/dateUtils';
 import { getMuscleContributionsFromAsset } from './muscleContributions';
 import { isWarmupSet } from '../../analysis/classification';
 import { createExerciseNameResolver, type ExerciseNameResolver } from '../../exercise/exerciseNameResolver';
+import { stripExerciseSourceLabel } from '../../exercise/exerciseSourceLabel';
 import type { MuscleTimeSeriesEntry, MuscleTimeSeriesResult } from './muscleAnalytics';
 
 let assetLowerCache: Map<string, ExerciseAsset> | null = null;
@@ -37,18 +38,19 @@ export function lookupAsset(
   lowerMap: Map<string, ExerciseAsset>
 ): ExerciseAsset | undefined {
   if (!name) return undefined;
+  const normalizedName = stripExerciseSourceLabel(name);
 
   // Fast path: exact match
-  const exact = assetsMap.get(name);
+  const exact = assetsMap.get(normalizedName);
   if (exact) return exact;
 
   // Fast path: case-insensitive match
-  const lower = lowerMap.get(name.toLowerCase());
+  const lower = lowerMap.get(normalizedName.toLowerCase());
   if (lower) return lower;
 
   // Fallback: fuzzy matching
   const resolver = getResolver(assetsMap);
-  const resolution = resolver.resolve(name);
+  const resolution = resolver.resolve(normalizedName);
 
   if (resolution.method !== 'none' && resolution.name) {
     return assetsMap.get(resolution.name) ?? lowerMap.get(resolution.name.toLowerCase());
@@ -64,7 +66,8 @@ export function lookupAsset(
 export function buildSimpleDailyTimeSeries(
   data: WorkoutSet[],
   assetsMap: Map<string, ExerciseAsset>,
-  useGroups: boolean
+  useGroups: boolean,
+  secondarySetMultiplier: number = 0.5
 ): MuscleTimeSeriesResult {
   const lowerMap = getLowerMap(assetsMap);
   const grouped = new Map<string, {
@@ -81,7 +84,7 @@ export function buildSimpleDailyTimeSeries(
     const asset = lookupAsset(name, assetsMap, lowerMap);
     if (!asset) continue;
 
-    const contributions = getMuscleContributionsFromAsset(asset, useGroups);
+    const contributions = getMuscleContributionsFromAsset(asset, useGroups, { secondarySetMultiplier });
     if (contributions.length === 0) continue;
 
     const dayStart = startOfDay(set.parsedDate);

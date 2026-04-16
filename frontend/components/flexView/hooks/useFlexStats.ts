@@ -17,6 +17,7 @@ interface UseFlexStatsArgs {
   dailySummaries?: DailySummary[];
   assetLookup: ExerciseAssetLookup;
   effectiveNow: Date;
+  secondarySetMultiplier: number;
 }
 
 export const useFlexStats = ({
@@ -25,6 +26,7 @@ export const useFlexStats = ({
   dailySummaries,
   assetLookup,
   effectiveNow,
+  secondarySetMultiplier,
 }: UseFlexStatsArgs): FlexStats =>
   useMemo(() => {
     if (data.length === 0) {
@@ -88,7 +90,7 @@ export const useFlexStats = ({
             for (const s of secondary.split(',')) {
               const secGroup = normalizeMuscleGroup(s.trim());
               if (secGroup !== 'Cardio' && secGroup !== 'Other' && secGroup !== 'Full Body') {
-                muscleGroups.set(secGroup, (muscleGroups.get(secGroup) || 0) + 0.5);
+                muscleGroups.set(secGroup, (muscleGroups.get(secGroup) || 0) + secondarySetMultiplier);
               }
             }
           }
@@ -156,4 +158,4 @@ export const useFlexStats = ({
       monthlyData,
       muscleData,
     };
-  }, [data, weightUnit, dailySummaries, assetLookup, effectiveNow]);
+  }, [data, weightUnit, dailySummaries, assetLookup, effectiveNow, secondarySetMultiplier]);

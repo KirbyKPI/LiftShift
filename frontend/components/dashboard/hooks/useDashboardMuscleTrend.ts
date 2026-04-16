@@ -28,21 +28,22 @@ export const useDashboardMuscleTrend = (args: {
   musclePeriod: DashboardMusclePeriod;
   effectiveNow: Date;
   filterCacheKey: string;
+  secondarySetMultiplier: number;
 }): {
   trendData: any[];
   trendKeys: string[];
   muscleTrendInsight: MuscleTrendInsight | null;
   muscleVsLabel: string;
 } => {
-  const { fullData, assetsMap, assetsLowerMap, muscleGrouping, musclePeriod, effectiveNow, filterCacheKey } = args;
+  const { fullData, assetsMap, assetsLowerMap, muscleGrouping, musclePeriod, effectiveNow, filterCacheKey, secondarySetMultiplier } = args;
 
   const muscleSeriesGroups = useMemo(() => {
     if (!assetsMap) return { data: [], keys: [] as string[] } as { data: any[]; keys: string[] };
-    const cacheKey = dashboardCacheKeys.muscleSeries(filterCacheKey, 'groups');
+    const cacheKey = dashboardCacheKeys.muscleSeries(filterCacheKey, 'groups', secondarySetMultiplier);
     const base = computationCache.getOrCompute(
       cacheKey,
       fullData,
-      () => getMuscleVolumeTimeSeries(fullData, assetsMap, 'weekly'),
+      () => getMuscleVolumeTimeSeries(fullData, assetsMap, 'weekly', secondarySetMultiplier),
       { ttl: 10 * 60 * 1000 }
     );
 
@@ -65,15 +66,15 @@ export const useDashboardMuscleTrend = (args: {
     const maxPoints = DEFAULT_CHART_MAX_POINTS;
     if (windowed.data.length <= maxPoints) return windowed as any;
     return windowed.data.length > 140 ? bucketRollingWeeklySeriesToMonths(windowed as any) : bucketRollingWeeklySeriesToWeeks(windowed as any);
-  }, [fullData, assetsMap, musclePeriod, effectiveNow, filterCacheKey]);
+  }, [fullData, assetsMap, musclePeriod, effectiveNow, filterCacheKey, secondarySetMultiplier]);
 
   const muscleSeriesMuscles = useMemo(() => {
     if (!assetsMap) return { data: [], keys: [] as string[] } as { data: any[]; keys: string[] };
-    const cacheKey = dashboardCacheKeys.muscleSeries(filterCacheKey, 'muscles');
+    const cacheKey = dashboardCacheKeys.muscleSeries(filterCacheKey, 'muscles', secondarySetMultiplier);
     const base = computationCache.getOrCompute(
       cacheKey,
       fullData,
-      () => getMuscleVolumeTimeSeriesDetailed(fullData, assetsMap, 'weekly'),
+      () => getMuscleVolumeTimeSeriesDetailed(fullData, assetsMap, 'weekly', secondarySetMultiplier),
       { ttl: 10 * 60 * 1000 }
     );
 
@@ -95,7 +96,7 @@ export const useDashboardMuscleTrend = (args: {
     const maxPoints = DEFAULT_CHART_MAX_POINTS;
     if (windowed.data.length <= maxPoints) return windowed as any;
     return windowed.data.length > 140 ? bucketRollingWeeklySeriesToMonths(windowed as any) : bucketRollingWeeklySeriesToWeeks(windowed as any);
-  }, [fullData, assetsMap, musclePeriod, effectiveNow, filterCacheKey]);
+  }, [fullData, assetsMap, musclePeriod, effectiveNow, filterCacheKey, secondarySetMultiplier]);
 
   const trendData = muscleGrouping === 'groups' ? muscleSeriesGroups.data : muscleSeriesMuscles.data;
 
@@ -114,7 +115,7 @@ export const useDashboardMuscleTrend = (args: {
     if (!assetsMap || !assetsLowerMap) return null;
     if (!trendKeys || trendKeys.length === 0) return null;
 
-    const cacheKey = dashboardCacheKeys.muscleTrendInsight(filterCacheKey, muscleGrouping, musclePeriod);
+    const cacheKey = dashboardCacheKeys.muscleTrendInsight(filterCacheKey, muscleGrouping, musclePeriod, secondarySetMultiplier);
     return computationCache.getOrCompute(
       cacheKey,
       fullData,
@@ -159,7 +160,7 @@ export const useDashboardMuscleTrend = (args: {
             const asset = assetsMap.get(name) || assetsLowerMap.get(name.toLowerCase());
             if (!asset) continue;
 
-            const contributions = getMuscleContributionsFromAsset(asset, useGroups);
+            const contributions = getMuscleContributionsFromAsset(asset, useGroups, { secondarySetMultiplier });
             for (const c of contributions) {
               add(c.muscle, c.sets);
             }
@@ -187,7 +188,7 @@ export const useDashboardMuscleTrend = (args: {
       },
       { ttl: 10 * 60 * 1000 }
     );
-  }, [assetsMap, assetsLowerMap, fullData, effectiveNow, trendKeys, muscleGrouping, musclePeriod, filterCacheKey]);
+  }, [assetsMap, assetsLowerMap, fullData, effectiveNow, trendKeys, muscleGrouping, musclePeriod, filterCacheKey, secondarySetMultiplier]);
 
   const muscleVsLabel =
     musclePeriod === 'weekly' ? 'vs prev wk' : musclePeriod === 'yearly' ? 'vs prev yr' : 'vs prev mo';

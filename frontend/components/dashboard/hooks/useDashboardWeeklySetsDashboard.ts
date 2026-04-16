@@ -16,13 +16,14 @@ export const useDashboardWeeklySetsDashboard = (args: {
   muscleCompQuick: WeeklySetsWindow;
   compositionGrouping: WeeklySetsGrouping;
   filterCacheKey: string;
+  secondarySetMultiplier: number;
 }): {
   weeklySetsDashboard: {
     heatmap: { volumes: Map<string, number>; maxVolume: number };
     windowStart: Date | null;
   };
 } => {
-  const { assetsMap, fullData, effectiveNow, muscleCompQuick, compositionGrouping, filterCacheKey } = args;
+  const { assetsMap, fullData, effectiveNow, muscleCompQuick, compositionGrouping, filterCacheKey, secondarySetMultiplier } = args;
 
   const weeklySetsDashboard = useMemo(() => {
     if (!assetsMap) {
@@ -32,7 +33,7 @@ export const useDashboardWeeklySetsDashboard = (args: {
       };
     }
 
-    const cacheKey = dashboardCacheKeys.weeklySets(filterCacheKey, muscleCompQuick, compositionGrouping);
+    const cacheKey = dashboardCacheKeys.weeklySets(filterCacheKey, muscleCompQuick, compositionGrouping, secondarySetMultiplier);
     return computationCache.getOrCompute(
       cacheKey,
       fullData,
@@ -42,7 +43,8 @@ export const useDashboardWeeklySetsDashboard = (args: {
           assetsMap,
           effectiveNow,
           muscleCompQuick,
-          compositionGrouping
+          compositionGrouping,
+          secondarySetMultiplier
         );
         return {
           heatmap: computed.heatmap,
@@ -51,7 +53,7 @@ export const useDashboardWeeklySetsDashboard = (args: {
       },
       { ttl: 10 * 60 * 1000 }
     );
-  }, [assetsMap, fullData, effectiveNow, muscleCompQuick, compositionGrouping, filterCacheKey]);
+  }, [assetsMap, fullData, effectiveNow, muscleCompQuick, compositionGrouping, filterCacheKey, secondarySetMultiplier]);
 
   return { weeklySetsDashboard };
 };
