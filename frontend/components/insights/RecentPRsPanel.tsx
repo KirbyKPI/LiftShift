@@ -7,6 +7,7 @@ import type { PRInsights } from '../../utils/analysis/insights';
 import { getExerciseAssets, type ExerciseAsset } from '../../utils/data/exerciseAssets';
 import type { WeightUnit } from '../../utils/storage/localStorage';
 import { RecentPRCard } from './RecentPRCard';
+import { stripExerciseSourceLabel } from '../../utils/exercise/exerciseSourceLabel';
 
 // Recent PRs Timeline Panel
 interface RecentPRsPanelProps {
@@ -57,7 +58,7 @@ export const RecentPRsPanel: React.FC<RecentPRsPanelProps> = memo(function Recen
               <RecentPRCard
                 pr={pr}
                 isLatest={idx === 0}
-                asset={assetsMap?.get(pr.exercise)}
+                asset={assetsMap?.get(stripExerciseSourceLabel(pr.exercise))}
                 weightUnit={weightUnit}
                 now={now}
                 onExerciseClick={onExerciseClick}
@@ -69,4 +70,3 @@ export const RecentPRsPanel: React.FC<RecentPRsPanelProps> = memo(function Recen
     </div>
   );
 });
-

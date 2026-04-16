@@ -31,6 +31,7 @@ interface HistoryViewProps {
   targetDate?: Date | null;
   onTargetDateConsumed?: () => void;
   now?: Date;
+  secondarySetMultiplier?: number;
 }
 
 export const HistoryView: React.FC<HistoryViewProps> = ({
@@ -44,6 +45,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   targetDate,
   onTargetDateConsumed,
   now,
+  secondarySetMultiplier = 0.5,
 }) => {
   const { mode } = useTheme();
   const isLightMode = mode === 'light';
@@ -195,6 +197,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             exerciseVolumePrBests={exerciseVolumePrBests}
             exerciseHistoricalSets={exerciseHistoricalSets}
             trainingLevel={trainingLevel}
+            secondarySetMultiplier={secondarySetMultiplier}
             onExerciseClick={onExerciseClick}
             onTooltipToggle={handleTooltipToggle}
             onMouseEnter={handleMouseEnter}

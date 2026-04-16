@@ -13,6 +13,7 @@ interface MuscleAnalysisExerciseListPanelProps {
   volumeThresholds: MuscleVolumeThresholds;
   onExerciseClick?: (exerciseName: string) => void;
   bodyMapGender?: BodyMapGender;
+  secondarySetMultiplier: number;
 }
 
 export const MuscleAnalysisExerciseListPanel: React.FC<MuscleAnalysisExerciseListPanelProps> = React.memo(({
@@ -23,6 +24,7 @@ export const MuscleAnalysisExerciseListPanel: React.FC<MuscleAnalysisExerciseLis
   volumeThresholds,
   onExerciseClick,
   bodyMapGender = 'male',
+  secondarySetMultiplier,
 }) => {
   return (
     <div className="bg-black/70 rounded-xl border border-slate-700/50 overflow-hidden flex flex-col h-auto lg:h-full min-h-0">
@@ -44,6 +46,7 @@ export const MuscleAnalysisExerciseListPanel: React.FC<MuscleAnalysisExerciseLis
           volumeThresholds={volumeThresholds}
           onExerciseClick={onExerciseClick}
           bodyMapGender={bodyMapGender}
+          secondarySetMultiplier={secondarySetMultiplier}
         />
       </div>
     </div>

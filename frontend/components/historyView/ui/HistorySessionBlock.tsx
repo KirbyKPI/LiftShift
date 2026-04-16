@@ -34,6 +34,7 @@ interface HistorySessionBlockProps {
   exerciseVolumePrBests: Map<string, ExerciseVolumePrEvent[]>;
   exerciseHistoricalSets: Map<string, WorkoutSet[]>;
   trainingLevel: TrainingLevel;
+  secondarySetMultiplier: number;
   onExerciseClick?: (exerciseName: string) => void;
   onTooltipToggle: (e: React.MouseEvent, data: any, variant: 'set' | 'macro') => void;
   onMouseEnter: (e: React.MouseEvent, data: any, variant: 'set' | 'macro') => void;
@@ -60,6 +61,7 @@ export const HistorySessionBlock: React.FC<HistorySessionBlockProps> = ({
   exerciseVolumePrBests,
   exerciseHistoricalSets,
   trainingLevel,
+  secondarySetMultiplier,
   onExerciseClick,
   onTooltipToggle,
   onMouseEnter,
@@ -67,7 +69,7 @@ export const HistorySessionBlock: React.FC<HistorySessionBlockProps> = ({
   setTooltip,
 }) => {
   const allSessionSets = session.exercises.flatMap((e) => e.sets);
-  const sessionHeatmap = buildSessionMuscleHeatmap(allSessionSets, exerciseMuscleData);
+  const sessionHeatmap = buildSessionMuscleHeatmap(allSessionSets, exerciseMuscleData, secondarySetMultiplier);
   const sessionHeadlessVolumes = toHeadlessVolumeMap(sessionHeatmap.volumes);
   const sessionHeadlessMaxVolume = Math.max(1, ...(Array.from(sessionHeadlessVolumes.values()) as number[]));
 

@@ -10,6 +10,12 @@ interface HistorySessionBodyMapProps {
   setTooltip: (state: TooltipState | null) => void;
 }
 
+const formatSets = (value: number): string => {
+  const rounded = Math.round(value * 100) / 100;
+  if (Number.isInteger(rounded)) return String(rounded);
+  return rounded.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+};
+
 export const getMuscleSetsListData = (headlessVolumes: Map<string, number>) => {
   const muscleList: { id: string; name: string; sets: number }[] = [];
   MUSCLE_IDS.forEach((muscleId) => {
@@ -36,8 +42,8 @@ export const MuscleSetsList: React.FC<{ headlessVolumes: Map<string, number> }> 
         <span key={muscle.id} className="text-slate-600 dark:text-slate-400">
           <span className="capitalize">{muscle.name}</span>
           <span className="text-slate-500 dark:text-slate-500">: </span>
-          <span>{muscle.sets}</span>
-          <span className="text-slate-500 dark:text-slate-500"> {muscle.sets === 1 ? 'set' : 'sets'}</span>
+          <span>{formatSets(muscle.sets)}</span>
+          <span className="text-slate-500 dark:text-slate-500"> {Math.abs(muscle.sets - 1) < 0.000001 ? 'set' : 'sets'}</span>
         </span>
       ))}
     </div>
@@ -71,7 +77,7 @@ export const HistorySessionBodyMap: React.FC<HistorySessionBodyMapProps> = ({
       if (!rect) return;
       const label = (HEADLESS_MUSCLE_NAMES as any)[muscleId] || muscleId;
       const sets = headlessVolumes.get(muscleId) || 0;
-      const setsText = Number.isInteger(sets) ? `${sets}` : `${sets.toFixed(1)}`;
+      const setsText = formatSets(sets);
       setTooltip({ rect, title: label, body: `${setsText} sets`, status: 'info' });
     }}
   />

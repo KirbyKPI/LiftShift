@@ -40,6 +40,7 @@ interface DashboardProps {
   bodyMapGender?: BodyMapGender;
   weightUnit?: WeightUnit;
   now?: Date;
+  secondarySetMultiplier?: number;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -56,6 +57,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   bodyMapGender = 'male' as BodyMapGender,
   weightUnit = 'kg' as WeightUnit,
   now,
+  secondarySetMultiplier = 0.5,
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [aiAnalyzeOpen, setAiAnalyzeOpen] = useState(false);
@@ -232,6 +234,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     musclePeriod,
     effectiveNow,
     filterCacheKey,
+    secondarySetMultiplier,
   });
 
   const { weeklySetsDashboard } = useDashboardWeeklySetsDashboard({
@@ -241,6 +244,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     muscleCompQuick,
     compositionGrouping,
     filterCacheKey,
+    secondarySetMultiplier,
   });
 
   const TooltipStyle = CHART_TOOLTIP_STYLE;

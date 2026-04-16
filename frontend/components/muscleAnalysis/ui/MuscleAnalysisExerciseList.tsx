@@ -5,6 +5,7 @@ import { getExerciseMuscleVolumes, lookupExerciseMuscleData, toHeadlessVolumeMap
 import type { ExerciseAsset } from '../../../utils/data/exerciseAssets';
 import type { MuscleVolumeThresholds } from '../../../utils/muscle/hypertrophy/muscleParams';
 import { ChevronDown } from 'lucide-react';
+import { stripExerciseSourceLabel } from '../../../utils/exercise/exerciseSourceLabel';
 
 interface MuscleAnalysisExerciseListProps {
   contributingExercises: Array<{ name: string; sets: number; primarySets: number; secondarySets: number }>;
@@ -14,6 +15,7 @@ interface MuscleAnalysisExerciseListProps {
   volumeThresholds: MuscleVolumeThresholds;
   onExerciseClick?: (exerciseName: string) => void;
   bodyMapGender?: BodyMapGender;
+  secondarySetMultiplier: number;
 }
 
 const INITIAL_DISPLAY_COUNT = 6;
@@ -28,6 +30,7 @@ export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProp
   volumeThresholds,
   onExerciseClick,
   bodyMapGender = 'male',
+  secondarySetMultiplier,
 }) => {
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY_COUNT);
   const displayedExercises = contributingExercises.slice(0, displayCount);
@@ -46,9 +49,10 @@ export const MuscleAnalysisExerciseList: React.FC<MuscleAnalysisExerciseListProp
         className="space-y-2 overflow-y-auto max-h-[120px] sm:max-h-[250px]"
       >
         {displayedExercises.map((ex) => {
-          const asset = assetsMap?.get(ex.name);
+          const baseName = stripExerciseSourceLabel(ex.name);
+          const asset = assetsMap?.get(baseName);
           const exData = lookupExerciseMuscleData(ex.name, exerciseMuscleData);
-          const { volumes: exVolumes, maxVolume: exMaxVol } = getExerciseMuscleVolumes(exData);
+          const { volumes: exVolumes, maxVolume: exMaxVol } = getExerciseMuscleVolumes(exData, secondarySetMultiplier);
           const exHeadlessVolumes = toHeadlessVolumeMap(exVolumes);
           const exHeadlessMaxVol = Math.max(1, ...(Array.from(exHeadlessVolumes.values()) as number[]));
           const totalSetsForCalc = totalSetsInWindow || 1;

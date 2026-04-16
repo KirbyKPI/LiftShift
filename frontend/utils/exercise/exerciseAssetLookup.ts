@@ -3,6 +3,7 @@ import {
   createFingerprintMatcher,
   type MatchResult,
 } from './exerciseFingerprint';
+import { stripExerciseSourceLabel } from './exerciseSourceLabel';
 
 export interface ExerciseAssetLookup {
   resolveName: (rawName: string) => MatchResult;
@@ -37,22 +38,23 @@ export const createExerciseAssetLookup = (assetsMap: Map<string, ExerciseAsset>)
   const lower = getLowerMap(assetsMap);
   const matcher = getMatcher(assetsMap);
 
-  const resolveName = (rawName: string): MatchResult => matcher.match(rawName);
+  const resolveName = (rawName: string): MatchResult => matcher.match(stripExerciseSourceLabel(rawName));
 
   const getAsset = (rawName: string): ExerciseAsset | undefined => {
+    const normalizedName = stripExerciseSourceLabel(rawName);
     // Fast path: exact match
-    if (assetsMap.has(rawName)) {
-      return assetsMap.get(rawName);
+    if (assetsMap.has(normalizedName)) {
+      return assetsMap.get(normalizedName);
     }
     
     // Fast path: case-insensitive match
-    const lowerAsset = lower.get(rawName.toLowerCase());
+    const lowerAsset = lower.get(normalizedName.toLowerCase());
     if (lowerAsset) {
       return lowerAsset;
     }
     
     // Use fingerprint matcher for fuzzy matching
-    const resolved = matcher.match(rawName);
+    const resolved = matcher.match(normalizedName);
     if (resolved.method !== 'none' && resolved.name) {
       return assetsMap.get(resolved.name) ?? lower.get(resolved.name.toLowerCase());
     }

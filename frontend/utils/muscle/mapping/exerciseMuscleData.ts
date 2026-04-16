@@ -1,4 +1,5 @@
 import { createExerciseNameResolver, type ExerciseNameResolver } from '../../exercise/exerciseNameResolver';
+import { stripExerciseSourceLabel } from '../../exercise/exerciseSourceLabel';
 
 export interface ExerciseMuscleData {
   name: string;
@@ -69,13 +70,15 @@ export const lookupExerciseMuscleData = (
 ): ExerciseMuscleData | undefined => {
   if (!exerciseTitle) return undefined;
 
+  const normalizedTitle = stripExerciseSourceLabel(exerciseTitle);
+
   // Try exact lowercase match first (fast path)
-  const exactMatch = muscleData.get(exerciseTitle.toLowerCase());
+  const exactMatch = muscleData.get(normalizedTitle.toLowerCase());
   if (exactMatch) return exactMatch;
 
   // Use fuzzy resolver for non-exact matches
   const resolver = getExerciseResolver(muscleData);
-  const resolution = resolver.resolve(exerciseTitle);
+  const resolution = resolver.resolve(normalizedTitle);
 
   if (resolution.method !== 'none' && resolution.name) {
     return muscleData.get(resolution.name.toLowerCase());

@@ -2,6 +2,7 @@ import React from 'react';
 import type { ExerciseAsset } from '../../../utils/data/exerciseAssets';
 import { ExerciseThumbnail } from '../../common/ExerciseThumbnail';
 import type { TopExerciseBarDatum } from './TopExercisesCard';
+import { stripExerciseSourceLabel } from '../../../utils/exercise/exerciseSourceLabel';
 
 interface TopExercisesBarViewProps {
   topExercisesBarData: TopExerciseBarDatum[];
@@ -70,7 +71,8 @@ export const TopExercisesBarView: React.FC<TopExercisesBarViewProps> = ({
             >
               {topExercisesBarData.map((exercise, idx) => {
                 const color = pieColors[idx % pieColors.length];
-                const asset = assetsMap?.get(exercise.name) || assetsLowerMap?.get(exercise.name.toLowerCase());
+                const baseName = stripExerciseSourceLabel(exercise.name);
+                const asset = assetsMap?.get(baseName) || assetsLowerMap?.get(baseName.toLowerCase());
                 const pct = Math.max(6, Math.round((exercise.count / max) * 100));
 
                 const medal = idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : null;

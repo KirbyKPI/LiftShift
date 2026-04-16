@@ -36,9 +36,12 @@ for (const [group, parts] of Object.entries(MUSCLE_GROUPS)) {
   }
 }
 
+const round2 = (value: number): number => Math.round(value * 100) / 100;
+
 export const buildSessionMuscleHeatmap = (
   sets: WorkoutSet[],
-  exerciseMuscleData: Map<string, ExerciseMuscleData>
+  exerciseMuscleData: Map<string, ExerciseMuscleData>,
+  secondarySetMultiplier: number = 0.5
 ): { volumes: Map<string, number>; maxVolume: number } => {
   // Track volumes at the MUSCLE GROUP level to match exercise-level behavior.
   // This ensures that if Lever Seated Shoulder Press shows "3 sets" for Shoulders,
@@ -79,14 +82,14 @@ export const buildSessionMuscleHeatmap = (
       const setIncrement = isUnilateralSet(set) ? 0.5 : 1;
       for (const groupName of Object.keys(MUSCLE_GROUPS)) {
         const entry = groupVolumes.get(groupName) || { primary: 0, secondary: 0 };
-        entry.primary += setIncrement;
+        entry.primary = round2(entry.primary + setIncrement);
         groupVolumes.set(groupName, entry);
       }
       continue;
     }
 
     const setIncrement = isUnilateralSet(set) ? 0.5 : 1;
-    const secondaryIncrement = isUnilateralSet(set) ? 0.25 : 0.5;
+    const secondaryIncrement = isUnilateralSet(set) ? (secondarySetMultiplier / 2) : secondarySetMultiplier;
 
     // Track which groups this set affects (to avoid double-counting within same set)
     const affectedGroupsPrimary = new Set<string>();
@@ -102,7 +105,7 @@ export const buildSessionMuscleHeatmap = (
         } else {
           // Standalone muscle (not part of a group)
           const current = standaloneVolumes.get(svgId) || 0;
-          standaloneVolumes.set(svgId, current + setIncrement);
+          standaloneVolumes.set(svgId, round2(current + setIncrement));
         }
       }
     }
@@ -124,7 +127,7 @@ export const buildSessionMuscleHeatmap = (
           } else {
             // Already exists, add secondary contribution
             const current = standaloneVolumes.get(svgId) || 0;
-            standaloneVolumes.set(svgId, current + secondaryIncrement);
+            standaloneVolumes.set(svgId, round2(current + secondaryIncrement));
           }
         }
       }
@@ -133,12 +136,12 @@ export const buildSessionMuscleHeatmap = (
     // Add increments to affected groups
     for (const group of affectedGroupsPrimary) {
       const entry = groupVolumes.get(group) || { primary: 0, secondary: 0 };
-      entry.primary += setIncrement;
+      entry.primary = round2(entry.primary + setIncrement);
       groupVolumes.set(group, entry);
     }
     for (const group of affectedGroupsSecondary) {
       const entry = groupVolumes.get(group) || { primary: 0, secondary: 0 };
-      entry.secondary += secondaryIncrement;
+      entry.secondary = round2(entry.secondary + secondaryIncrement);
       groupVolumes.set(group, entry);
     }
   }
@@ -149,7 +152,7 @@ export const buildSessionMuscleHeatmap = (
   let maxVolume = 0;
 
   for (const [group, { primary, secondary }] of groupVolumes.entries()) {
-    const total = primary + secondary;
+    const total = round2(primary + secondary);
     if (total <= 0) continue;
     
     const parts = MUSCLE_GROUPS[group];
@@ -163,8 +166,9 @@ export const buildSessionMuscleHeatmap = (
 
   // Add standalone muscles
   for (const [svgId, vol] of standaloneVolumes.entries()) {
-    volumes.set(svgId, vol);
-    if (vol > maxVolume) maxVolume = vol;
+    const rounded = round2(vol);
+    volumes.set(svgId, rounded);
+    if (rounded > maxVolume) maxVolume = rounded;
   }
 
   return { volumes, maxVolume: Math.max(maxVolume, 1) };
@@ -172,7 +176,8 @@ export const buildSessionMuscleHeatmap = (
 
 export const buildExerciseMuscleHeatmap = (
   sets: WorkoutSet[],
-  exerciseData: ExerciseMuscleData | undefined
+  exerciseData: ExerciseMuscleData | undefined,
+  secondarySetMultiplier: number = 0.5
 ): { volumes: Map<string, number>; maxVolume: number } => {
   // Count working sets with L/R sets as 0.5 each
   let workingSetCount = 0;
@@ -181,7 +186,7 @@ export const buildExerciseMuscleHeatmap = (
     workingSetCount += isUnilateralSet(s) ? 0.5 : 1;
   }
   
-  const base = getExerciseMuscleVolumes(exerciseData);
+  const base = getExerciseMuscleVolumes(exerciseData, secondarySetMultiplier);
   const volumes = new Map<string, number>();
   let maxVolume = 0;
 
@@ -190,7 +195,7 @@ export const buildExerciseMuscleHeatmap = (
   }
 
   base.volumes.forEach((w, svgId) => {
-    const v = w * workingSetCount;
+    const v = round2(w * workingSetCount);
     volumes.set(svgId, v);
     if (v > maxVolume) maxVolume = v;
   });

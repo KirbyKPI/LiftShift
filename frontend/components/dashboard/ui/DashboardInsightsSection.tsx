@@ -6,6 +6,7 @@ import { TrainingTimelineCard } from '../trainingTimeline/TrainingTimelineCard';
 import type { WeightUnit } from '../../../utils/storage/localStorage';
 import type { DailySummary } from '../../../types';
 import type { TimelineProgress } from '../../../utils/training/trainingTimeline';
+import { stripExerciseSourceLabel } from '../../../utils/exercise/exerciseSourceLabel';
 
 interface DashboardInsightsSectionProps {
   dashboardInsights: any;
@@ -70,20 +71,23 @@ export const DashboardInsightsSection: React.FC<DashboardInsightsSectionProps> =
         </div>
         <div className="overflow-x-auto -mx-2 px-2 pb-2">
           <div className="flex gap-2">
-            {activePlateauExercises.map((p) => (
-              <div key={p.exerciseName} className="min-w-[280px] flex-shrink-0">
-                <PlateauAlert
-                  exerciseName={p.exerciseName}
-                  suggestion={p.suggestion}
-                  lastWeight={p.lastWeight}
-                  lastReps={p.lastReps}
-                  isBodyweightLike={p.isBodyweightLike}
-                  asset={assetsMap?.get(p.exerciseName) || assetsLowerMap?.get(p.exerciseName.toLowerCase())}
-                  weightUnit={weightUnit}
-                  onClick={() => onExerciseClick?.(p.exerciseName)}
-                />
-              </div>
-            ))}
+            {activePlateauExercises.map((p) => {
+              const baseName = stripExerciseSourceLabel(p.exerciseName);
+              return (
+                <div key={p.exerciseName} className="min-w-[280px] flex-shrink-0">
+                  <PlateauAlert
+                    exerciseName={p.exerciseName}
+                    suggestion={p.suggestion}
+                    lastWeight={p.lastWeight}
+                    lastReps={p.lastReps}
+                    isBodyweightLike={p.isBodyweightLike}
+                    asset={assetsMap?.get(baseName) || assetsLowerMap?.get(baseName.toLowerCase())}
+                    weightUnit={weightUnit}
+                    onClick={() => onExerciseClick?.(p.exerciseName)}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import type { ExerciseAsset } from '../../data/exerciseAssets';
 import { createExerciseNameResolver, type ExerciseNameResolver } from '../../exercise/exerciseNameResolver';
+import { stripExerciseSourceLabel } from '../../exercise/exerciseSourceLabel';
 
 /** Cache for lowercase asset lookups */
 let assetLowerCache: Map<string, ExerciseAsset> | null = null;
@@ -41,18 +42,19 @@ export function lookupExerciseAsset(
   lowerMap: Map<string, ExerciseAsset>
 ): ExerciseAsset | undefined {
   if (!name) return undefined;
+  const normalizedName = stripExerciseSourceLabel(name);
 
   // Fast path: exact match
-  const exact = assetsMap.get(name);
+  const exact = assetsMap.get(normalizedName);
   if (exact) return exact;
 
   // Fast path: case-insensitive match
-  const lower = lowerMap.get(name.toLowerCase());
+  const lower = lowerMap.get(normalizedName.toLowerCase());
   if (lower) return lower;
 
   // Fallback: fuzzy matching
   const resolver = getAssetResolver(assetsMap);
-  const resolution = resolver.resolve(name);
+  const resolution = resolver.resolve(normalizedName);
 
   if (resolution.method !== 'none' && resolution.name) {
     return assetsMap.get(resolution.name) ?? lowerMap.get(resolution.name.toLowerCase());

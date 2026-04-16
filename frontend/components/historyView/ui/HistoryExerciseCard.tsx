@@ -14,6 +14,7 @@ import type { TooltipState } from './HistoryTooltipPortal';
 import type { WorkoutSet } from '../../../types';
 import type { TrainingLevel } from '../../../utils/muscle/hypertrophy/muscleParams';
 import { calculateRepProfile, getExerciseType, calculateTypicalWeightJump, buildExerciseProgressionProfile } from '../../../utils/analysis/userProfile';
+import { stripExerciseSourceLabel } from '../../../utils/exercise/exerciseSourceLabel';
 
 interface HistoryExerciseCardProps {
   group: GroupedExercise;
@@ -119,7 +120,8 @@ export const HistoryExerciseCard: React.FC<HistoryExerciseCardProps> = ({
     return bestIdx;
   })();
 
-  const asset = assetsMap?.get(group.exerciseName);
+  const baseExerciseName = stripExerciseSourceLabel(group.exerciseName);
+  const asset = assetsMap?.get(baseExerciseName);
 
   return (
     <LazyRender
