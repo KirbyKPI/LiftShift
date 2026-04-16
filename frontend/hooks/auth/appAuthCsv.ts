@@ -1,6 +1,6 @@
 import { WeightUnit } from '../../utils/storage/localStorage';
 import type { DataSourceChoice } from '../../utils/storage/dataSourceStorage';
-import { saveLastCsvPlatform, saveLastLoginMethod, saveSetupComplete } from '../../utils/storage/dataSourceStorage';
+import { addCombinedDataSource, saveLastCsvPlatform, saveLastLoginMethod, saveSetupComplete } from '../../utils/storage/dataSourceStorage';
 import { getHevyUsernameOrEmail } from '../../utils/storage/hevyCredentialsStorage';
 import { saveCSVData } from '../../utils/storage/localStorage';
 import { identifyPersonalRecords } from '../../utils/analysis/core';
@@ -32,14 +32,15 @@ export const runCsvImport = (
       parseWorkoutCSVAsyncWithUnit(text, { unit })
         .then((result: ParseWorkoutCsvResult) => {
           const enriched = identifyPersonalRecords(result.sets);
+          const sourced = enriched.map((s) => ({ ...s, source: platform }));
           trackEvent('csv_import_success', {
             platform,
             unit,
             sets: result.sets?.length,
-            enriched_sets: enriched?.length,
+            enriched_sets: sourced?.length,
           });
 
-          deps.setParsedData(enriched);
+          deps.setParsedData(sourced);
           saveCSVData(text);
           saveLastCsvPlatform(platform);
           saveLastLoginMethod(
@@ -48,6 +49,7 @@ export const runCsvImport = (
             platform === 'hevy' ? (getHevyUsernameOrEmail() ?? undefined) : undefined
           );
           deps.setDataSource(platform);
+          addCombinedDataSource(platform);
           saveSetupComplete(true);
           deps.setOnboarding(null);
         })

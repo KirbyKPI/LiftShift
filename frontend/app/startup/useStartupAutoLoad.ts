@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { getCSVData, getPreferencesConfirmed, getWeightUnit, savePreferencesConfirmed } from '../../utils/storage/localStorage';
 import {
+  getCombinedDataSources,
   getDataSourceChoice,
   getHevyAuthToken,
   getHevyProApiKey,
@@ -40,6 +41,7 @@ export const useStartupAutoLoad = (params: StartupAutoLoadParams): void => {
     }
 
     const storedChoice = getDataSourceChoice();
+    const combinedSources = getCombinedDataSources();
     if (!storedChoice) {
       saveSetupComplete(false);
       params.setIsAnalyzing(false);
@@ -81,12 +83,14 @@ export const useStartupAutoLoad = (params: StartupAutoLoadParams): void => {
     // Unified retry wrapper
     const attemptReload = async (
       platform: DataSourceChoice,
-      method: LoginMethod | null
+      method: LoginMethod | null,
+      options: { resetOnError?: boolean } = {}
     ): Promise<boolean> => {
+      const resetOnError = options.resetOnError !== false;
       // Platform: Strong / Other - only CSV
       if (platform === 'strong' || platform === 'other') {
         if (!storedCSV || lastCsvPlatform !== platform) {
-          resetToPlatform();
+          if (resetOnError) resetToPlatform();
           return false;
         }
 
@@ -95,7 +99,7 @@ export const useStartupAutoLoad = (params: StartupAutoLoadParams): void => {
           storedCSV,
           weightUnit,
           clearLoginErrors: () => params.setHevyLoginError(null),
-        });
+        }, { resetOnError });
         // CSV loading completes asynchronously; dashboard updates via setParsedData
         return true;
       }
@@ -106,7 +110,7 @@ export const useStartupAutoLoad = (params: StartupAutoLoadParams): void => {
 
         // Try API key first (preferred for power users)
         if ((method === 'apiKey' || !method) && lyftaApiKey) {
-          loadLyftaFromApiKey(params, lyftaApiKey);
+          loadLyftaFromApiKey(params, lyftaApiKey, { resetOnError });
           return true;
         }
 
@@ -117,12 +121,12 @@ export const useStartupAutoLoad = (params: StartupAutoLoadParams): void => {
             storedCSV,
             weightUnit,
             clearLoginErrors: () => params.setLyfatLoginError(null),
-          });
+          }, { resetOnError });
           return true;
         }
 
         // No valid method found
-        resetToPlatform();
+        if (resetOnError) resetToPlatform();
         return false;
       }
 
@@ -136,7 +140,7 @@ export const useStartupAutoLoad = (params: StartupAutoLoadParams): void => {
 
         // If user last used API key, keep that as the primary path.
         if (method === 'apiKey' && hevyProApiKey) {
-          loadHevyFromProKey(params, hevyProApiKey);
+          loadHevyFromProKey(params, hevyProApiKey, { resetOnError });
           return true;
         }
 
@@ -145,19 +149,19 @@ export const useStartupAutoLoad = (params: StartupAutoLoadParams): void => {
           loadHevyFromToken(params, token, {
             successMethod: 'saved_auth_token',
             errorMethod: 'saved_auth_token',
-          });
+          }, { resetOnError });
           return true;
         }
 
         // Priority 2: Credentials (auto-relogin)
         if (hasCredentials && username && password) {
-          const success = await loadHevyFromCredentials(params, username, password);
+          const success = await loadHevyFromCredentials(params, username, password, { resetOnError });
           if (success) return true;
         }
 
         // Priority 3: API key fallback
         if (hevyProApiKey) {
-          loadHevyFromProKey(params, hevyProApiKey);
+          loadHevyFromProKey(params, hevyProApiKey, { resetOnError });
           return true;
         }
 
@@ -168,21 +172,37 @@ export const useStartupAutoLoad = (params: StartupAutoLoadParams): void => {
             storedCSV,
             weightUnit,
             clearLoginErrors: () => params.setHevyLoginError(null),
-          });
+          }, { resetOnError });
           return true;
         }
 
         // Nothing worked
-        resetToPlatform();
+        if (resetOnError) resetToPlatform();
         return false;
       }
 
-      resetToPlatform();
+      if (resetOnError) resetToPlatform();
       return false;
     };
 
     // Execute auto-reload
-    attemptReload(storedChoice, lastMethod).catch((err) => {
+    const runCombinedReload = async () => {
+      const loadOrder = Array.from(new Set([storedChoice, ...combinedSources])) as DataSourceChoice[];
+      let anyLoaded = false;
+
+      for (const source of loadOrder) {
+        const accountKey = source === 'hevy' ? (getHevyUsernameOrEmail() ?? undefined) : undefined;
+        const methodForSource = getLastLoginMethod(source, accountKey);
+        const loaded = await attemptReload(source, methodForSource, { resetOnError: false });
+        anyLoaded = anyLoaded || loaded;
+      }
+
+      if (!anyLoaded) {
+        resetToPlatform();
+      }
+    };
+
+    runCombinedReload().catch((err) => {
       console.error('[StartupAutoLoad] Unexpected failure', err);
       resetToPlatform();
     });

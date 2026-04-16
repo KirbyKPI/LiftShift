@@ -11,6 +11,7 @@ type LastLoginRecord = {
 };
 
 type LastLoginMap = Partial<Record<DataSourceChoice, LastLoginRecord>>;
+const COMBINED_SOURCES_KEY = 'hevy_analytics_combined_sources_v1';
 
 const validDataSources: DataSourceChoice[] = ['strong', 'hevy', 'lyfta', 'other'];
 const validLoginMethods: LoginMethod[] = ['csv', 'credentials', 'apiKey'];
@@ -146,6 +147,47 @@ export const getLastLoginMethod = (platform: DataSourceChoice, accountKey?: stri
 export const clearLastLoginMethod = (): void => {
   try {
     localStorage.removeItem(LAST_LOGIN_METHOD_KEY);
+  } catch {
+    // Silent fail
+  }
+};
+
+const readCombinedSources = (): DataSourceChoice[] => {
+  try {
+    const raw = localStorage.getItem(COMBINED_SOURCES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((v): v is DataSourceChoice => validDataSources.includes(v as DataSourceChoice));
+  } catch {
+    return [];
+  }
+};
+
+const writeCombinedSources = (sources: DataSourceChoice[]): void => {
+  try {
+    const unique = Array.from(new Set(sources)).filter((v): v is DataSourceChoice => validDataSources.includes(v));
+    localStorage.setItem(COMBINED_SOURCES_KEY, JSON.stringify(unique));
+  } catch {
+    // Silent fail
+  }
+};
+
+export const getCombinedDataSources = (): DataSourceChoice[] => readCombinedSources();
+
+export const saveCombinedDataSources = (sources: DataSourceChoice[]): void => {
+  writeCombinedSources(sources);
+};
+
+export const addCombinedDataSource = (source: DataSourceChoice): void => {
+  const current = readCombinedSources();
+  if (current.includes(source)) return;
+  writeCombinedSources([...current, source]);
+};
+
+export const clearCombinedDataSources = (): void => {
+  try {
+    localStorage.removeItem(COMBINED_SOURCES_KEY);
   } catch {
     // Silent fail
   }

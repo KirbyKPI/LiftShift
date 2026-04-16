@@ -12,6 +12,7 @@ import {
   saveHevyProApiKey,
   clearHevyProApiKey,
   saveLastLoginMethod,
+  addCombinedDataSource,
   saveSetupComplete,
 } from '../../utils/storage/dataSourceStorage';
 import {
@@ -29,7 +30,7 @@ import {
   hevyBackendValidateProApiKey,
 } from '../../utils/api/hevyBackend';
 import { identifyPersonalRecords } from '../../utils/analysis/core';
-import { hydrateBackendWorkoutSets } from '../../app/auth';
+import { hydrateBackendWorkoutSetsWithSource } from '../../app/auth/hydrateBackendWorkoutSets';
 import { getHevyErrorMessage } from '../../app/ui';
 import { trackEvent, identifyUser } from '../../utils/integrations/analytics';
 import type { AppAuthHandlersDeps } from './appAuthTypes';
@@ -45,12 +46,13 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
     hevyBackendGetSetsWithProApiKey<WorkoutSet>(savedProKey)
       .then((resp) => {
         const sets = resp.sets ?? [];
-        const hydrated = hydrateBackendWorkoutSets(sets);
+        const hydrated = hydrateBackendWorkoutSetsWithSource(sets, 'hevy');
         const enriched = identifyPersonalRecords(hydrated);
 
         deps.setParsedData(enriched);
         saveLastLoginMethod('hevy', 'apiKey', getHevyUsernameOrEmail() ?? undefined);
         deps.setDataSource('hevy');
+        addCombinedDataSource('hevy');
         saveSetupComplete(true);
         deps.setOnboarding(null);
 
@@ -97,12 +99,13 @@ export const runHevySyncSaved = (deps: AppAuthHandlersDeps): void => {
 
   const applySetsResponse = (resp: { sets?: WorkoutSet[]; username?: string; email?: string }, accessToken?: string): void => {
     const sets = resp.sets ?? [];
-    const hydrated = hydrateBackendWorkoutSets(sets);
+    const hydrated = hydrateBackendWorkoutSetsWithSource(sets, 'hevy');
     const enriched = identifyPersonalRecords(hydrated);
 
     deps.setParsedData(enriched);
     saveLastLoginMethod('hevy', 'credentials', getHevyUsernameOrEmail() ?? undefined);
     deps.setDataSource('hevy');
+    addCombinedDataSource('hevy');
     saveSetupComplete(true);
     deps.setOnboarding(null);
 
@@ -200,11 +203,12 @@ export const runHevyApiKeyLogin = (deps: AppAuthHandlersDeps, apiKey: string): v
     })
     .then((resp) => {
       const sets = resp.sets ?? [];
-      const hydrated = hydrateBackendWorkoutSets(sets);
+      const hydrated = hydrateBackendWorkoutSetsWithSource(sets, 'hevy');
       const enriched = identifyPersonalRecords(hydrated);
 
       deps.setParsedData(enriched);
       deps.setDataSource('hevy');
+      addCombinedDataSource('hevy');
       saveSetupComplete(true);
       deps.setOnboarding(null);
 
@@ -259,11 +263,12 @@ export const runHevyLogin = (deps: AppAuthHandlersDeps, emailOrUsername: string,
     })
     .then((resp) => {
       const sets = resp.sets ?? [];
-      const hydrated = hydrateBackendWorkoutSets(sets);
+      const hydrated = hydrateBackendWorkoutSetsWithSource(sets, 'hevy');
       const enriched = identifyPersonalRecords(hydrated);
 
       deps.setParsedData(enriched);
       deps.setDataSource('hevy');
+      addCombinedDataSource('hevy');
       saveSetupComplete(true);
       deps.setOnboarding(null);
       const totalMs = Date.now() - startedAt;

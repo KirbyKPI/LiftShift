@@ -15,3 +15,11 @@ export const hydrateBackendWorkoutSets = (sets: WorkoutSet[]): WorkoutSet[] => {
   
   return hydrated;
 };
+
+export const hydrateBackendWorkoutSetsWithSource = (
+  sets: WorkoutSet[],
+  source: 'hevy' | 'lyfta' | 'strong' | 'other'
+): WorkoutSet[] => {
+  const hydrated = hydrateBackendWorkoutSets(sets);
+  return hydrated.map((s) => ({ ...s, source }));
+};

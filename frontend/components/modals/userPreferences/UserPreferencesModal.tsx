@@ -9,6 +9,7 @@ import {
   ThemeSection,
   TrendModeSection,
   WeightUnitSection,
+  SecondarySetMultiplierSection,
 } from './UserPreferencesSections';
 
 interface UserPreferencesModalProps {
@@ -24,6 +25,8 @@ interface UserPreferencesModalProps {
   onDateModeChange: (mode: DateMode) => void;
   exerciseTrendMode: ExerciseTrendMode;
   onExerciseTrendModeChange: (mode: ExerciseTrendMode) => void;
+  secondarySetMultiplier: number;
+  onSecondarySetMultiplierChange: (value: number) => void;
   dataAgeInfo?: DataAgeInfo;
 }
 
@@ -40,6 +43,8 @@ export const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({
   onDateModeChange,
   exerciseTrendMode,
   onExerciseTrendModeChange,
+  secondarySetMultiplier,
+  onSecondarySetMultiplierChange,
   dataAgeInfo,
 }) => {
   if (!isOpen) return null;
@@ -84,6 +89,10 @@ export const UserPreferencesModal: React.FC<UserPreferencesModalProps> = ({
               <TrendModeSection
                 exerciseTrendMode={exerciseTrendMode}
                 onExerciseTrendModeChange={onExerciseTrendModeChange}
+              />
+              <SecondarySetMultiplierSection
+                secondarySetMultiplier={secondarySetMultiplier}
+                onSecondarySetMultiplierChange={onSecondarySetMultiplierChange}
               />
               <ThemeSection themeMode={themeMode} onThemeModeChange={onThemeModeChange} />
             </div>

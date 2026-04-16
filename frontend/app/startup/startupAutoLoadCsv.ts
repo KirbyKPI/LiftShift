@@ -14,7 +14,16 @@ interface CsvLoadOptions {
   clearLoginErrors: () => void;
 }
 
-export const loadCsvAuto = (deps: StartupAutoLoadParams, options: CsvLoadOptions): void => {
+interface StartupLoadBehavior {
+  resetOnError?: boolean;
+}
+
+export const loadCsvAuto = (
+  deps: StartupAutoLoadParams,
+  options: CsvLoadOptions,
+  behavior: StartupLoadBehavior = {}
+): void => {
+  const shouldResetOnError = behavior.resetOnError !== false;
   deps.setLoadingKind('csv');
   deps.setIsAnalyzing(true);
   const startedAt = deps.startProgress();
@@ -23,22 +32,27 @@ export const loadCsvAuto = (deps: StartupAutoLoadParams, options: CsvLoadOptions
     .then((result: ParseWorkoutCsvResult) => {
       if (result.sets.length === 0 || result.sets.every((s) => !s.parsedDate)) {
         clearCSVData();
-        saveSetupComplete(false);
-        deps.setCsvImportError('No workouts found in your CSV.');
-        deps.setOnboarding({ intent: 'initial', step: 'platform' });
+        if (shouldResetOnError) {
+          saveSetupComplete(false);
+          deps.setCsvImportError('No workouts found in your CSV.');
+          deps.setOnboarding({ intent: 'initial', step: 'platform' });
+        }
         return;
       }
 
       const enriched = identifyPersonalRecords(result.sets);
-      deps.setParsedData(enriched);
+      const sourced = enriched.map((s) => ({ ...s, source: options.platform }));
+      deps.setParsedData(sourced);
       options.clearLoginErrors();
       deps.setCsvImportError(null);
     })
     .catch((err) => {
       clearCSVData();
-      saveSetupComplete(false);
-      deps.setCsvImportError(getErrorMessage(err));
-      deps.setOnboarding({ intent: 'initial', step: 'platform' });
+      if (shouldResetOnError) {
+        saveSetupComplete(false);
+        deps.setCsvImportError(getErrorMessage(err));
+        deps.setOnboarding({ intent: 'initial', step: 'platform' });
+      }
     })
     .finally(() => {
       deps.finishProgress(startedAt);

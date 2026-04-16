@@ -36,6 +36,7 @@ interface CSVImportModalProps {
   onBack?: () => void;
   onClose?: () => void;
   onClearCache?: () => void;
+  onAddDataSource?: () => void;
   onGenderChange?: (gender: BodyMapGender) => void;
   onUnitChange?: (unit: WeightUnit) => void;
 }
@@ -55,6 +56,7 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({
   onBack,
   onClose,
   onClearCache,
+  onAddDataSource,
   onGenderChange,
   onUnitChange,
 }) => {
@@ -103,6 +105,7 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({
           showExportHelp={showExportHelp}
           onToggleExportHelp={() => setShowExportHelp((v) => !v)}
           onClearCache={onClearCache}
+          onAddDataSource={onAddDataSource}
           isLoading={isLoading}
         />
       )}

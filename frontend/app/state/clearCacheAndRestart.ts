@@ -16,6 +16,7 @@ import {
   clearLastCsvPlatform,
   clearLastLoginMethod,
   clearLyfataApiKey,
+  clearCombinedDataSources,
   clearSetupComplete,
 } from '../../utils/storage/dataSourceStorage';
 
@@ -29,6 +30,7 @@ export const clearCacheAndRestart = (): void => {
   clearDataSourceChoice();
   clearLastCsvPlatform();
   clearLastLoginMethod();
+  clearCombinedDataSources();
   clearSetupComplete();
   clearWeightUnit();
   clearBodyMapGender();

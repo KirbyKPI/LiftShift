@@ -9,6 +9,7 @@ interface CSVImportFooterProps {
   showExportHelp: boolean;
   onToggleExportHelp: () => void;
   onClearCache?: () => void;
+  onAddDataSource?: () => void;
   isLoading: boolean;
 }
 
@@ -18,11 +19,12 @@ export const CSVImportFooter: React.FC<CSVImportFooterProps> = ({
   showExportHelp,
   onToggleExportHelp,
   onClearCache,
+  onAddDataSource,
   isLoading,
 }) => {
   if (variant === 'csv') {
     return (
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex flex-wrap items-center justify-center gap-3">
         {platform !== 'other' ? (
           <button
             type="button"
@@ -46,6 +48,17 @@ export const CSVImportFooter: React.FC<CSVImportFooterProps> = ({
             <span>Clear cache</span>
           </button>
         ) : null}
+
+        {onAddDataSource ? (
+          <button
+            type="button"
+            onClick={onAddDataSource}
+            disabled={isLoading}
+            className={`${UNIFORM_HEADER_BUTTON_CLASS} h-10 text-sm font-semibold disabled:opacity-60`}
+          >
+            <span>Combine data</span>
+          </button>
+        ) : null}
       </div>
     );
   }
@@ -53,7 +66,7 @@ export const CSVImportFooter: React.FC<CSVImportFooterProps> = ({
   if (!onClearCache) return null;
 
   return (
-    <div className="flex justify-center">
+    <div className="flex flex-wrap justify-center gap-3">
       <button
         type="button"
         onClick={onClearCache}
@@ -63,6 +76,16 @@ export const CSVImportFooter: React.FC<CSVImportFooterProps> = ({
         <Trash2 className="w-4 h-4" />
         <span>Clear cache</span>
       </button>
+      {onAddDataSource ? (
+        <button
+          type="button"
+          onClick={onAddDataSource}
+          disabled={isLoading}
+          className={`${UNIFORM_HEADER_BUTTON_CLASS} h-10 text-sm font-semibold disabled:opacity-60`}
+        >
+          <span>Combine data</span>
+        </button>
+      ) : null}
     </div>
   );
 };

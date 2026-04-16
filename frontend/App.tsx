@@ -22,6 +22,7 @@ import { useAppSideEffects } from './app/state';
 import { useAppDerivedData } from './app/state';
 import { useCalendarSelectionHandlers } from './app/state';
 import { useUpdateFlowHandler } from './app/auth';
+import { createFingerprintMatcher } from './utils/exercise/exerciseFingerprint';
 
 const CHUNK_RELOAD_KEY = 'liftshift_chunk_reload_once';
 
@@ -116,6 +117,7 @@ const App: React.FC = () => {
   }, [navigate]);
 
   const [parsedData, setParsedData] = useState<WorkoutSet[]>([]);
+  const [dataBySource, setDataBySource] = useState<Partial<Record<'hevy' | 'lyfta' | 'strong' | 'other', WorkoutSet[]>>>({});
   const [hasHydratedData, setHasHydratedData] = useState(false);
   const [onboarding, setOnboarding] = useState<OnboardingFlow | null>(() => {
     return getSetupComplete() ? null : { intent: 'initial', step: 'platform' };
@@ -134,7 +136,115 @@ const App: React.FC = () => {
     setDateMode,
     exerciseTrendMode,
     setExerciseTrendMode,
+    secondarySetMultiplier,
+    setSecondarySetMultiplier,
   } = useAppPreferences();
+
+  const mergeDatasets = useCallback(
+    (datasets: Partial<Record<'hevy' | 'lyfta' | 'strong' | 'other', WorkoutSet[]>>): WorkoutSet[] => {
+      const activeSourceCount = Object.values(datasets).filter((sets) => (sets?.length ?? 0) > 0).length;
+      const useSourceLabels = activeSourceCount > 1;
+      const normalizedBySource = new Map<'hevy' | 'lyfta' | 'strong' | 'other', Map<string, string>>();
+
+      const sources = Object.entries(datasets) as Array<['hevy' | 'lyfta' | 'strong' | 'other', WorkoutSet[] | undefined]>;
+      const allCanonicalNames = Array.from(
+        new Set(
+          sources.flatMap(([_, sets]) => (sets ?? []).map((s) => s.exercise_title || '').filter(Boolean))
+        )
+      );
+      const matcher = createFingerprintMatcher(allCanonicalNames);
+
+      for (const [source, sets] of sources) {
+        const m = new Map<string, string>();
+        for (const set of sets ?? []) {
+          const raw = set.exercise_title || '';
+          if (!raw) continue;
+          const resolved = matcher.match(raw);
+          m.set(raw, resolved.name || raw);
+        }
+        normalizedBySource.set(source, m);
+      }
+
+      const canonicalSources = new Map<string, Set<string>>();
+      for (const [source, sets] of sources) {
+        const normMap = normalizedBySource.get(source);
+        for (const set of sets ?? []) {
+          const raw = set.exercise_title || '';
+          const canonical = normMap?.get(raw) || raw;
+          if (!canonical) continue;
+          if (!canonicalSources.has(canonical)) canonicalSources.set(canonical, new Set());
+          canonicalSources.get(canonical)!.add(source);
+        }
+      }
+
+      const merged: WorkoutSet[] = [];
+      for (const [source, sets] of sources) {
+        const normMap = normalizedBySource.get(source);
+        for (const set of sets ?? []) {
+          const raw = set.exercise_title || '';
+          const canonical = normMap?.get(raw) || raw;
+          const contributingSources = canonicalSources.get(canonical) ?? new Set([source]);
+          const label = !useSourceLabels
+            ? ''
+            : contributingSources.size > 1
+              ? '@merged'
+              : source === 'hevy'
+                ? '@hevy'
+                : source === 'lyfta'
+                  ? '@lyfta'
+                  : source === 'strong'
+                    ? '@strong'
+                    : '@other';
+          const exerciseTitle = label ? `${canonical || raw} ${label}` : (canonical || raw);
+          merged.push({ ...set, exercise_title: exerciseTitle.trim(), source });
+        }
+      }
+
+      merged.sort((a, b) => {
+        const ta = a.parsedDate?.getTime() ?? 0;
+        const tb = b.parsedDate?.getTime() ?? 0;
+        if (tb !== ta) return tb - ta;
+        const exA = a.exercise_index ?? 0;
+        const exB = b.exercise_index ?? 0;
+        if (exA !== exB) return exA - exB;
+        return (a.set_index || 0) - (b.set_index || 0);
+      });
+
+      return merged;
+    },
+    []
+  );
+
+  const mergeIntoCombinedData = useCallback(
+    (source: 'hevy' | 'lyfta' | 'strong' | 'other', incoming: WorkoutSet[]) => {
+      setDataBySource((prev) => {
+        const existing = prev[source] ?? [];
+        const nextSourceData = [...existing, ...incoming];
+
+        const byKey = new Map<string, WorkoutSet>();
+        for (const set of nextSourceData) {
+          const key = [
+            set.start_time,
+            set.end_time,
+            set.exercise_title,
+            set.set_index,
+            set.weight_kg,
+            set.reps,
+            set.rpe,
+          ].join('|');
+          if (!byKey.has(key)) byKey.set(key, set);
+        }
+
+        const deduped = Array.from(byKey.values());
+        const next = { ...prev, [source]: deduped };
+        const combined = mergeDatasets(next);
+        setParsedData(combined);
+        if (combined.length > 0) setHasHydratedData(true);
+        return next;
+      });
+    },
+    [mergeDatasets]
+  );
 
   const {
     activeTab,
@@ -203,6 +313,11 @@ const App: React.FC = () => {
   } = useAppAuth({
     weightUnit,
     setParsedData: (data) => {
+      const inferredSource = data[0]?.source;
+      if (inferredSource === 'hevy' || inferredSource === 'lyfta' || inferredSource === 'strong' || inferredSource === 'other') {
+        mergeIntoCombinedData(inferredSource, data);
+        return;
+      }
       setParsedData(data);
       if (data.length > 0) setHasHydratedData(true);
     },
@@ -222,6 +337,11 @@ const App: React.FC = () => {
     setOnboarding,
     setDataSource,
     setParsedData: (data) => {
+      const inferredSource = data[0]?.source;
+      if (inferredSource === 'hevy' || inferredSource === 'lyfta' || inferredSource === 'strong' || inferredSource === 'other') {
+        mergeIntoCombinedData(inferredSource, data);
+        return;
+      }
       setParsedData(data);
       if (data.length > 0) setHasHydratedData(true);
     },
@@ -339,6 +459,7 @@ const App: React.FC = () => {
         bodyMapGender={bodyMapGender}
         weightUnit={weightUnit}
         exerciseTrendMode={exerciseTrendMode}
+        secondarySetMultiplier={secondarySetMultiplier}
         now={filteredEffectiveNow}
       />
 
@@ -355,6 +476,8 @@ const App: React.FC = () => {
         onDateModeChange={setDateMode}
         exerciseTrendMode={exerciseTrendMode}
         onExerciseTrendModeChange={setExerciseTrendMode}
+        secondarySetMultiplier={secondarySetMultiplier}
+        onSecondarySetMultiplierChange={setSecondarySetMultiplier}
         dataAgeInfo={dataAgeInfo}
       />
 

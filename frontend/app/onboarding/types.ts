@@ -4,6 +4,7 @@ export type OnboardingIntent = 'initial' | 'update';
 
 export type OnboardingStep =
   | 'platform'
+  | 'add_source_platform'
   | 'demo_prefs'
   | 'strong_prefs'
   | 'strong_csv'

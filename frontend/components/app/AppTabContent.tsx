@@ -53,6 +53,7 @@ interface AppTabContentProps {
   bodyMapGender: BodyMapGender;
   weightUnit: WeightUnit;
   exerciseTrendMode: ExerciseTrendMode;
+  secondarySetMultiplier: number;
   now: Date;
 }
 
@@ -80,6 +81,7 @@ export const AppTabContent: React.FC<AppTabContentProps> = ({
   bodyMapGender,
   weightUnit,
   exerciseTrendMode,
+  secondarySetMultiplier,
   now,
 }) => {
   return (
@@ -102,6 +104,7 @@ export const AppTabContent: React.FC<AppTabContentProps> = ({
             onExerciseClick={onExerciseClick}
             bodyMapGender={bodyMapGender}
             weightUnit={weightUnit}
+            secondarySetMultiplier={secondarySetMultiplier}
             now={now}
           />
         )}
@@ -119,6 +122,7 @@ export const AppTabContent: React.FC<AppTabContentProps> = ({
             bodyMapGender={bodyMapGender}
             stickyHeader={hasActiveCalendarFilter}
             now={now}
+            secondarySetMultiplier={secondarySetMultiplier}
           />
         )}
         {activeTab === Tab.HISTORY && (
@@ -134,6 +138,7 @@ export const AppTabContent: React.FC<AppTabContentProps> = ({
             targetDate={targetHistoryDate}
             onTargetDateConsumed={onTargetHistoryDateConsumed}
             now={now}
+            secondarySetMultiplier={secondarySetMultiplier}
           />
         )}
         {activeTab === Tab.MUSCLE_ANALYSIS && (
@@ -149,6 +154,7 @@ export const AppTabContent: React.FC<AppTabContentProps> = ({
             bodyMapGender={bodyMapGender}
             stickyHeader={hasActiveCalendarFilter}
             now={now}
+            secondarySetMultiplier={secondarySetMultiplier}
           />
         )}
         {activeTab === Tab.FLEX && (
@@ -161,6 +167,7 @@ export const AppTabContent: React.FC<AppTabContentProps> = ({
             stickyHeader={hasActiveCalendarFilter}
             bodyMapGender={bodyMapGender}
             now={now}
+            secondarySetMultiplier={secondarySetMultiplier}
           />
         )}
       </Suspense>

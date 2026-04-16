@@ -17,6 +17,7 @@ interface LyfataLoginModalProps {
   onSyncSaved?: () => void;
   onClearCache?: () => void;
   onImportCsv?: () => void;
+  onAddDataSource?: () => void;
   onBack?: () => void;
   onClose?: () => void;
 }
@@ -31,6 +32,7 @@ export const LyfataLoginModal: React.FC<LyfataLoginModalProps> = ({
   onSyncSaved,
   onClearCache,
   onImportCsv,
+  onAddDataSource,
   onBack,
   onClose,
 }) => {
@@ -170,6 +172,17 @@ export const LyfataLoginModal: React.FC<LyfataLoginModalProps> = ({
               <div />
             )}
           </div>
+          {onAddDataSource ? (
+            <button
+              type="button"
+              onClick={onAddDataSource}
+              disabled={isLoading}
+              className={`${UNIFORM_HEADER_BUTTON_CLASS} mt-2 h-10 w-full text-[12px] font-semibold disabled:opacity-60 gap-2 justify-center`}
+              title="Combine data"
+            >
+              <span>Combine data</span>
+            </button>
+          ) : null}
         </div>
       </form>
 

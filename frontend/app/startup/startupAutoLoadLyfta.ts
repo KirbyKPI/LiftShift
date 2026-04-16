@@ -2,12 +2,20 @@ import { WorkoutSet } from '../../types';
 import { lyfatBackendGetSets } from '../../utils/api/lyfataBackend';
 import { identifyPersonalRecords } from '../../utils/analysis/core';
 import { clearLyfataApiKey, saveSetupComplete } from '../../utils/storage/dataSourceStorage';
-import { hydrateBackendWorkoutSets } from '../auth/hydrateBackendWorkoutSets';
+import { hydrateBackendWorkoutSetsWithSource } from '../auth/hydrateBackendWorkoutSets';
 import { getLyfatErrorMessage } from '../ui/appErrorMessages';
 import type { StartupAutoLoadParams } from './startupAutoLoadTypes';
 
+interface StartupLoadBehavior {
+  resetOnError?: boolean;
+}
 
-export const loadLyftaFromApiKey = (deps: StartupAutoLoadParams, apiKey: string): void => {
+export const loadLyftaFromApiKey = (
+  deps: StartupAutoLoadParams,
+  apiKey: string,
+  behavior: StartupLoadBehavior = {}
+): void => {
+  const shouldResetOnError = behavior.resetOnError !== false;
   deps.setLoadingKind('lyfta');
   deps.setIsAnalyzing(true);
   const startedAt = deps.startProgress();
@@ -17,12 +25,14 @@ export const loadLyftaFromApiKey = (deps: StartupAutoLoadParams, apiKey: string)
       const sets = resp.sets ?? [];
 
       // Instant processing
-      const hydrated = hydrateBackendWorkoutSets(sets);
+      const hydrated = hydrateBackendWorkoutSetsWithSource(sets, 'lyfta');
 
       if (hydrated.length === 0 || hydrated.every((s) => !s.parsedDate)) {
-        saveSetupComplete(false);
-        deps.setLyfatLoginError('Lyfta data could not be parsed. Please try syncing again.');
-        deps.setOnboarding({ intent: 'initial', step: 'platform' });
+        if (shouldResetOnError) {
+          saveSetupComplete(false);
+          deps.setLyfatLoginError('Lyfta data could not be parsed. Please try syncing again.');
+          deps.setOnboarding({ intent: 'initial', step: 'platform' });
+        }
         return;
       }
 
@@ -33,9 +43,11 @@ export const loadLyftaFromApiKey = (deps: StartupAutoLoadParams, apiKey: string)
     })
     .catch((err) => {
       clearLyfataApiKey();
-      saveSetupComplete(false);
-      deps.setLyfatLoginError(getLyfatErrorMessage(err));
-      deps.setOnboarding({ intent: 'initial', step: 'platform' });
+      if (shouldResetOnError) {
+        saveSetupComplete(false);
+        deps.setLyfatLoginError(getLyfatErrorMessage(err));
+        deps.setOnboarding({ intent: 'initial', step: 'platform' });
+      }
     })
     .finally(() => {
       deps.finishProgress(startedAt);

@@ -21,6 +21,7 @@ interface OnboardingCsvStepProps {
   onClearCacheAndRestart: () => void;
   onClose?: () => void;
   withPreferences?: boolean;
+  onOpenAddSourcePicker?: () => void;
 }
 
 export const OnboardingCsvStep: React.FC<OnboardingCsvStepProps> = ({
@@ -39,6 +40,7 @@ export const OnboardingCsvStep: React.FC<OnboardingCsvStepProps> = ({
   onClearCacheAndRestart,
   onClose,
   withPreferences = false,
+  onOpenAddSourcePicker,
 }) => (
   <CSVImportModal
     intent={intent}
@@ -61,12 +63,9 @@ export const OnboardingCsvStep: React.FC<OnboardingCsvStepProps> = ({
     onUnitChange={(u) => onSetWeightUnit(u)}
     errorMessage={csvImportError}
     onBack={() => {
-      if (intent === 'initial') {
-        onSetOnboarding({ intent, step: backStep, platform });
-        return;
-      }
-      onSetOnboarding({ intent: 'initial', step: 'platform' });
+      onSetOnboarding({ intent, step: backStep, platform });
     }}
     onClose={onClose}
+    onAddDataSource={onOpenAddSourcePicker}
   />
 );

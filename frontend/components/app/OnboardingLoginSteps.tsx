@@ -14,6 +14,8 @@ interface HevyLoginStepProps {
   onHevySyncSaved: () => void;
   onClearCacheAndRestart: () => void;
   onSetOnboarding: (next: OnboardingFlow | null) => void;
+  onOpenAddSourcePicker?: () => void;
+  backToCombinePicker?: boolean;
 }
 
 export const HevyLoginStep: React.FC<HevyLoginStepProps> = ({
@@ -25,6 +27,8 @@ export const HevyLoginStep: React.FC<HevyLoginStepProps> = ({
   onHevySyncSaved,
   onClearCacheAndRestart,
   onSetOnboarding,
+  onOpenAddSourcePicker,
+  backToCombinePicker = false,
 }) => (
   <HevyLoginModal
     intent={intent}
@@ -39,10 +43,11 @@ export const HevyLoginStep: React.FC<HevyLoginStepProps> = ({
     onSyncSaved={onHevySyncSaved}
     onClearCache={onClearCacheAndRestart}
     onImportCsv={() => onSetOnboarding({ intent, step: 'hevy_csv', platform: 'hevy', backStep: 'hevy_login' })}
+    onAddDataSource={onOpenAddSourcePicker}
     onBack={
       intent === 'initial'
         ? () => onSetOnboarding({ intent, step: 'hevy_prefs', platform: 'hevy' })
-        : () => onSetOnboarding({ intent: 'initial', step: 'platform' })
+        : () => onSetOnboarding(backToCombinePicker ? { intent, step: 'add_source_platform' } : { intent: 'initial', step: 'platform' })
     }
     onClose={intent === 'update' ? () => onSetOnboarding(null) : undefined}
   />
@@ -56,6 +61,8 @@ interface LyftaLoginStepProps {
   onLyfatSyncSaved: () => void;
   onClearCacheAndRestart: () => void;
   onSetOnboarding: (next: OnboardingFlow | null) => void;
+  onOpenAddSourcePicker?: () => void;
+  backToCombinePicker?: boolean;
 }
 
 export const LyftaLoginStep: React.FC<LyftaLoginStepProps> = ({
@@ -66,6 +73,8 @@ export const LyftaLoginStep: React.FC<LyftaLoginStepProps> = ({
   onLyfatSyncSaved,
   onClearCacheAndRestart,
   onSetOnboarding,
+  onOpenAddSourcePicker,
+  backToCombinePicker = false,
 }) => (
   <LyfataLoginModal
     intent={intent}
@@ -77,10 +86,11 @@ export const LyftaLoginStep: React.FC<LyftaLoginStepProps> = ({
     onSyncSaved={onLyfatSyncSaved}
     onClearCache={onClearCacheAndRestart}
     onImportCsv={() => onSetOnboarding({ intent, step: 'lyfta_csv', platform: 'lyfta', backStep: 'lyfta_login' })}
+    onAddDataSource={onOpenAddSourcePicker}
     onBack={
       intent === 'initial'
         ? () => onSetOnboarding({ intent, step: 'lyfta_prefs', platform: 'lyfta' })
-        : () => onSetOnboarding({ intent: 'initial', step: 'platform' })
+        : () => onSetOnboarding(backToCombinePicker ? { intent, step: 'add_source_platform' } : { intent: 'initial', step: 'platform' })
     }
     onClose={intent === 'update' ? () => onSetOnboarding(null) : undefined}
   />

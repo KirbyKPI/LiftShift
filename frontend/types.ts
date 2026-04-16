@@ -21,6 +21,7 @@ export interface WorkoutSet {
   prTypes?: PrType[];
   isSilverPr?: boolean;
   silverPrTypes?: PrType[];
+  source?: 'hevy' | 'lyfta' | 'strong' | 'other';
 }
 
 export interface ExerciseHistoryEntry {

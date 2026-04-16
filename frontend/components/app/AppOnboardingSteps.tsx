@@ -8,6 +8,44 @@ import { OnboardingPreferencesStep } from './OnboardingPreferencesStep';
 import { OnboardingDemoStep } from './OnboardingDemoStep';
 import { HevyLoginStep, LyftaLoginStep } from './OnboardingLoginSteps';
 import { OnboardingCsvStep } from './OnboardingCsvStep';
+import { AddSourcePickerModal } from './AddSourcePickerModal';
+
+const chooseNextStep = (
+  intent: OnboardingFlow['intent'],
+  source: 'strong' | 'hevy' | 'lyfta' | 'other',
+  preferencesConfirmed: boolean
+): OnboardingFlow => {
+  if (source === 'strong') {
+    return {
+      intent,
+      step: preferencesConfirmed ? 'strong_csv' : 'strong_prefs',
+      platform: 'strong',
+      backStep: 'strong_prefs',
+    };
+  }
+  if (source === 'lyfta') {
+    return {
+      intent,
+      step: preferencesConfirmed ? 'lyfta_login' : 'lyfta_prefs',
+      platform: 'lyfta',
+      backStep: intent === 'update' && preferencesConfirmed ? 'add_source_platform' : undefined,
+    };
+  }
+  if (source === 'other') {
+    return {
+      intent,
+      step: preferencesConfirmed ? 'other_csv' : 'other_prefs',
+      platform: 'other',
+      backStep: 'other_prefs',
+    };
+  }
+  return {
+    intent,
+    step: preferencesConfirmed ? 'hevy_login' : 'hevy_prefs',
+    platform: 'hevy',
+    backStep: intent === 'update' && preferencesConfirmed ? 'add_source_platform' : undefined,
+  };
+};
 
 interface AppOnboardingStepsProps {
   onboarding: OnboardingFlow;
@@ -57,33 +95,33 @@ export const AppOnboardingSteps: React.FC<AppOnboardingStepsProps> = ({
 }) => {
   const closeForUpdate = onboarding.intent === 'update' ? () => onSetOnboarding(null) : undefined;
 
+  const handleSelectPlatform = (source: 'strong' | 'hevy' | 'lyfta' | 'other') => {
+    onSetCsvImportError(null);
+    onSetHevyLoginError(null);
+    onSetLyfatLoginError(null);
+    const skipPrefs = onboarding.intent === 'update' && getPreferencesConfirmed();
+    onSetOnboarding(chooseNextStep(onboarding.intent, source, skipPrefs));
+  };
+
   if (onboarding.step === 'platform') {
     return (
       <LandingPage
-        onSelectPlatform={(source) => {
-          onSetCsvImportError(null);
-          onSetHevyLoginError(null);
-          onSetLyfatLoginError(null);
-          if (source === 'strong') {
-            onSetOnboarding({ intent: onboarding.intent, step: 'strong_prefs', platform: 'strong' });
-            return;
-          }
-          if (source === 'lyfta') {
-            onSetOnboarding({ intent: onboarding.intent, step: 'lyfta_prefs', platform: 'lyfta' });
-            return;
-          }
-          if (source === 'other') {
-            onSetOnboarding({ intent: onboarding.intent, step: 'other_prefs', platform: 'other' });
-            return;
-          }
-          onSetOnboarding({ intent: onboarding.intent, step: 'hevy_prefs', platform: 'hevy' });
-        }}
+        onSelectPlatform={handleSelectPlatform}
         onTryDemo={() => {
           onSetCsvImportError(null);
           onSetHevyLoginError(null);
           onSetLyfatLoginError(null);
           onSetOnboarding({ intent: 'initial', step: 'demo_prefs', platform: 'other' });
         }}
+      />
+    );
+  }
+
+  if (onboarding.step === 'add_source_platform') {
+    return (
+      <AddSourcePickerModal
+        onSelectSource={handleSelectPlatform}
+        onClose={() => onSetOnboarding(null)}
       />
     );
   }
@@ -190,6 +228,8 @@ export const AppOnboardingSteps: React.FC<AppOnboardingStepsProps> = ({
         onHevySyncSaved={onHevySyncSaved}
         onClearCacheAndRestart={onClearCacheAndRestart}
         onSetOnboarding={onSetOnboarding}
+        backToCombinePicker={onboarding.backStep === 'add_source_platform'}
+        onOpenAddSourcePicker={onboarding.backStep === 'add_source_platform' ? undefined : () => onSetOnboarding({ intent: 'update', step: 'add_source_platform' })}
       />
     );
   }
@@ -204,6 +244,8 @@ export const AppOnboardingSteps: React.FC<AppOnboardingStepsProps> = ({
         onLyfatSyncSaved={onLyfatSyncSaved}
         onClearCacheAndRestart={onClearCacheAndRestart}
         onSetOnboarding={onSetOnboarding}
+        backToCombinePicker={onboarding.backStep === 'add_source_platform'}
+        onOpenAddSourcePicker={onboarding.backStep === 'add_source_platform' ? undefined : () => onSetOnboarding({ intent: 'update', step: 'add_source_platform' })}
       />
     );
   }
@@ -225,6 +267,7 @@ export const AppOnboardingSteps: React.FC<AppOnboardingStepsProps> = ({
         onProcessFile={onProcessFile}
         onClearCacheAndRestart={onClearCacheAndRestart}
         onClose={closeForUpdate}
+        onOpenAddSourcePicker={onboarding.backStep === 'add_source_platform' ? undefined : () => onSetOnboarding({ intent: 'update', step: 'add_source_platform' })}
       />
     );
   }
@@ -246,6 +289,7 @@ export const AppOnboardingSteps: React.FC<AppOnboardingStepsProps> = ({
         onProcessFile={onProcessFile}
         onClearCacheAndRestart={onClearCacheAndRestart}
         onClose={closeForUpdate}
+        onOpenAddSourcePicker={onboarding.backStep === 'add_source_platform' ? undefined : () => onSetOnboarding({ intent: 'update', step: 'add_source_platform' })}
       />
     );
   }
@@ -267,6 +311,7 @@ export const AppOnboardingSteps: React.FC<AppOnboardingStepsProps> = ({
         onProcessFile={onProcessFile}
         onClearCacheAndRestart={onClearCacheAndRestart}
         onClose={closeForUpdate}
+        onOpenAddSourcePicker={onboarding.backStep === 'add_source_platform' ? undefined : () => onSetOnboarding({ intent: 'update', step: 'add_source_platform' })}
       />
     );
   }
@@ -289,6 +334,7 @@ export const AppOnboardingSteps: React.FC<AppOnboardingStepsProps> = ({
         onClearCacheAndRestart={onClearCacheAndRestart}
         onClose={closeForUpdate}
         withPreferences={true}
+        onOpenAddSourcePicker={onboarding.backStep === 'add_source_platform' ? undefined : () => onSetOnboarding({ intent: 'update', step: 'add_source_platform' })}
       />
     );
   }

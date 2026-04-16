@@ -55,6 +55,7 @@ interface AppShellProps {
   bodyMapGender: 'male' | 'female';
   weightUnit: 'kg' | 'lbs';
   exerciseTrendMode: 'stable' | 'reactive';
+  secondarySetMultiplier: number;
   now: Date;
 }
 
@@ -106,6 +107,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   bodyMapGender,
   weightUnit,
   exerciseTrendMode,
+  secondarySetMultiplier,
   now,
 }) => {
   if (onboardingIntent === 'initial') return null;
@@ -169,6 +171,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         bodyMapGender={bodyMapGender}
         weightUnit={weightUnit}
         exerciseTrendMode={exerciseTrendMode}
+        secondarySetMultiplier={secondarySetMultiplier}
         now={now}
       />
     </>

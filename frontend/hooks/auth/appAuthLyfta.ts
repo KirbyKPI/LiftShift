@@ -4,11 +4,12 @@ import {
   saveLyfataApiKey,
   clearLyfataApiKey,
   saveLastLoginMethod,
+  addCombinedDataSource,
   saveSetupComplete,
 } from '../../utils/storage/dataSourceStorage';
 import { lyfatBackendGetSets } from '../../utils/api/lyfataBackend';
 import { identifyPersonalRecords } from '../../utils/analysis/core';
-import { hydrateBackendWorkoutSets } from '../../app/auth';
+import { hydrateBackendWorkoutSetsWithSource } from '../../app/auth/hydrateBackendWorkoutSets';
 import { getLyfatErrorMessage } from '../../app/ui';
 import { trackEvent, identifyUser } from '../../utils/integrations/analytics';
 import type { AppAuthHandlersDeps } from './appAuthTypes';
@@ -28,11 +29,12 @@ export const runLyfatSyncSaved = (deps: AppAuthHandlersDeps): void => {
   lyfatBackendGetSets<WorkoutSet>(apiKey)
     .then((resp) => {
       const sets = resp.sets ?? [];
-      const hydrated = hydrateBackendWorkoutSets(sets);
+      const hydrated = hydrateBackendWorkoutSetsWithSource(sets, 'lyfta');
       const enriched = identifyPersonalRecords(hydrated);
 
       deps.setParsedData(enriched);
       deps.setDataSource('lyfta');
+      addCombinedDataSource('lyfta');
       saveSetupComplete(true);
       deps.setOnboarding(null);
 
@@ -63,11 +65,12 @@ export const runLyfatLogin = (deps: AppAuthHandlersDeps, apiKey: string): void =
       saveLyfataApiKey(apiKey);
       saveLastLoginMethod('lyfta', 'apiKey');
       const sets = resp.sets ?? [];
-      const hydrated = hydrateBackendWorkoutSets(sets);
+      const hydrated = hydrateBackendWorkoutSetsWithSource(sets, 'lyfta');
       const enriched = identifyPersonalRecords(hydrated);
 
       deps.setParsedData(enriched);
       deps.setDataSource('lyfta');
+      addCombinedDataSource('lyfta');
       saveSetupComplete(true);
       deps.setOnboarding(null);
 
