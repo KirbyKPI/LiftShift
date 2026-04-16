@@ -95,7 +95,9 @@ const PossibleGainsBar: React.FC<{ percent: number; thresholds: { mv: number; me
     <div className="relative flex items-center text-[9px]">
       {Array.from({ length: TOTAL_PILLS }).map((_, idx) => {
         const position = (idx / (TOTAL_PILLS - 1)) * legendMax;
-        const color = getVolumeZoneColor(position, thresholds, legendMax);
+        // Use maxv for color calculation to keep colors in green spectrum
+        // Don't extend color range beyond maxv even if legendMax is larger
+        const color = getVolumeZoneColor(position, thresholds, thresholds.maxv);
         const { flexGrow, marginLeft } = pillData[idx];
         
         const pillStart = accumulatedFlex;
