@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { differenceInCalendarDays, differenceInMonths } from 'date-fns';
+import { differenceInCalendarDays } from 'date-fns';
 import type { WorkoutSet } from '../../../types';
 import { computeWeeklySetsDelta } from '../utils/weeklySetsMetrics';
 import type { WeeklySetsWindow } from '../../../utils/muscle/analytics';
@@ -10,8 +10,8 @@ import type { NormalizedMuscleGroup } from '../../../utils/muscle/analytics';
 import type { ExerciseAsset } from '../../../utils/data/exerciseAssets';
 import { computationCache } from '../../../utils/storage/computationCache';
 import { muscleCacheKeys } from '../../../utils/storage/cacheKeys';
-import { getTrainingLevel, getVolumeThresholds, type TrainingLevel } from '../../../utils/muscle/hypertrophy/muscleParams';
-import { parseHevyDateString } from '../../../utils/date/parseHevyDateString';
+import { getVolumeThresholds, type TrainingLevel } from '../../../utils/muscle/hypertrophy/muscleParams';
+import { useTrainingLevel } from '../../../hooks/app/useTrainingLevel';
 
 interface UseMuscleTrendDataParams {
   data: WorkoutSet[];
@@ -43,25 +43,8 @@ export const useMuscleTrendData = ({
   filterCacheKey,
   secondarySetMultiplier,
 }: UseMuscleTrendDataParams) => {
-  // Compute user's training level from data
-  const trainingLevel = useMemo(() => {
-    if (!data || data.length === 0) return 'beginner' as TrainingLevel;
-    
-    // Find earliest workout date
-    let earliestDate: Date | null = null;
-    for (const set of data) {
-      const date = set.parsedDate ?? parseHevyDateString(set.start_time ?? '');
-      if (!date) continue;
-      if (!earliestDate || date < earliestDate) {
-        earliestDate = date;
-      }
-    }
-    
-    if (!earliestDate) return 'beginner' as TrainingLevel;
-    
-    const monthsTraining = differenceInMonths(new Date(), earliestDate);
-    return getTrainingLevel(monthsTraining);
-  }, [data]);
+  // Use shared hook for training level calculation (matches Dashboard)
+  const { trainingLevel } = useTrainingLevel(data, effectiveNow);
 
   // Get volume thresholds based on training level
   const volumeThresholds = useMemo(() => {
