@@ -126,7 +126,7 @@ export const loadHevyFromToken = (
     const username = getHevyUsernameOrEmail();
     const password = getHevyPassword();
     if (!username || !password) return Promise.reject(new Error('Missing saved credentials'));
-    return loadHevyFromCredentials(deps, username, password).then((success) => {
+    return loadHevyFromCredentials(deps, username, password, { resetOnError: shouldResetOnError }).then((success) => {
       if (!success) throw new Error('Credential login failed');
     });
   };

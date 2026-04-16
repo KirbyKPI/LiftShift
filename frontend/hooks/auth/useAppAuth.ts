@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { WorkoutSet } from '../../types';
 import { WeightUnit } from '../../utils/storage/localStorage';
 import type { DataSourceChoice } from '../../utils/storage/dataSourceStorage';
@@ -58,19 +58,40 @@ export function useAppAuth({
   const [loadingKind, setLoadingKind] = useState<'hevy' | 'lyfta' | 'csv' | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const inFlightCountRef = useRef(0);
+  const finishTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (finishTimerRef.current) {
+        window.clearTimeout(finishTimerRef.current);
+        finishTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const startProgress = useCallback((): number => {
+    inFlightCountRef.current += 1;
+    if (finishTimerRef.current) {
+      window.clearTimeout(finishTimerRef.current);
+      finishTimerRef.current = null;
+    }
+    setIsAnalyzing(true);
     setIsCompleting(false);
     return Date.now();
   }, []);
 
-  const finishProgress = useCallback((startedAt: number): void => {
+  const finishProgress = useCallback((_startedAt: number): void => {
+    inFlightCountRef.current = Math.max(0, inFlightCountRef.current - 1);
+    if (inFlightCountRef.current > 0) return;
+
     setIsCompleting(true);
     // Brief moment to show completed state, then hide
-    window.setTimeout(() => {
+    finishTimerRef.current = window.setTimeout(() => {
       setIsAnalyzing(false);
       setLoadingKind(null);
       setIsCompleting(false);
+      finishTimerRef.current = null;
     }, 250);
   }, []);
 

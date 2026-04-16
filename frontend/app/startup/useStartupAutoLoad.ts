@@ -188,16 +188,20 @@ export const useStartupAutoLoad = (params: StartupAutoLoadParams): void => {
     // Execute auto-reload
     const runCombinedReload = async () => {
       const loadOrder = Array.from(new Set([storedChoice, ...combinedSources])) as DataSourceChoice[];
-      let anyLoaded = false;
+      const results = await Promise.all(
+        loadOrder.map(async (source) => {
+          try {
+            const accountKey = source === 'hevy' ? (getHevyUsernameOrEmail() ?? undefined) : undefined;
+            const methodForSource = getLastLoginMethod(source, accountKey);
+            return await attemptReload(source, methodForSource, { resetOnError: false });
+          } catch (err) {
+            console.error('[StartupAutoLoad] Source reload failed', { source, err });
+            return false;
+          }
+        })
+      );
 
-      for (const source of loadOrder) {
-        const accountKey = source === 'hevy' ? (getHevyUsernameOrEmail() ?? undefined) : undefined;
-        const methodForSource = getLastLoginMethod(source, accountKey);
-        const loaded = await attemptReload(source, methodForSource, { resetOnError: false });
-        anyLoaded = anyLoaded || loaded;
-      }
-
-      if (!anyLoaded) {
+      if (!results.some(Boolean)) {
         resetToPlatform();
       }
     };
