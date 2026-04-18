@@ -1,12 +1,14 @@
 import { format } from 'date-fns';
 import type { ExerciseHistoryEntry, PrType } from '../../../types';
 import type { ExerciseSessionEntry } from '../exerciseTrend/exerciseTrendCore';
+import { calculateDirectionalStrengthScore } from '../../exercise/loadProgression';
 
 export const summarizeExerciseHistory = (
   history: ExerciseHistoryEntry[],
-  options?: { separateSides?: boolean }
+  options?: { separateSides?: boolean; exerciseName?: string }
 ): ExerciseSessionEntry[] => {
   const separateSides = options?.separateSides ?? false;
+  const exerciseName = options?.exerciseName;
   const bySession = new Map<string, ExerciseSessionEntry>();
 
   for (const h of history) {
@@ -20,15 +22,16 @@ export const summarizeExerciseHistory = (
 
     let entry = bySession.get(key);
     if (!entry) {
-      entry = {
-        date: d,
-        weight: 0,
-        reps: 0,
-        oneRepMax: 0,
-        volume: 0,
-        sets: 0,
-        totalReps: 0,
-        maxReps: 0,
+        entry = {
+          date: d,
+          weight: 0,
+          reps: 0,
+          oneRepMax: 0,
+          directionalStrengthScore: 0,
+          volume: 0,
+          sets: 0,
+          totalReps: 0,
+          maxReps: 0,
         prTypes: [],
         silverPrTypes: [],
         side: separateSides ? h.side : undefined,
@@ -55,10 +58,25 @@ export const summarizeExerciseHistory = (
       entry.silverPrTypes = Array.from(currentSilverTypes);
     }
 
-    if ((h.oneRepMax || 0) >= (entry.oneRepMax || 0)) {
-      entry.oneRepMax = h.oneRepMax || 0;
-      entry.weight = h.weight || 0;
-      entry.reps = h.reps || 0;
+    const candidateOneRepMax = h.oneRepMax || 0;
+    const candidateWeight = h.weight || 0;
+    const candidateReps = h.reps || 0;
+    const candidateScore = exerciseName
+      ? calculateDirectionalStrengthScore(exerciseName, candidateWeight, candidateReps, candidateOneRepMax)
+      : candidateOneRepMax;
+    const currentScore = exerciseName
+      ? (Number.isFinite(entry.directionalStrengthScore)
+          ? (entry.directionalStrengthScore as number)
+          : calculateDirectionalStrengthScore(exerciseName, entry.weight, entry.reps, entry.oneRepMax))
+      : (entry.oneRepMax || 0);
+
+    if (candidateScore >= currentScore) {
+      entry.oneRepMax = candidateOneRepMax;
+      entry.weight = candidateWeight;
+      entry.reps = candidateReps;
+      if (exerciseName) {
+        entry.directionalStrengthScore = candidateScore;
+      }
     }
   }
 

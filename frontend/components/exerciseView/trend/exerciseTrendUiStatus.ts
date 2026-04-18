@@ -8,6 +8,7 @@ import { getNewCopy } from './exerciseTrendUiCopyNew';
 import { getStagnantCopy } from './exerciseTrendUiCopyStagnant';
 import { getOverloadCopy } from './exerciseTrendUiCopyOverload';
 import { getRegressionCopy } from './exerciseTrendUiCopyRegression';
+import { getLoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 export const analyzeExerciseTrend = (
   stats: ExerciseStats,
@@ -15,6 +16,9 @@ export const analyzeExerciseTrend = (
   options?: { trendMode?: ExerciseTrendMode; summarizedHistory?: ExerciseSessionEntry[] }
 ): StatusResult => {
   const core = analyzeExerciseTrendCore(stats, { trendMode: options?.trendMode, summarizedHistory: options?.summarizedHistory });
+  const loadDirection = getLoadProgressionDirection(stats.name);
+  const positiveLabel = loadDirection === 'lower' ? 'easier loading' : 'gaining';
+  const negativeLabel = loadDirection === 'lower' ? 'harder loading' : 'losing';
   const seedBase = `${stats.name}|${core.status}|${getLatestHistoryKey(stats.history)}`;
 
   if (core.status === 'new') {
@@ -36,6 +40,7 @@ export const analyzeExerciseTrend = (
       evidence: core.evidence,
       label: 'new exercise',
       isBodyweightLike: core.isBodyweightLike,
+      loadProgressionDirection: core.loadProgressionDirection,
       prematurePr: core.prematurePr,
     };
   }
@@ -58,12 +63,13 @@ export const analyzeExerciseTrend = (
       evidence: core.evidence,
       label: 'plateauing',
       isBodyweightLike: core.isBodyweightLike,
+      loadProgressionDirection: core.loadProgressionDirection,
       prematurePr: core.prematurePr,
     };
   }
 
   if (core.status === 'overload') {
-    const { title, description, subtext } = getOverloadCopy(seedBase);
+    const { title, description, subtext } = getOverloadCopy(seedBase, core.loadProgressionDirection);
     return {
       status: 'overload',
       diffPct: core.diffPct,
@@ -77,14 +83,15 @@ export const analyzeExerciseTrend = (
       subtext,
       confidence: core.confidence,
       evidence: core.evidence,
-      label: 'gaining',
+      label: positiveLabel,
       isBodyweightLike: core.isBodyweightLike,
+      loadProgressionDirection: core.loadProgressionDirection,
       prematurePr: core.prematurePr,
     };
   }
 
   if (core.status === 'regression') {
-    const { title, description, subtext } = getRegressionCopy(seedBase);
+    const { title, description, subtext } = getRegressionCopy(seedBase, core.loadProgressionDirection);
     return {
       status: 'regression',
       diffPct: core.diffPct,
@@ -98,8 +105,9 @@ export const analyzeExerciseTrend = (
       subtext,
       confidence: core.confidence,
       evidence: core.evidence,
-      label: 'losing',
+      label: negativeLabel,
       isBodyweightLike: core.isBodyweightLike,
+      loadProgressionDirection: core.loadProgressionDirection,
       prematurePr: core.prematurePr,
     };
   }
@@ -118,6 +126,7 @@ export const analyzeExerciseTrend = (
     evidence: core.evidence,
     label: 'unknown',
     isBodyweightLike: core.isBodyweightLike,
+    loadProgressionDirection: core.loadProgressionDirection,
     prematurePr: core.prematurePr,
   };
 };

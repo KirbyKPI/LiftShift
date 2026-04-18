@@ -64,7 +64,7 @@ export function useExerciseFilters({
   const summarizedHistoryByName = useMemo(() => {
     const map = new Map<string, import('../../../utils/analysis/exerciseTrend').ExerciseSessionEntry[]>();
     for (const s of stats) {
-      map.set(s.name, summarizeExerciseHistory(s.history));
+      map.set(s.name, summarizeExerciseHistory(s.history, { exerciseName: s.name }));
     }
     return map;
   }, [stats]);

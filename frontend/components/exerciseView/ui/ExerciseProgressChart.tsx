@@ -20,6 +20,7 @@ import type { WeightUnit } from '../../../utils/storage/localStorage';
 import { CustomTooltip } from './ExerciseChartTooltip';
 import { StrengthProgressionValueDot } from './StrengthProgressionValueDot';
 import { getThemeMode } from '../../../utils/storage/localStorage';
+import { getLoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 interface ExerciseProgressChartProps {
   selectedStats: ExerciseStats;
@@ -55,6 +56,9 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
   tickIndexMap,
 }) => {
   if (!selectedStats) return null;
+  const isLowerWeightBetter = getLoadProgressionDirection(selectedStats.name) === 'lower';
+  const positiveLabel = isLowerWeightBetter ? 'Easier Loading' : 'Gaining';
+  const negativeLabel = isLowerWeightBetter ? 'Harder Loading' : 'Losing';
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const mode = getThemeMode();
@@ -96,6 +100,8 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
       if (previous === 0) return 'plateauing';
       const change = (current - previous) / previous;
       if (Math.abs(change) <= plateauThreshold) return 'plateauing';
+      if (isBodyweightLike) return change > 0 ? 'gaining' : 'losing';
+      if (isLowerWeightBetter) return change < 0 ? 'gaining' : 'losing';
       return change > 0 ? 'gaining' : 'losing';
     };
     
@@ -187,15 +193,15 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
               </>
             ) : (
               <>
-                <div className="flex items-center gap-1 text-emerald-400/70">
-                  <span className="w-2 h-2 rounded bg-emerald-500/20 border border-emerald-400/70"></span> Gaining
-                </div>
+                 <div className="flex items-center gap-1 text-emerald-400/70">
+                   <span className="w-2 h-2 rounded bg-emerald-500/20 border border-emerald-400/70"></span> {positiveLabel}
+                 </div>
                 <div className="flex items-center gap-1 text-yellow-400/70">
                   <span className="w-2 h-2 rounded bg-yellow-500/20 border border-yellow-400/70"></span> Plateauing
                 </div>
-                <div className="flex items-center gap-1 text-rose-400/70">
-                  <span className="w-2 h-2 rounded bg-rose-500/20 border border-rose-400/70"></span> Losing
-                </div>
+                 <div className="flex items-center gap-1 text-rose-400/70">
+                   <span className="w-2 h-2 rounded bg-rose-500/20 border border-rose-400/70"></span> {negativeLabel}
+                 </div>
               </>
             )}
           </div>
@@ -244,15 +250,15 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
             </>
           ) : (
             <>
-              <div className="flex items-center gap-2 text-emerald-400">
-                <span className="w-2.5 h-2.5 rounded bg-emerald-500/20 border border-emerald-500"></span> Gaining
-              </div>
+               <div className="flex items-center gap-2 text-emerald-400">
+                 <span className="w-2.5 h-2.5 rounded bg-emerald-500/20 border border-emerald-500"></span> {positiveLabel}
+               </div>
               <div className="flex items-center gap-2 text-yellow-400">
                 <span className="w-2.5 h-2.5 rounded bg-yellow-500/20 border border-yellow-500"></span> Plateauing
               </div>
-              <div className="flex items-center gap-2 text-rose-400">
-                <span className="w-2.5 h-2.5 rounded bg-rose-500/20 border border-rose-500"></span> Losing
-              </div>
+               <div className="flex items-center gap-2 text-rose-400">
+                 <span className="w-2.5 h-2.5 rounded bg-rose-500/20 border border-rose-500"></span> {negativeLabel}
+               </div>
             </>
           )}
 
@@ -352,7 +358,6 @@ export const ExerciseProgressChart: React.FC<ExerciseProgressChartProps> = ({
                   dataKey="date"
                   stroke="var(--text-muted)"
                   fontSize={10}
-                  animationDuration={1000}
                   padding={RECHARTS_XAXIS_PADDING as any}
                   interval={0}
                   ticks={xTicks as any}

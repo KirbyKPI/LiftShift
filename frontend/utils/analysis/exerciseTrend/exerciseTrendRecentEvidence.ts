@@ -1,5 +1,6 @@
 import { fmtSignedPct } from '../exerciseTrend/exerciseTrendUtils';
 import type { ExerciseSessionEntry } from '../exerciseTrend/exerciseTrendCore';
+import { getLoadProgressionDirection } from '../../exercise/loadProgression';
 
 const recentDirectionTag = (overall: number, recent: number): string | undefined => {
   // We only surface "recent" callouts when there is a meaningful change.
@@ -26,6 +27,7 @@ const recentDirectionTag = (overall: number, recent: number): string | undefined
 };
 
 export const buildRecentEvidence = (args: {
+  exerciseName: string;
   latestSession?: ExerciseSessionEntry;
   previousSession?: ExerciseSessionEntry;
   isBodyweightLike: boolean;
@@ -35,6 +37,7 @@ export const buildRecentEvidence = (args: {
   recentDeltaPct: number;
 }): string | undefined => {
   const {
+    exerciseName,
     latestSession,
     previousSession,
     isBodyweightLike,
@@ -57,5 +60,7 @@ export const buildRecentEvidence = (args: {
   if (Math.abs(recentDeltaPct) < 0.5) return undefined;
 
   const tag = recentDirectionTag(diffPct, recentDeltaPct);
-  return tag ? `Recent: ${fmtSignedPct(recentDeltaPct)} (${tag})` : `Recent: ${fmtSignedPct(recentDeltaPct)}`;
+  const isLowerWeightBetter = getLoadProgressionDirection(exerciseName) === 'lower';
+  const label = isLowerWeightBetter ? 'Recent load change' : 'Recent';
+  return tag ? `${label}: ${fmtSignedPct(recentDeltaPct)} (${tag})` : `${label}: ${fmtSignedPct(recentDeltaPct)}`;
 };

@@ -6,6 +6,7 @@ import { FANCY_FONT } from '../../../utils/ui/uiConstants';
 import { ExerciseThumbnail } from '../../common/ExerciseThumbnail';
 import { Sparkline } from './HistorySparkline';
 import type { GroupedExercise } from '../utils/historySessions';
+import { getLoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 interface HistoryExerciseHeaderProps {
   group: GroupedExercise;
@@ -24,6 +25,8 @@ export const HistoryExerciseHeader: React.FC<HistoryExerciseHeaderProps> = ({
   weightUnit,
   onExerciseClick,
 }) => {
+  const isLowerWeightBetter = getLoadProgressionDirection(group.exerciseName) === 'lower';
+
   return (
     <div
       className="grid grid-cols-[2.5rem_1fr] grid-rows-2 gap-x-3 gap-y-1 mb-4 cursor-pointer select-none sm:flex sm:items-center sm:gap-3"
@@ -54,7 +57,7 @@ export const HistoryExerciseHeader: React.FC<HistoryExerciseHeaderProps> = ({
             </span>
           )}
           <span className="text-slate-300">
-            PR: <span className="font-semibold">{convertWeight(exerciseBest, weightUnit)}{weightUnit}</span>
+            PR: <span className="font-semibold">{convertWeight(Math.abs(exerciseBest), weightUnit)}{weightUnit}{isLowerWeightBetter ? ' less assist' : ''}</span>
           </span>
         </div>
       </div>

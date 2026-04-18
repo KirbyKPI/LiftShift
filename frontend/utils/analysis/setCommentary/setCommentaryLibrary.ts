@@ -18,6 +18,15 @@ import {
   WEIGHT_DECREASE_SIGNIFICANTLY_BELOW,
 } from './setCommentaryDecrease';
 import {
+  SUPPORT_DECREASE_EXCEEDED,
+  SUPPORT_DECREASE_MET,
+  SUPPORT_DECREASE_SLIGHTLY_BELOW,
+  SUPPORT_DECREASE_SIGNIFICANTLY_BELOW,
+  SUPPORT_INCREASE_MET,
+  SUPPORT_INCREASE_SLIGHTLY_BELOW,
+  SUPPORT_INCREASE_SIGNIFICANTLY_BELOW,
+} from './setCommentarySupport';
+import {
   PROMOTE_INCREASE_WEIGHT,
   DEMOTE_TOO_HEAVY,
   DEMOTE_INCONSISTENT,
@@ -40,9 +49,16 @@ export type SetScenario =
   | 'weightIncrease_met'
   | 'weightIncrease_slightlyBelow'
   | 'weightIncrease_significantlyBelow'
+  | 'supportDecrease_exceeded'
+  | 'supportDecrease_met'
+  | 'supportDecrease_slightlyBelow'
+  | 'supportDecrease_significantlyBelow'
   | 'weightDecrease_met'
   | 'weightDecrease_slightlyBelow'
-  | 'weightDecrease_significantlyBelow';
+  | 'weightDecrease_significantlyBelow'
+  | 'supportIncrease_met'
+  | 'supportIncrease_slightlyBelow'
+  | 'supportIncrease_significantlyBelow';
 
 export interface ResolvedSetCommentary {
   shortMessage: string;
@@ -61,9 +77,16 @@ const scenarioOptions: Record<SetScenario, SetCommentaryOptions> = {
   weightIncrease_met: WEIGHT_INCREASE_MET,
   weightIncrease_slightlyBelow: WEIGHT_INCREASE_SLIGHTLY_BELOW,
   weightIncrease_significantlyBelow: WEIGHT_INCREASE_SIGNIFICANTLY_BELOW,
+  supportDecrease_exceeded: SUPPORT_DECREASE_EXCEEDED,
+  supportDecrease_met: SUPPORT_DECREASE_MET,
+  supportDecrease_slightlyBelow: SUPPORT_DECREASE_SLIGHTLY_BELOW,
+  supportDecrease_significantlyBelow: SUPPORT_DECREASE_SIGNIFICANTLY_BELOW,
   weightDecrease_met: WEIGHT_DECREASE_MET,
   weightDecrease_slightlyBelow: WEIGHT_DECREASE_SLIGHTLY_BELOW,
   weightDecrease_significantlyBelow: WEIGHT_DECREASE_SIGNIFICANTLY_BELOW,
+  supportIncrease_met: SUPPORT_INCREASE_MET,
+  supportIncrease_slightlyBelow: SUPPORT_INCREASE_SLIGHTLY_BELOW,
+  supportIncrease_significantlyBelow: SUPPORT_INCREASE_SIGNIFICANTLY_BELOW,
 };
 
 const interpolateText = (text: string, templateVars?: Record<string, string | number>): string => {

@@ -36,5 +36,6 @@ export interface FlexHeadlessHeatmap {
 export interface FlexTopPRExercise {
   name: string;
   weight: number;
+  isLowerWeightBetter?: boolean;
   thumbnail?: string;
 }

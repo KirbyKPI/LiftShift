@@ -10,6 +10,7 @@ import {
 import { ExerciseSessionEntry } from '../../../utils/analysis/exerciseTrend';
 import { convertWeight } from '../../../utils/format/units';
 import { TimeFilterMode, WeightUnit } from '../../../utils/storage/localStorage';
+import { getLoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 export interface ExerciseChartDataPoint {
   timestamp: number;
@@ -52,6 +53,17 @@ export const buildExerciseChartData = (args: {
   } = args;
 
   if (!selectedStats || selectedSessions.length === 0) return [];
+  const isLowerWeightBetter = getLoadProgressionDirection(selectedStats.name) === 'lower';
+
+  const isBetterLoadValue = (candidate: number, currentBest: number): boolean => {
+    if (!Number.isFinite(candidate) || candidate <= 0) return false;
+    if (!Number.isFinite(currentBest) || currentBest <= 0) return true;
+    return isLowerWeightBetter ? candidate < currentBest : candidate > currentBest;
+  };
+
+  const pickBetterLoadValue = (a: number, b: number): number => {
+    return isBetterLoadValue(a, b) ? a : b;
+  };
 
   // Check if this exercise has unilateral data
   const hasUnilateralData = selectedStats.hasUnilateralData ?? false;
@@ -60,18 +72,6 @@ export const buildExerciseChartData = (args: {
   const showSeparateSides = hasUnilateralData && (hasLeftData || hasRightData);
 
   const history = [...selectedSessions].sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  let globalMaxWeight = -Infinity;
-  let globalMaxReps = -Infinity;
-  let globalMaxOneRm = -Infinity;
-  let globalMaxVolume = -Infinity;
-  for (const h of history) {
-    if (Number.isFinite(h.weight)) globalMaxWeight = Math.max(globalMaxWeight, h.weight);
-    if (Number.isFinite(h.maxReps)) globalMaxReps = Math.max(globalMaxReps, h.maxReps);
-    if (Number.isFinite(h.oneRepMax)) globalMaxOneRm = Math.max(globalMaxOneRm, h.oneRepMax);
-    if (Number.isFinite(h.volume)) globalMaxVolume = Math.max(globalMaxVolume, h.volume);
-  }
-  const eps = 1e-9;
 
   const windowStart = getRollingWindowStartForMode(viewMode, effectiveNow);
   const source = windowStart ? history.filter((h) => h.date >= windowStart) : history;
@@ -140,17 +140,17 @@ export const buildExerciseChartData = (args: {
       }
 
       if (h.side === 'left') {
-        b.leftOneRmMax = Math.max(b.leftOneRmMax, h.oneRepMax);
-        b.leftWeightMax = Math.max(b.leftWeightMax, h.weight);
-        b.leftRepsMax = Math.max(b.leftRepsMax, h.maxReps);
+        b.leftOneRmMax = pickBetterLoadValue(h.oneRepMax, b.leftOneRmMax);
+        b.leftWeightMax = pickBetterLoadValue(h.weight, b.leftWeightMax);
+        if (h.maxReps > b.leftRepsMax) b.leftRepsMax = h.maxReps;
       } else if (h.side === 'right') {
-        b.rightOneRmMax = Math.max(b.rightOneRmMax, h.oneRepMax);
-        b.rightWeightMax = Math.max(b.rightWeightMax, h.weight);
-        b.rightRepsMax = Math.max(b.rightRepsMax, h.maxReps);
+        b.rightOneRmMax = pickBetterLoadValue(h.oneRepMax, b.rightOneRmMax);
+        b.rightWeightMax = pickBetterLoadValue(h.weight, b.rightWeightMax);
+        if (h.maxReps > b.rightRepsMax) b.rightRepsMax = h.maxReps;
       } else {
-        b.oneRmMax = Math.max(b.oneRmMax, h.oneRepMax);
-        b.weightMax = Math.max(b.weightMax, h.weight);
-        b.repsMax = Math.max(b.repsMax, h.maxReps);
+        b.oneRmMax = pickBetterLoadValue(h.oneRepMax, b.oneRmMax);
+        b.weightMax = pickBetterLoadValue(h.weight, b.weightMax);
+        if (h.maxReps > b.repsMax) b.repsMax = h.maxReps;
       }
       b.sets += h.sets;
 
@@ -241,12 +241,12 @@ export const buildExerciseChartData = (args: {
       }
       
       // Check BEFORE updating max values
-      const isNewWeightMax = h.weight > b.weightMax;
-      const isNewOneRmMax = h.oneRepMax > b.oneRmMax;
+      const isNewWeightMax = isBetterLoadValue(h.weight, b.weightMax);
+      const isNewOneRmMax = isBetterLoadValue(h.oneRepMax, b.oneRmMax);
       
       // Update max values
-      b.oneRmMax = Math.max(b.oneRmMax, h.oneRepMax);
-      b.weightMax = Math.max(b.weightMax, h.weight);
+      b.oneRmMax = pickBetterLoadValue(h.oneRepMax, b.oneRmMax);
+      b.weightMax = pickBetterLoadValue(h.weight, b.weightMax);
       b.repsMax = Math.max(b.repsMax, h.maxReps);
       b.sets += h.sets;
 

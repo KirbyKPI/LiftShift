@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
 import { ExerciseTrendStatus } from '../../../utils/analysis/exerciseTrend';
 import type { UseExerciseFiltersReturn } from '../hooks/useExerciseFilters';
+import type { LoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 interface ExerciseViewHeaderProps {
   filtersSlot?: React.ReactNode;
   stickyHeader?: boolean;
+  loadDirectionMode?: LoadProgressionDirection;
   trainingStructure: UseExerciseFiltersReturn['trainingStructure'];
   trendFilter: ExerciseTrendStatus | null;
   setTrendFilter: (filter: ExerciseTrendStatus | null) => void;
@@ -13,10 +15,14 @@ interface ExerciseViewHeaderProps {
 export const ExerciseViewHeader: React.FC<ExerciseViewHeaderProps> = ({
   filtersSlot,
   stickyHeader = false,
+  loadDirectionMode = 'higher',
   trainingStructure,
   trendFilter,
   setTrendFilter,
 }) => {
+  const positiveLabel = loadDirectionMode === 'lower' ? 'Easier' : 'Gaining';
+  const negativeLabel = loadDirectionMode === 'lower' ? 'Harder' : 'Losing';
+
   const headerCenterSlot = useMemo(() => {
     if (trainingStructure.activeCount <= 0) return filtersSlot;
 
@@ -49,20 +55,20 @@ export const ExerciseViewHeader: React.FC<ExerciseViewHeaderProps> = ({
             {trainingStructure.activeCount} active exercises
           </span>
           <button type="button" onClick={() => toggle('overload')} className={`${chipCls('overload', 'good')} cursor-pointer`}>
-            {trainingStructure.overloadCount} Gaining
+            {trainingStructure.overloadCount} {positiveLabel}
           </button>
           <button type="button" onClick={() => toggle('stagnant')} className={`${chipCls('stagnant', 'warn')} cursor-pointer`}>
             {trainingStructure.plateauCount} Plateauing
           </button>
           <button type="button" onClick={() => toggle('regression')} className={`${chipCls('regression', 'bad')} cursor-pointer`}>
-            {trainingStructure.regressionCount} Losing
+            {trainingStructure.regressionCount} {negativeLabel}
           </button>
         </div>
 
         <div className="justify-self-center">{filtersSlot}</div>
       </div>
     );
-  }, [filtersSlot, trainingStructure.activeCount, trainingStructure.overloadCount, trainingStructure.plateauCount, trainingStructure.regressionCount, trendFilter, setTrendFilter]);
+  }, [filtersSlot, trainingStructure.activeCount, trainingStructure.overloadCount, trainingStructure.plateauCount, trainingStructure.regressionCount, trendFilter, setTrendFilter, positiveLabel, negativeLabel]);
 
   return (
     <>
@@ -82,7 +88,7 @@ export const ExerciseViewHeader: React.FC<ExerciseViewHeaderProps> = ({
                 onClick={() => setTrendFilter(trendFilter === 'overload' ? null : 'overload')}
                 className={`w-full text-center text-[9px] px-2 py-1 rounded font-bold border whitespace-nowrap transition-all duration-200 cursor-pointer ${trendFilter === 'overload' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/60 ring-2 ring-emerald-500/25' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25 hover:border-emerald-400/45'}`}
               >
-                {trainingStructure.overloadCount} Gaining
+                {trainingStructure.overloadCount} {positiveLabel}
               </button>
               <button
                 type="button"
@@ -96,7 +102,7 @@ export const ExerciseViewHeader: React.FC<ExerciseViewHeaderProps> = ({
                 onClick={() => setTrendFilter(trendFilter === 'regression' ? null : 'regression')}
                 className={`w-full text-center text-[9px] px-2 py-1 rounded font-bold border whitespace-nowrap transition-all duration-200 cursor-pointer ${trendFilter === 'regression' ? 'bg-rose-500/20 text-rose-200 border-rose-400/60 ring-2 ring-rose-500/25' : 'bg-rose-500/10 text-rose-300 border-rose-500/25 hover:border-rose-400/45'}`}
               >
-                {trainingStructure.regressionCount} Losing
+                {trainingStructure.regressionCount} {negativeLabel}
               </button>
             </div>
           ) : null}

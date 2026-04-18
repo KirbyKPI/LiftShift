@@ -5,6 +5,7 @@ import {
   detectGoldAndSilverPRs,
   sortSetsChronologically,
 } from '../core/prCalculation';
+import { getLoadProgressionDirection } from '../../exercise/loadProgression';
 
 export type RecentPR = PRDetectionResult & { isSilver?: boolean };
 
@@ -33,6 +34,15 @@ const getPriority = (pr: RecentPR): number => {
   return PR_TYPE_PRIORITY[pr.type] ?? 0;
 };
 
+const normalizeDisplayImprovement = (pr: RecentPR): RecentPR => {
+  const isLowerWeightBetter = getLoadProgressionDirection(pr.exercise) === 'lower';
+  if (!isLowerWeightBetter) return pr;
+  return {
+    ...pr,
+    improvement: Math.abs(pr.improvement),
+  };
+};
+
 export const calculatePRInsights = (data: WorkoutSet[], now: Date = new Date(0)): PRInsights => {
   const sorted = sortSetsChronologically(data);
 
@@ -55,8 +65,8 @@ export const calculatePRInsights = (data: WorkoutSet[], now: Date = new Date(0))
   const lastGoldPR = goldPRs[goldPRs.length - 1];
   const daysSinceLastPR = lastGoldPR ? differenceInDays(now, lastGoldPR.date) : 0;
 
-  const recentGoldPRs: RecentPR[] = goldPRs.slice(-5).reverse().map(pr => ({ ...pr, isSilver: false }));
-  const recentSilverPRs: RecentPR[] = silverPRs.slice(-3).reverse().map(pr => ({ ...pr, isSilver: true }));
+  const recentGoldPRs: RecentPR[] = goldPRs.slice(-5).reverse().map(pr => normalizeDisplayImprovement({ ...pr, isSilver: false }));
+  const recentSilverPRs: RecentPR[] = silverPRs.slice(-3).reverse().map(pr => normalizeDisplayImprovement({ ...pr, isSilver: true }));
   
   const allRecent: RecentPR[] = [...recentGoldPRs, ...recentSilverPRs];
   

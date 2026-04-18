@@ -4,6 +4,8 @@ import type { ExerciseAsset } from '../../utils/data/exerciseAssets';
 import type { WeightUnit } from '../../utils/storage/localStorage';
 import { convertWeight } from '../../utils/format/units';
 import { ExerciseThumbnail } from '../common/ExerciseThumbnail';
+import { getLoadProgressionDirection } from '../../utils/exercise/loadProgression';
+import type { LoadProgressionDirection } from '../../utils/exercise/loadProgression';
 
 // Compact Alert Card for Plateaus
 interface PlateauAlertProps {
@@ -12,6 +14,7 @@ interface PlateauAlertProps {
   lastWeight: number;
   lastReps: number;
   isBodyweightLike: boolean;
+  loadProgressionDirection?: LoadProgressionDirection;
   asset?: ExerciseAsset;
   weightUnit?: WeightUnit;
   onClick?: () => void;
@@ -23,11 +26,14 @@ export const PlateauAlert: React.FC<PlateauAlertProps> = ({
   lastWeight,
   lastReps,
   isBodyweightLike,
+  loadProgressionDirection,
   asset,
   weightUnit = 'kg',
   onClick,
 }) => {
   const clickable = typeof onClick === 'function';
+  const resolvedDirection = loadProgressionDirection ?? getLoadProgressionDirection(exerciseName);
+  const isLowerWeightBetter = resolvedDirection === 'lower';
 
   return (
     <button
@@ -69,7 +75,7 @@ export const PlateauAlert: React.FC<PlateauAlertProps> = ({
           </>
         ) : (
           <>
-            <div className="text-sm font-bold text-white">{convertWeight(lastWeight, weightUnit)}{weightUnit}</div>
+            <div className="text-sm font-bold text-white">{convertWeight(lastWeight, weightUnit)}{weightUnit}{isLowerWeightBetter ? ' support' : ''}</div>
             <div className="text-[10px] text-slate-500">×{lastReps} reps</div>
           </>
         )}

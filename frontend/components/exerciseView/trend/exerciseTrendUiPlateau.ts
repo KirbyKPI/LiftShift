@@ -20,6 +20,7 @@ export const getPlateauAdvice = (
   const seedBase = `${exerciseName}|${core.status}|${getLatestHistoryKey(stats.history)}`;
   const sessionsAtPlateau = Math.min(6, Math.max(1, stats.history.length));
   const hasStaticPlateau = Boolean(core.plateau);
+  const isLowerWeightBetter = core.loadProgressionDirection === 'lower';
 
   const title = pickDeterministic(
     `${seedBase}|title`,
@@ -53,11 +54,21 @@ export const getPlateauAdvice = (
   const description = (() => {
     if (!hasStaticPlateau) {
       return pickDeterministic(`${seedBase}|desc`, [
-        "Your recent sessions aren't improving yet. This is a normal phase, time for a small, deliberate push.",
-        'The trend is basically flat lately. Keep technique consistent and add one small progression lever.',
-        'No clear progress (or just a tiny dip). Treat this as feedback: recover well and progress slowly.',
-        "You're repeating similar performance. That's fine, now choose a micro-goal and beat it next session.",
-        `Output has been steady for ${sessionsAtPlateau}+ sessions. A small nudge (reps, load, rest) usually breaks it.`,
+        isLowerWeightBetter
+          ? "Support load hasn't improved lately. Time for a small, deliberate nudge toward less assistance."
+          : "Your recent sessions aren't improving yet. This is a normal phase, time for a small, deliberate push.",
+        isLowerWeightBetter
+          ? 'The trend is flat on assisted loading. Keep technique consistent and reduce support in tiny steps.'
+          : 'The trend is basically flat lately. Keep technique consistent and add one small progression lever.',
+        isLowerWeightBetter
+          ? 'No clear loading progress. Treat this as feedback: recover well and progress support gradually.'
+          : 'No clear progress (or just a tiny dip). Treat this as feedback: recover well and progress slowly.',
+        isLowerWeightBetter
+          ? "You're repeating similar support levels. That's fine, now choose a micro-goal and make one step harder."
+          : "You're repeating similar performance. That's fine, now choose a micro-goal and beat it next session.",
+        isLowerWeightBetter
+          ? `Support has been steady for ${sessionsAtPlateau}+ sessions. A small nudge usually breaks it.`
+          : `Output has been steady for ${sessionsAtPlateau}+ sessions. A small nudge (reps, load, rest) usually breaks it.`,
       ] as const);
     }
 
@@ -68,10 +79,14 @@ export const getPlateauAdvice = (
     return pickDeterministic(`${seedBase}|desc`, [
       `You've been hovering between ${minReps}-${maxReps} reps for ${sessionsAtPlateau}+ sessions. Time to shake things up!`,
       `Stuck at ${minReps}-${maxReps} reps for ${sessionsAtPlateau}+ sessions. Your muscles need a new challenge.`,
-      `Load is static at ${plateauWeight}${weightUnit} while reps vary. Let's break this pattern!`,
+      isLowerWeightBetter
+        ? `Assistance is static at ${plateauWeight}${weightUnit} while reps vary. Let's break this pattern!`
+        : `Load is static at ${plateauWeight}${weightUnit} while reps vary. Let's break this pattern!`,
       `Both load (${plateauWeight}${weightUnit}) and reps (${minReps}-${maxReps}) are consistent. Your comfort zone is showing.`,
       `Same old: ${minReps}-${maxReps} reps. Progress is taking a coffee break.`,
-      `Strength is stable at ${plateauWeight}${weightUnit}. Time to introduce a new stimulus!`,
+      isLowerWeightBetter
+        ? `Support level is stable at ${plateauWeight}${weightUnit}. Time to introduce a harder stimulus!`
+        : `Strength is stable at ${plateauWeight}${weightUnit}. Time to introduce a new stimulus!`,
       `Consistent pattern: ${plateauWeight}${weightUnit} × ${minReps}-${maxReps}. Great control, now chase growth.`,
       'This looks like a true plateau: consistent output, limited change. Perfect moment for a small, strategic push.',
     ] as const);
@@ -89,10 +104,18 @@ export const getPlateauAdvice = (
               'If recovery is poor, take one easy session. If recovery is good, push one set a bit harder.',
             ]
           : [
-              "Pick one lever: +1 rep somewhere, or a small load bump next session. Don't change everything at once.",
-              'Lock your technique and chase a micro-win: +1 rep total or a small load increase when reps are stable.',
-              'If this feels easy, progress. If it feels grindy, recover and repeat the same load cleanly once more.',
-              'Small changes work: slightly more reps, slightly more load, or slightly more rest, choose one.',
+              isLowerWeightBetter
+                ? "Pick one lever: +1 rep somewhere, or a small assistance reduction next session. Don't change everything at once."
+                : "Pick one lever: +1 rep somewhere, or a small load bump next session. Don't change everything at once.",
+              isLowerWeightBetter
+                ? 'Lock technique and chase a micro-win: +1 rep total or a small support reduction when reps are stable.'
+                : 'Lock your technique and chase a micro-win: +1 rep total or a small load increase when reps are stable.',
+              isLowerWeightBetter
+                ? 'If this feels easy, reduce assistance. If it feels grindy, recover and repeat this support cleanly once more.'
+                : 'If this feels easy, progress. If it feels grindy, recover and repeat the same load cleanly once more.',
+              isLowerWeightBetter
+                ? 'Small changes work: slightly more reps, slightly less support, or slightly more rest, choose one.'
+                : 'Small changes work: slightly more reps, slightly more load, or slightly more rest, choose one.',
             ]
       );
     }
@@ -101,16 +124,26 @@ export const getPlateauAdvice = (
     const maxReps = core.plateau?.maxReps ?? 0;
     const w = core.plateau?.weight ?? 0;
     const plateauWeight = convertWeight(w, weightUnit);
-    const suggestedNext = convertWeight(w + getStandardWeightIncrementKg(weightUnit), weightUnit);
+    const suggestedNext = isLowerWeightBetter
+      ? convertWeight(Math.max(0, w - getStandardWeightIncrementKg(weightUnit)), weightUnit)
+      : convertWeight(w + getStandardWeightIncrementKg(weightUnit), weightUnit);
 
     return pickDeterministic(`${seedBase}|sub`, [
       `Pick ${maxReps} reps and chase ${maxReps + 1} on ALL sets. No playing favorites with the first set only.`,
       'Next session: add 1 rep to your first set, then make the others match. Quality over speed.',
-      `Standardize at ${maxReps} reps. Master it across all sets, then level up to ${suggestedNext}${weightUnit}.`,
-      `Try ${suggestedNext}${weightUnit} next session. If form gets ugly, repeat ${plateauWeight}${weightUnit} and add a rep.`,
+      isLowerWeightBetter
+        ? `Standardize at ${maxReps} reps. Master it across all sets, then reduce support to ~${suggestedNext}${weightUnit}.`
+        : `Standardize at ${maxReps} reps. Master it across all sets, then level up to ${suggestedNext}${weightUnit}.`,
+      isLowerWeightBetter
+        ? `Try ~${suggestedNext}${weightUnit} support next session. If form gets ugly, repeat ${plateauWeight}${weightUnit} and add a rep.`
+        : `Try ${suggestedNext}${weightUnit} next session. If form gets ugly, repeat ${plateauWeight}${weightUnit} and add a rep.`,
       'Get fancy: pause reps, slow eccentrics (3-4 seconds), or slightly shorter rests.',
-      `Double progression: repeat ${plateauWeight}${weightUnit} and add 1-2 reps across sets, then increase weight.`,
-      `Stay at ${plateauWeight}${weightUnit} and earn a bigger rep buffer. Then jump to ${suggestedNext}${weightUnit} with confidence.`,
+      isLowerWeightBetter
+        ? `Double progression: repeat ${plateauWeight}${weightUnit} support and add 1-2 reps, then reduce assistance.`
+        : `Double progression: repeat ${plateauWeight}${weightUnit} and add 1-2 reps across sets, then increase weight.`,
+      isLowerWeightBetter
+        ? `Stay at ${plateauWeight}${weightUnit} support and earn a bigger rep buffer. Then move to ~${suggestedNext}${weightUnit} with confidence.`
+        : `Stay at ${plateauWeight}${weightUnit} and earn a bigger rep buffer. Then jump to ${suggestedNext}${weightUnit} with confidence.`,
       'Add one variable: +1 rep, +1 set, or +5-10% rest reduction. Tiny change, big signal.',
     ] as const);
   })();

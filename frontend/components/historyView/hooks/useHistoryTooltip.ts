@@ -19,7 +19,8 @@ export const useHistoryTooltip = () => {
       status = insight.status;
       structured = insight.structured;
       if (!structured) {
-        metrics = [{ label: 'Vol', value: insight.metrics.vol_drop_pct }, { label: 'Weight', value: insight.metrics.weight_change_pct }];
+        const loadLabel = insight.loadProgressionDirection === 'lower' ? 'Support' : 'Weight';
+        metrics = [{ label: 'Vol', value: insight.metrics.vol_drop_pct }, { label: loadLabel, value: insight.metrics.weight_change_pct }];
       }
     } else if (variant === 'macro') {
       const insight = data as SetWisdom;

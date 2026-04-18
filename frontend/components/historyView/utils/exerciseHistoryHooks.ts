@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import type { WorkoutSet } from '../../../types';
 import { isWarmupSet } from '../../../utils/analysis/masterAlgorithm';
 import { getSessionKey } from '../../../utils/date/dateUtils';
+import { getLoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 export interface HistoricalSetsForExercise {
   exerciseName: string;
@@ -121,11 +122,17 @@ export const useExerciseBestHistory = (data: WorkoutSet[]) => {
 
     for (const set of sortedSets) {
       const exercise = set.exercise_title;
-      const currentBest = runningBest.get(exercise) || 0;
+      const isLowerWeightBetter = getLoadProgressionDirection(exercise) === 'lower';
+      const hasBest = runningBest.has(exercise);
+      const currentBestRaw = runningBest.get(exercise) || 0;
       const sessionKey = getSessionKey(set);
       if (!sessionKey) continue;
 
-      if (set.weight_kg > currentBest) {
+      const isNewBest = !hasBest
+        ? set.weight_kg > 0
+        : (isLowerWeightBetter ? set.weight_kg < currentBestRaw : set.weight_kg > currentBestRaw);
+
+      if (isNewBest) {
         if (!exerciseBests.has(exercise)) {
           exerciseBests.set(exercise, []);
         }
@@ -133,15 +140,15 @@ export const useExerciseBestHistory = (data: WorkoutSet[]) => {
           date: set.parsedDate!,
           weight: set.weight_kg,
           sessionKey,
-          previousBest: currentBest,
+          previousBest: hasBest ? currentBestRaw : 0,
         });
         runningBest.set(exercise, set.weight_kg);
       }
     }
 
     const currentBests = new Map<string, number>();
-    runningBest.forEach((best, exercise) => {
-      currentBests.set(exercise, best);
+    runningBest.forEach((bestRaw, exercise) => {
+      currentBests.set(exercise, bestRaw);
     });
 
     return { exerciseBests, currentBests };

@@ -7,6 +7,7 @@ import { getSelectedHighlightClasses } from '../utils/exerciseRowHighlight';
 import { ExerciseThumbnail } from '../../common/ExerciseThumbnail';
 import { capitalizeLabel } from '../utils/exerciseViewUtils';
 import type { StatusResult } from '../trend/exerciseTrendUi';
+import { getLoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 interface ExerciseListRowProps {
   exercise: ExerciseStats;
@@ -37,7 +38,11 @@ export const ExerciseListRow: React.FC<ExerciseListRowProps> = ({
   const lastDoneLabel = lastDone ? formatRelativeTime(lastDone, effectiveNow) : '—';
   const selectedHighlight = getSelectedHighlightClasses(status.status, !isEligible ? 'soft' : 'strong');
   const RowStatusIcon = status.icon;
-  const displayLabel = capitalizeLabel(subLabel);
+  const isLowerWeightBetter = getLoadProgressionDirection(exercise.name) === 'lower';
+  const trendLabel = isLowerWeightBetter
+    ? subLabel.replace(/\bgaining\b/i, 'easier loading').replace(/\blosing\b/i, 'harder loading')
+    : subLabel;
+  const displayLabel = capitalizeLabel(trendLabel);
   const IneligibleStatusIcon = displayLabel === 'New exercise' ? Hourglass : null;
 
   return (

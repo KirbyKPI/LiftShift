@@ -81,6 +81,7 @@ export const DashboardInsightsSection: React.FC<DashboardInsightsSectionProps> =
                     lastWeight={p.lastWeight}
                     lastReps={p.lastReps}
                     isBodyweightLike={p.isBodyweightLike}
+                    loadProgressionDirection={p.loadProgressionDirection}
                     asset={assetsMap?.get(baseName) || assetsLowerMap?.get(baseName.toLowerCase())}
                     weightUnit={weightUnit}
                     onClick={() => onExerciseClick?.(p.exerciseName)}

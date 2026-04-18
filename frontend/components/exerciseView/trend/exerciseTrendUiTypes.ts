@@ -1,6 +1,7 @@
 import type { ElementType } from 'react';
 import type { ExerciseTrendStatus } from '../../../utils/analysis/exerciseTrend';
 import type { ExerciseTrendCoreResult } from '../../../utils/analysis/exerciseTrend';
+import type { LoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 export interface StatusResult {
   status: ExerciseTrendStatus;
@@ -17,5 +18,6 @@ export interface StatusResult {
   evidence?: string[];
   label: string;
   isBodyweightLike: boolean;
+  loadProgressionDirection: LoadProgressionDirection;
   prematurePr?: boolean;
 }

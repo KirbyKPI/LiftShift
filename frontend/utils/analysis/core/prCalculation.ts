@@ -1,5 +1,6 @@
 import type { PrType, WorkoutSet } from '../../../types';
 import { isWarmupSet } from '../classification/setClassification';
+import { getLoadProgressionDirection } from '../../exercise/loadProgression';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -17,8 +18,9 @@ export interface PRTracker {
   type: PrType;
   getPreviousBest: (exercise: string) => number;
   setBest: (exercise: string, value: number) => void;
-  calculateValue: (weight: number, reps: number) => number;
-  getImprovement: (previous: number, current: number) => number;
+  calculateValue: (exercise: string, weight: number, reps: number) => number;
+  isBetter: (exercise: string, current: number, previous: number) => boolean;
+  getImprovement: (exercise: string, previous: number, current: number) => number;
 }
 
 export const createWeightTracker = (): PRTracker => {
@@ -27,8 +29,17 @@ export const createWeightTracker = (): PRTracker => {
     type: 'weight',
     getPreviousBest: (exercise: string) => map.get(exercise) ?? 0,
     setBest: (exercise: string, value: number) => map.set(exercise, value),
-    calculateValue: (weight: number) => weight,
-    getImprovement: (previous: number, current: number) => current - previous,
+    calculateValue: (_exercise: string, weight: number, _reps: number) => weight,
+    isBetter: (exercise: string, current: number, previous: number) => {
+      if (current <= 0 || !Number.isFinite(current)) return false;
+      if (previous <= 0 || !Number.isFinite(previous)) return true;
+      const isLowerWeightBetter = getLoadProgressionDirection(exercise) === 'lower';
+      return isLowerWeightBetter ? current < previous : current > previous;
+    },
+    getImprovement: (exercise: string, previous: number, current: number) => {
+      const isLowerWeightBetter = getLoadProgressionDirection(exercise) === 'lower';
+      return roundTo(isLowerWeightBetter ? (previous - current) : (current - previous), 2);
+    },
   };
 };
 
@@ -38,8 +49,17 @@ export const createOneRmTracker = (): PRTracker => {
     type: 'oneRm',
     getPreviousBest: (exercise: string) => map.get(exercise) ?? 0,
     setBest: (exercise: string, value: number) => map.set(exercise, value),
-    calculateValue: (weight: number, reps: number) => calculateOneRepMax(weight, reps),
-    getImprovement: (previous: number, current: number) => roundTo(current - previous, 2),
+    calculateValue: (_exercise: string, weight: number, reps: number) => calculateOneRepMax(weight, reps),
+    isBetter: (exercise: string, current: number, previous: number) => {
+      if (current <= 0 || !Number.isFinite(current)) return false;
+      if (previous <= 0 || !Number.isFinite(previous)) return true;
+      const isLowerWeightBetter = getLoadProgressionDirection(exercise) === 'lower';
+      return isLowerWeightBetter ? current < previous : current > previous;
+    },
+    getImprovement: (exercise: string, previous: number, current: number) => {
+      const isLowerWeightBetter = getLoadProgressionDirection(exercise) === 'lower';
+      return roundTo(isLowerWeightBetter ? (previous - current) : (current - previous), 2);
+    },
   };
 };
 
@@ -49,8 +69,17 @@ export const createVolumeTracker = (): PRTracker => {
     type: 'volume',
     getPreviousBest: (exercise: string) => map.get(exercise) ?? 0,
     setBest: (exercise: string, value: number) => map.set(exercise, value),
-    calculateValue: (weight: number, reps: number) => weight * reps,
-    getImprovement: (previous: number, current: number) => current - previous,
+    calculateValue: (_exercise: string, weight: number, reps: number) => weight * reps,
+    isBetter: (exercise: string, current: number, previous: number) => {
+      if (current <= 0 || !Number.isFinite(current)) return false;
+      if (previous <= 0 || !Number.isFinite(previous)) return true;
+      const isLowerWeightBetter = getLoadProgressionDirection(exercise) === 'lower';
+      return isLowerWeightBetter ? current < previous : current > previous;
+    },
+    getImprovement: (exercise: string, previous: number, current: number) => {
+      const isLowerWeightBetter = getLoadProgressionDirection(exercise) === 'lower';
+      return roundTo(isLowerWeightBetter ? (previous - current) : (current - previous), 2);
+    },
   };
 };
 
@@ -94,17 +123,17 @@ export const detectPRsWithTrackers = (
     const reps = set.reps || 0;
 
     for (const tracker of trackers) {
-      const currentValue = tracker.calculateValue(weight, reps);
+      const currentValue = tracker.calculateValue(exercise, weight, reps);
       const previousBest = tracker.getPreviousBest(exercise);
 
-      if (currentValue > 0 && currentValue > previousBest) {
+      if (tracker.isBetter(exercise, currentValue, previousBest)) {
         prEvents.push({
           exercise,
           weight,
           reps,
           date: set.parsedDate!,
           previousBest,
-          improvement: tracker.getImprovement(previousBest, currentValue),
+          improvement: tracker.getImprovement(exercise, previousBest, currentValue),
           type: tracker.type,
         });
         tracker.setBest(exercise, currentValue);
@@ -147,10 +176,10 @@ export const detectGoldAndSilverPRs = (
     // Check if this set is a gold PR
     let isGoldPR = false;
     for (const tracker of goldTrackers) {
-      const currentValue = tracker.calculateValue(weight, reps);
+      const currentValue = tracker.calculateValue(exercise, weight, reps);
       const previousBest = tracker.getPreviousBest(exercise);
       
-      if (currentValue > 0 && currentValue > previousBest) {
+      if (tracker.isBetter(exercise, currentValue, previousBest)) {
         isGoldPR = true;
         goldPRs.push({
           exercise,
@@ -158,7 +187,7 @@ export const detectGoldAndSilverPRs = (
           reps,
           date: set.parsedDate!,
           previousBest,
-          improvement: tracker.getImprovement(previousBest, currentValue),
+          improvement: tracker.getImprovement(exercise, previousBest, currentValue),
           type: tracker.type,
         });
         tracker.setBest(exercise, currentValue);
@@ -197,17 +226,17 @@ export const detectGoldAndSilverPRs = (
     const reps = set.reps || 0;
     
     for (const tracker of silverTrackers) {
-      const currentValue = tracker.calculateValue(weight, reps);
+      const currentValue = tracker.calculateValue(exercise, weight, reps);
       const previousBest = tracker.getPreviousBest(exercise);
       
-      if (currentValue > 0 && currentValue > previousBest) {
+      if (tracker.isBetter(exercise, currentValue, previousBest)) {
         silverPRs.push({
           exercise,
           weight,
           reps,
           date: set.parsedDate!,
           previousBest,
-          improvement: tracker.getImprovement(previousBest, currentValue),
+          improvement: tracker.getImprovement(exercise, previousBest, currentValue),
           type: tracker.type,
         });
         tracker.setBest(exercise, currentValue);

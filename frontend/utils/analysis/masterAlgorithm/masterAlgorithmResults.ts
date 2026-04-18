@@ -1,4 +1,5 @@
 import type { AnalysisResult, AnalysisStatus, StructuredTooltip } from '../../../types';
+import type { LoadProgressionDirection } from '../../exercise/loadProgression';
 import { roundTo } from '../../format/formatters';
 
 export const createAnalysisResult = (
@@ -10,7 +11,8 @@ export const createAnalysisResult = (
   expectedReps: string,
   shortMessage: string,
   tooltip: string,
-  structured?: StructuredTooltip
+  structured?: StructuredTooltip,
+  loadProgressionDirection?: LoadProgressionDirection
 ): AnalysisResult => ({
   transition,
   status,
@@ -23,4 +25,5 @@ export const createAnalysisResult = (
   shortMessage,
   tooltip,
   structured,
+  loadProgressionDirection,
 });

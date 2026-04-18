@@ -5,6 +5,7 @@ import { ExerciseSessionEntry } from '../../../utils/analysis/exerciseTrend';
 import { convertWeight } from '../../../utils/format/units';
 import { formatNumber } from '../../../utils/format/formatters';
 import { WeightUnit } from '../../../utils/storage/localStorage';
+import { getLoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 export const StrengthProgressionValueDot = (props: any) => {
   const {
@@ -19,6 +20,7 @@ export const StrengthProgressionValueDot = (props: any) => {
     color = 'var(--text-muted)',
     prTypesToShow,
     labelPosition,
+    selectedStats,
   } = props;
 
   if (!payload || cx === undefined || cy === undefined) return null;
@@ -29,14 +31,24 @@ export const StrengthProgressionValueDot = (props: any) => {
   const prGold = '#d97706';
   const prSilver = '#64748b';
   const eps = 0.001;
+  const isLowerWeightBetter =
+    selectedStats && typeof selectedStats.name === 'string'
+      ? getLoadProgressionDirection(selectedStats.name) === 'lower'
+      : false;
 
-  // Calculate global max value for this metric across all data
-  let globalMaxValue = -Infinity;
-  let firstGlobalMaxIndex: number | null = null;
+  const isBetterValue = (candidate: number, currentBest: number): boolean => {
+    if (!Number.isFinite(candidate)) return false;
+    if (!Number.isFinite(currentBest)) return true;
+    return isLowerWeightBetter ? candidate < currentBest : candidate > currentBest;
+  };
+
+  // Calculate global best value for this metric across all data
+  let globalBestValue = Number.NaN;
+  let firstGlobalBestIndex: number | null = null;
   
-  // Calculate max silver value and its first index
-  let maxSilverValue = -Infinity;
-  let firstSilverMaxIndex: number | null = null;
+  // Calculate best silver value and its first index
+  let bestSilverValue = Number.NaN;
+  let firstSilverBestIndex: number | null = null;
   
   if (Array.isArray(data)) {
     for (let i = 0; i < data.length; i++) {
@@ -45,21 +57,21 @@ export const StrengthProgressionValueDot = (props: any) => {
       
       if (typeof v !== 'number') continue;
 
-      // Track global max
-      if (v > globalMaxValue) {
-        globalMaxValue = v;
-        firstGlobalMaxIndex = i;
+      // Track global best
+      if (isBetterValue(v, globalBestValue)) {
+        globalBestValue = v;
+        firstGlobalBestIndex = i;
       }
 
-      // Track silver max
-      if (row?.isSilverPr && v > maxSilverValue) {
-        maxSilverValue = v;
-        firstSilverMaxIndex = i;
+      // Track silver best
+      if (row?.isSilverPr && isBetterValue(v, bestSilverValue)) {
+        bestSilverValue = v;
+        firstSilverBestIndex = i;
       }
     }
   }
 
-  const isGlobalMax = Number.isFinite(globalMaxValue) && Math.abs(value - globalMaxValue) <= eps;
+  const isGlobalBest = Number.isFinite(globalBestValue) && Math.abs(value - globalBestValue) <= eps;
 
   // Get PR types from payload
   const combinedPrTypes: PrType[] = payload.prTypes || [];
@@ -77,7 +89,7 @@ export const StrengthProgressionValueDot = (props: any) => {
 
 
   // Check for Gold PR
-  const shouldShowPr = isGlobalMax && filteredPrTypes.length > 0;
+  const shouldShowPr = isGlobalBest && filteredPrTypes.length > 0;
   
  
   // Get Silver PR types
@@ -101,12 +113,16 @@ export const StrengthProgressionValueDot = (props: any) => {
 
   // Check for Silver PR (only if not showing gold)
   const isSilverPr = !shouldShowPr && payload.isSilverPr && filteredSilverPrTypes.length > 0;
-  const isMaxSilverPr = isSilverPr && index === firstSilverMaxIndex && Number.isFinite(maxSilverValue) && Math.abs(value - maxSilverValue) <= eps;
+  const isBestSilverPr =
+    isSilverPr
+    && index === firstSilverBestIndex
+    && Number.isFinite(bestSilverValue)
+    && Math.abs(value - bestSilverValue) <= eps;
 
-  // Show label for gold PR at first max, or for silver PR at max silver
+  // Show label for gold PR at first best, or for silver PR at best silver
   const shouldShowLabel = shouldShowPr 
-    ? index === firstGlobalMaxIndex 
-    : isMaxSilverPr;
+    ? index === firstGlobalBestIndex
+    : isBestSilverPr;
 
   if (!shouldShowLabel) {
     if (!showDotWhenHidden) return null;

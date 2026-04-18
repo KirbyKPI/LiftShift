@@ -8,6 +8,7 @@ import type { WeightUnit } from '../../utils/storage/localStorage';
 import { convertWeight } from '../../utils/format/units';
 import { formatHumanReadableDate } from '../../utils/date/dateUtils';
 import { ExerciseThumbnail } from '../common/ExerciseThumbnail';
+import { getLoadProgressionDirection } from '../../utils/exercise/loadProgression';
 
 // Recent PR Card with image and improvement
 interface RecentPRCardProps {
@@ -29,6 +30,8 @@ export const RecentPRCard: React.FC<RecentPRCardProps> = ({
 }) => {
   const { exercise, weight, reps, date, improvement, isSilver } = pr;
   const clickable = typeof onExerciseClick === 'function';
+  const isLowerWeightBetter = getLoadProgressionDirection(exercise) === 'lower';
+  const displayImprovement = Math.abs(improvement);
   
   // Silver PR styling: slate/gray instead of gold/emerald - darker for visibility
   const cardClass = isSilver 
@@ -59,7 +62,7 @@ export const RecentPRCard: React.FC<RecentPRCardProps> = ({
         <div className="text-sm font-bold text-[color:var(--text-primary)]">{convertWeight(weight, weightUnit)}{weightUnit}</div>
         {improvement > 0 ? (
           <div className={`text-[10px] font-bold ${improvementClass} flex items-center justify-end gap-0.5`}>
-            <TrendingUp className="w-3 h-3" />+{convertWeight(improvement, weightUnit)}{weightUnit}
+            <TrendingUp className="w-3 h-3" />+{convertWeight(displayImprovement, weightUnit)}{weightUnit}{isLowerWeightBetter ? ' less assistance' : ''}
           </div>
         ) : (
           <div className="text-[10px] text-slate-500">×{reps}</div>

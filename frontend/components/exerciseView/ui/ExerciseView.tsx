@@ -117,7 +117,9 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
 
   const smartMode = useMemo(() => getSmartFilterMode(exerciseSpanDays), [exerciseSpanDays]);
   const allAggregationMode = useMemo<'daily' | 'weekly' | 'monthly'>(() => {
-    return smartMode === 'all' ? 'daily' : smartMode;
+    if (smartMode === 'all') return 'daily';
+    if (smartMode === 'yearly') return 'monthly';
+    return smartMode;
   }, [smartMode]);
 
   const viewMode = viewModeOverride ?? 'monthly';
@@ -146,10 +148,10 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
 
   const selectedSessions = useMemo(() => {
     if (!selectedStats) return [] as ExerciseSessionEntry[];
-    const base = summarizedHistoryByName.get(selectedStats.name) ?? summarizeExerciseHistory(selectedStats.history);
+    const base = summarizedHistoryByName.get(selectedStats.name) ?? summarizeExerciseHistory(selectedStats.history, { exerciseName: selectedStats.name });
     const separateSides = selectedStats.hasUnilateralData ?? false;
     if (!separateSides) return base;
-    return summarizeExerciseHistory(selectedStats.history, { separateSides });
+    return summarizeExerciseHistory(selectedStats.history, { separateSides, exerciseName: selectedStats.name });
   }, [selectedStats, summarizedHistoryByName]);
 
   const selectedExerciseMuscleInfo = useMemo<ExerciseMuscleTargets>(() => {
@@ -225,6 +227,7 @@ export const ExerciseView: React.FC<ExerciseViewProps> = ({
       <ExerciseViewHeader
         filtersSlot={filtersSlot}
         stickyHeader={stickyHeader}
+        loadDirectionMode={currentStatus?.loadProgressionDirection ?? 'higher'}
         trainingStructure={trainingStructure}
         trendFilter={trendFilter}
         setTrendFilter={setTrendFilter}

@@ -14,7 +14,7 @@ export const getInactiveReason = (
   if (!selectedStats) return null;
 
   const activeSince = subDays(effectiveNow, 60);
-  const sessions = summarizedHistoryByName.get(selectedStats.name) ?? summarizeExerciseHistory(selectedStats.history);
+  const sessions = summarizedHistoryByName.get(selectedStats.name) ?? summarizeExerciseHistory(selectedStats.history, { exerciseName: selectedStats.name });
   const lastDate = sessions[0]?.date ?? null;
   const tooOld = !lastDate || lastDate < activeSince;
   const notEnoughData = sessions.length < MIN_SESSIONS_FOR_TREND;
@@ -37,7 +37,7 @@ export const getExerciseSpanDays = (
   summarizedHistoryByName: Map<string, import('../../../utils/analysis/exerciseTrend').ExerciseSessionEntry[]>
 ): number => {
   if (!selectedStats) return 0;
-  const sessions = summarizedHistoryByName.get(selectedStats.name) ?? summarizeExerciseHistory(selectedStats.history);
+  const sessions = summarizedHistoryByName.get(selectedStats.name) ?? summarizeExerciseHistory(selectedStats.history, { exerciseName: selectedStats.name });
   if (sessions.length === 0) return 0;
   const dates = sessions.map((h) => h.date.getTime());
   const min = Math.min(...dates);

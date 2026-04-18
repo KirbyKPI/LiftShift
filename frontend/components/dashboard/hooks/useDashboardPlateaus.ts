@@ -35,7 +35,7 @@ export const useDashboardPlateaus = (args: {
   const summarizedHistoryByExercise = useMemo(() => {
     const m = new Map<string, ReturnType<typeof summarizeExerciseHistory>>();
     for (const stat of exerciseStats) {
-      m.set(stat.name, summarizeExerciseHistory(stat.history));
+      m.set(stat.name, summarizeExerciseHistory(stat.history, { exerciseName: stat.name }));
     }
     return m;
   }, [exerciseStats]);

@@ -6,6 +6,7 @@ import { convertWeight } from '../../../utils/format/units';
 import { formatSignedNumber } from '../../../utils/format/formatters';
 import type { WeightUnit } from '../../../utils/storage/localStorage';
 import type { ExerciseBestEvent, ExerciseVolumePrEvent } from '../utils/historyViewTypes';
+import { getLoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 interface HistorySetRowProps {
   set: WorkoutSet;
@@ -37,6 +38,7 @@ export const HistorySetRow: React.FC<HistorySetRowProps> = ({
   onClearTooltip,
 }) => {
   const setConfig = getSetTypeConfig(set);
+  const isLowerWeightBetter = getLoadProgressionDirection(set.exercise_title) === 'lower';
 
   let rowStatusClass = 'border-transparent';
   let dotClass = 'bg-black/50 border-slate-700';
@@ -48,7 +50,9 @@ export const HistorySetRow: React.FC<HistorySetRowProps> = ({
       (p) => p.date.getTime() === set.parsedDate!.getTime() && p.weight === set.weight_kg
     );
     if (!ev) return 0;
-    const deltaKg = set.weight_kg - ev.previousBest;
+    const deltaKg = isLowerWeightBetter
+      ? (ev.previousBest - set.weight_kg)
+      : (set.weight_kg - ev.previousBest);
     return deltaKg > 0 ? deltaKg : 0;
   })();
 
@@ -140,7 +144,7 @@ export const HistorySetRow: React.FC<HistorySetRowProps> = ({
                     <span>{label}</span>
                     {prType === 'weight' && prDelta > 0 && (
                       <span className={`text-[4px] sm:text-[6px] font-extrabold leading-none ${set.isPr ? 'text-yellow-500' : 'text-slate-500'}`}>
-                        {formatSignedNumber(convertWeight(prDelta, weightUnit), { maxDecimals: 2 })}{weightUnit}
+                        {formatSignedNumber(convertWeight(prDelta, weightUnit), { maxDecimals: 2 })}{weightUnit}{isLowerWeightBetter ? ' less assist' : ''}
                       </span>
                     )}
                   </span>

@@ -7,6 +7,7 @@ import { convertWeight } from '../../../utils/format/units';
 import type { WeightUnit } from '../../../utils/storage/localStorage';
 import type { ExerciseAssetLookup } from '../../../utils/exercise/exerciseAssetLookup';
 import type { FlexTopPRExercise } from '../utils/flexViewTypes';
+import { getLoadProgressionDirection } from '../../../utils/exercise/loadProgression';
 
 interface UseFlexInsightsArgs {
   data: WorkoutSet[];
@@ -50,9 +51,11 @@ export const useFlexInsights = ({
       .slice(0, 3)
       .map((s) => {
         const asset = getAssetForExercise(s.name);
+        const isLowerWeightBetter = getLoadProgressionDirection(s.name) === 'lower';
         return {
           name: s.name,
-          weight: convertWeight(s.maxWeight, weightUnit),
+          weight: convertWeight(Math.abs(s.maxWeight), weightUnit),
+          isLowerWeightBetter,
           thumbnail: asset?.thumbnail,
         };
       });

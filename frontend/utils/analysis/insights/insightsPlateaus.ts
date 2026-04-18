@@ -2,6 +2,8 @@ import { ExerciseStats, WorkoutSet } from '../../../types';
 import { analyzeExerciseTrendCore, summarizeExerciseHistory } from '../exerciseTrend/exerciseTrend';
 import { ExerciseTrendMode, WeightUnit } from '../../storage/localStorage';
 import { getPlateauAdvice } from '../../../components/exerciseView/trend/exerciseTrendUi';
+import { calculateDirectionalStrengthScore, directionalPercentChange } from '../../exercise/loadProgression';
+import type { LoadProgressionDirection } from '../../exercise/loadProgression';
 
 export interface ExercisePlateauInfo {
   exerciseName: string;
@@ -11,6 +13,7 @@ export interface ExercisePlateauInfo {
   lastWeight: number;
   lastReps: number;
   isBodyweightLike: boolean;
+  loadProgressionDirection: LoadProgressionDirection;
 }
 
 export interface PlateauAnalysis {
@@ -38,15 +41,19 @@ export const detectPlateaus = (
 
     if (core.status !== 'stagnant') continue;
 
-    const sessions = summarizeExerciseHistory(stat.history);
-    const currentBestMetric = core.isBodyweightLike ? sessions[0]?.maxReps ?? 0 : sessions[0]?.oneRepMax ?? 0;
+    const sessions = summarizeExerciseHistory(stat.history, { exerciseName: stat.name });
+    const currentBestMetric = core.isBodyweightLike
+      ? sessions[0]?.maxReps ?? 0
+      : calculateDirectionalStrengthScore(stat.name, sessions[0]?.weight ?? 0, sessions[0]?.reps ?? 0, sessions[0]?.oneRepMax);
 
     let sessionsSinceProgress = 1;
     const GAINING_PCT_THRESHOLD = 2.0;
 
     for (let i = 1; i < sessions.length; i++) {
-      const sessionBest = core.isBodyweightLike ? sessions[i].maxReps : sessions[i].oneRepMax;
-      const diffPct = currentBestMetric > 0 ? ((currentBestMetric - sessionBest) / sessionBest) * 100 : 0;
+      const sessionBest = core.isBodyweightLike
+        ? sessions[i].maxReps
+        : calculateDirectionalStrengthScore(stat.name, sessions[i].weight, sessions[i].reps, sessions[i].oneRepMax);
+      const diffPct = directionalPercentChange(sessionBest, currentBestMetric);
 
       if (diffPct > GAINING_PCT_THRESHOLD) {
         break;
@@ -66,6 +73,7 @@ export const detectPlateaus = (
       lastWeight,
       lastReps,
       isBodyweightLike: core.isBodyweightLike,
+      loadProgressionDirection: core.loadProgressionDirection,
     });
   }
 

@@ -3,6 +3,12 @@ import type { ExerciseStats, PrType } from '../../../types';
 import { avg, clampEvidence, fmtSignedPct, getConfidence, keepDynamicEvidence } from '../exerciseTrend/exerciseTrendUtils';
 import { summarizeExerciseHistory } from '../exerciseTrend/exerciseTrendSummary';
 import { buildRecentEvidence } from '../exerciseTrend/exerciseTrendRecentEvidence';
+import {
+  calculateDirectionalStrengthScore,
+  directionalPercentChange,
+  getLoadProgressionDirection,
+  type LoadProgressionDirection,
+} from '../../exercise/loadProgression';
 
 // ============================================================================
 // Constants (merged from exerciseTrendConstants.ts)
@@ -34,6 +40,7 @@ export interface ExerciseSessionEntry {
   weight: number;
   reps: number;
   oneRepMax: number;
+  directionalStrengthScore?: number;
   volume: number;
   sets: number;
   totalReps: number;
@@ -49,6 +56,7 @@ export interface ExerciseSessionEntry {
 export interface ExerciseTrendCoreResult {
   status: ExerciseTrendStatus;
   isBodyweightLike: boolean;
+  loadProgressionDirection: LoadProgressionDirection;
   diffPct?: number;
   confidence?: 'low' | 'medium' | 'high';
   evidence?: string[];
@@ -81,13 +89,22 @@ export const analyzeExerciseTrendCore = (
   options?: { trendMode?: ExerciseTrendMode; summarizedHistory?: ExerciseSessionEntry[] }
 ): ExerciseTrendCoreResult => {
   const trendMode: ExerciseTrendMode = options?.trendMode ?? 'reactive';
-  const history = options?.summarizedHistory ?? summarizeExerciseHistory(stats.history);
+  const loadProgressionDirection = getLoadProgressionDirection(stats.name);
+  const isLowerWeightBetter = loadProgressionDirection === 'lower';
+  const history = options?.summarizedHistory ?? summarizeExerciseHistory(stats.history, { exerciseName: stats.name });
+  const getStrengthMetric = (session: ExerciseSessionEntry): number => {
+    if (Number.isFinite(session.directionalStrengthScore)) {
+      return session.directionalStrengthScore as number;
+    }
+    return calculateDirectionalStrengthScore(stats.name, session.weight, session.reps, session.oneRepMax);
+  };
 
   // No usable history yet.
   if (history.length === 0) {
     return {
       status: 'new',
       isBodyweightLike: false,
+      loadProgressionDirection,
       confidence: 'low',
     };
   }
@@ -109,6 +126,7 @@ export const analyzeExerciseTrendCore = (
     return {
       status: 'new',
       isBodyweightLike,
+      loadProgressionDirection,
       confidence: 'low',
       evidence: keepDynamicEvidence(clampEvidence([
         // Keep this dynamic: it will show "weight ≈ 0" which contains a digit.
@@ -122,6 +140,7 @@ export const analyzeExerciseTrendCore = (
     return {
       status: 'new',
       isBodyweightLike,
+      loadProgressionDirection,
       confidence: 'low',
       evidence: keepDynamicEvidence(clampEvidence([
         `Only ${history.length} session${history.length === 1 ? '' : 's'} logged (need ${MIN_SESSIONS_FOR_TREND}+).`,
@@ -138,6 +157,7 @@ export const analyzeExerciseTrendCore = (
     return {
       status: 'new',
       isBodyweightLike,
+      loadProgressionDirection,
       confidence: 'low',
       evidence: keepDynamicEvidence(clampEvidence([
         'No valid rep data available for analysis.',
@@ -154,6 +174,7 @@ export const analyzeExerciseTrendCore = (
     return {
       status: 'new',
       isBodyweightLike,
+      loadProgressionDirection,
       confidence: 'low',
       evidence: keepDynamicEvidence(clampEvidence([
         'Most recent sessions have near-zero load.',
@@ -186,18 +207,24 @@ export const analyzeExerciseTrendCore = (
 
   const metric = isBodyweightLike
     ? window.map((h) => h.maxReps)
-    : window.map((h) => h.oneRepMax);
+    : window.map((h) => getStrengthMetric(h));
 
   const half = windowSize / 2;
   const currentMetric = avg(metric.slice(0, half));
   const previousMetric = avg(metric.slice(half));
   const diffAbs = currentMetric - previousMetric;
-  const diffPct = previousMetric > 0 ? (diffAbs / previousMetric) * 100 : 0;
+  const diffPct = directionalPercentChange(previousMetric, currentMetric);
 
-  if (currentMetric <= 0 || previousMetric <= 0) {
+  if (
+    !Number.isFinite(currentMetric)
+    || !Number.isFinite(previousMetric)
+    || Math.abs(currentMetric) <= 0.0001
+    || Math.abs(previousMetric) <= 0.0001
+  ) {
     return {
       status: 'new',
       isBodyweightLike,
+      loadProgressionDirection,
       confidence: 'low',
       evidence: undefined,
     };
@@ -205,12 +232,13 @@ export const analyzeExerciseTrendCore = (
 
   const latestSession = history[0];
   const previousSession = history[1];
-  const latestMetric = latestSession ? (isBodyweightLike ? latestSession.maxReps : latestSession.oneRepMax) : 0;
-  const previousSessionMetric = previousSession ? (isBodyweightLike ? previousSession.maxReps : previousSession.oneRepMax) : 0;
+  const latestMetric = latestSession ? (isBodyweightLike ? latestSession.maxReps : getStrengthMetric(latestSession)) : 0;
+  const previousSessionMetric = previousSession ? (isBodyweightLike ? previousSession.maxReps : getStrengthMetric(previousSession)) : 0;
   const recentDeltaAbs = latestMetric - previousSessionMetric;
-  const recentDeltaPct = previousSessionMetric > 0 ? (recentDeltaAbs / previousSessionMetric) * 100 : 0;
+  const recentDeltaPct = directionalPercentChange(previousSessionMetric, latestMetric);
 
   const recentEvidence = buildRecentEvidence({
+    exerciseName: stats.name,
     latestSession,
     previousSession,
     isBodyweightLike,
@@ -226,7 +254,7 @@ export const analyzeExerciseTrendCore = (
   {
     const lookback = Math.min(6, history.length);
     const sessions = history.slice(0, lookback);
-    const m = sessions.map((s) => (isBodyweightLike ? s.maxReps : s.oneRepMax));
+    const m = sessions.map((s) => (isBodyweightLike ? s.maxReps : getStrengthMetric(s)));
 
     // Find the most recent PR that has at least one follow-up session.
     // (Index 0 is latest; if that's the PR we skip because there's no follow-up.)
@@ -263,7 +291,13 @@ export const analyzeExerciseTrendCore = (
       const afterPrSessions = sessions.slice(0, prIndex);
       const rehitCount = isBodyweightLike
         ? afterPrSessions.filter((s) => (s.maxReps ?? 0) >= prMetric).length
-        : afterPrSessions.filter((s) => (s.weight ?? 0) >= prWeight - WEIGHT_STATIC_EPSILON_KG).length;
+        : afterPrSessions.filter((s) => {
+            const followupWeight = s.weight ?? 0;
+            if (isLowerWeightBetter) {
+              return followupWeight <= prWeight + WEIGHT_STATIC_EPSILON_KG;
+            }
+            return followupWeight >= prWeight - WEIGHT_STATIC_EPSILON_KG;
+          }).length;
       const isValidated = rehitCount >= 2;
 
       // If the best follow-up still can't get close, it's a premature PR.
@@ -297,6 +331,7 @@ export const analyzeExerciseTrendCore = (
     return {
       status: 'overload',
       isBodyweightLike,
+      loadProgressionDirection,
       diffPct,
       confidence,
       prematurePr,
@@ -304,7 +339,9 @@ export const analyzeExerciseTrendCore = (
       prDropPct,
       calculation,
       evidence: keepDynamicEvidence(clampEvidence([
-        isBodyweightLike ? `Reps: ${fmtSignedPct(diffPct)}` : `Strength: ${fmtSignedPct(diffPct)}`,
+        isBodyweightLike
+          ? `Reps: ${fmtSignedPct(diffPct)}`
+          : (isLowerWeightBetter ? `Loading: ${fmtSignedPct(diffPct)}` : `Strength: ${fmtSignedPct(diffPct)}`),
         recentEvidence,
       ])),
     };
@@ -315,6 +352,7 @@ export const analyzeExerciseTrendCore = (
     return {
       status: 'regression',
       isBodyweightLike,
+      loadProgressionDirection,
       diffPct,
       confidence,
       prematurePr,
@@ -322,7 +360,9 @@ export const analyzeExerciseTrendCore = (
       prDropPct,
       calculation,
       evidence: keepDynamicEvidence(clampEvidence([
-        isBodyweightLike ? `Reps: ${fmtSignedPct(diffPct)}` : `Strength: ${fmtSignedPct(diffPct)}`,
+        isBodyweightLike
+          ? `Reps: ${fmtSignedPct(diffPct)}`
+          : (isLowerWeightBetter ? `Loading: ${fmtSignedPct(diffPct)}` : `Strength: ${fmtSignedPct(diffPct)}`),
         recentEvidence,
       ])),
     };
@@ -332,6 +372,7 @@ export const analyzeExerciseTrendCore = (
   return {
     status: 'stagnant',
     isBodyweightLike,
+    loadProgressionDirection,
     diffPct,
     confidence,
     prematurePr,
@@ -339,7 +380,9 @@ export const analyzeExerciseTrendCore = (
     prDropPct,
     calculation,
     evidence: keepDynamicEvidence(clampEvidence([
-      isBodyweightLike ? `Reps: ${fmtSignedPct(diffPct)}` : `Strength: ${fmtSignedPct(diffPct)}`,
+      isBodyweightLike
+        ? `Reps: ${fmtSignedPct(diffPct)}`
+        : (isLowerWeightBetter ? `Loading: ${fmtSignedPct(diffPct)}` : `Strength: ${fmtSignedPct(diffPct)}`),
       recentEvidence,
       isStaticPlateau
         ? (isBodyweightLike

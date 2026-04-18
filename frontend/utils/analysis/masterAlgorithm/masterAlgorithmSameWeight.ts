@@ -4,13 +4,15 @@ import { resolveSetCommentary } from '../setCommentary/setCommentaryLibrary';
 import { DROP_THRESHOLD_MILD, DROP_THRESHOLD_MODERATE } from './masterAlgorithmConstants';
 import { buildStructured, line } from './masterAlgorithmTooltips';
 import { createAnalysisResult } from './masterAlgorithmResults';
+import type { LoadProgressionDirection } from '../../exercise/loadProgression';
 
 export const analyzeSameWeight = (
   transition: string,
   repDropPct: number,
   prevReps: number,
   currReps: number,
-  setNumber: number
+  setNumber: number,
+  loadDirection: LoadProgressionDirection = 'higher'
 ): AnalysisResult => {
   const repDiff = currReps - prevReps;
   const isAfterFirstWorkingSet = setNumber === 2;
@@ -32,7 +34,8 @@ export const analyzeSameWeight = (
         line(whyLines[0] ?? `Reps increased by ${repDiff} at the same load`, 'gray'),
         line(`Expected: ${prevReps} reps, actual: ${currReps} reps`, 'gray'),
         line(whyLines[1] ?? 'Set pacing and rest likely improved on this transition', 'gray'),
-      ])
+      ]),
+      loadDirection
     );
   }
 
@@ -52,7 +55,8 @@ export const analyzeSameWeight = (
         line(whyLines[0] ?? `Reps held steady at ${currReps}`, 'gray'),
         line(`Expected: ${prevReps} reps, actual: ${currReps} reps`, 'gray'),
         line(whyLines[1] ?? 'Pacing and rest are consistent between these sets', 'gray'),
-      ])
+      ]),
+      loadDirection
     );
   }
 
@@ -80,7 +84,8 @@ export const analyzeSameWeight = (
         line(whyLines[0] ?? `Reps dropped by ${dropAbs}, which is within normal fatigue`, 'gray'),
         line(`Expected: ${prevReps} reps, actual: ${currReps} reps`, 'gray'),
         line(whyLines[1] ?? 'This pattern is common as fatigue accumulates across sets', 'gray'),
-      ])
+      ]),
+      loadDirection
     );
   }
 
@@ -115,7 +120,8 @@ export const analyzeSameWeight = (
           line(improveLines[0] ?? 'Extend rest slightly before the next hard set', 'gray'),
           line(improveLines[1] ?? 'Aim to keep rep loss tighter on the next set', 'gray'),
         ]
-      )
+      ),
+      loadDirection
     );
   }
 
@@ -149,6 +155,7 @@ export const analyzeSameWeight = (
         line(improveLines[0] ?? 'Reduce load or increase rest to restore output', 'gray'),
         line(improveLines[1] ?? 'Prioritize rep quality over grinding through breakdown', 'gray'),
       ]
-    )
+    ),
+    loadDirection
   );
 };

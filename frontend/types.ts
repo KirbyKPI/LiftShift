@@ -114,4 +114,5 @@ export interface AnalysisResult {
   tooltip: string;
   shortMessage: string;
   structured?: StructuredTooltip;
+  loadProgressionDirection?: 'higher' | 'lower';
 }

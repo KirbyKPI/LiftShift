@@ -71,11 +71,13 @@ export const HistoryExerciseCard: React.FC<HistoryExerciseCardProps> = ({
   }, [exerciseHistoricalSets, group.exerciseName, assetsMap, weightUnit]);
 
   const insights = analyzeSetProgression(group.sets, {
+    exerciseName: group.exerciseName,
     repProfile: userProfileContext.repProfile,
     trainingLevel: trainingLevel,
     isCompound: userProfileContext.isCompound,
   });
   const macroInsight = analyzeProgression(group.sets, undefined, {
+    exerciseName: group.exerciseName,
     typicalWeightJump: userProfileContext.typicalWeightJump,
     weightUnit: weightUnit,
     isCompound: userProfileContext.isCompound,

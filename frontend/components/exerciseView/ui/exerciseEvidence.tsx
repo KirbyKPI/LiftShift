@@ -44,7 +44,7 @@ export const getTrendEvidenceTitle = (status: StatusResult | undefined, evidence
   const clean = (t: string) => String(t).replace(/\[\[(GREEN|RED)\]\]|\[\[\/(GREEN|RED)\]\]/g, '');
 
   const windowSize = c ? Math.max(0, c.windowSize) : 0;
-  const subject = core.isBodyweightLike ? 'reps' : 'strength';
+  const subject = core.isBodyweightLike ? 'reps' : (core.loadProgressionDirection === 'lower' ? 'loading efficiency' : 'strength');
 
   const directionVerb = (pct: number | undefined): string => {
     if (!Number.isFinite(pct)) return 'changed';
@@ -53,10 +53,10 @@ export const getTrendEvidenceTitle = (status: StatusResult | undefined, evidence
     return 'stayed about the same';
   };
 
-  if (/^(Strength|Reps):\s/.test(evidenceLine)) {
+  if (/^(Strength|Reps|Loading):\s/.test(evidenceLine)) {
     const pct = core.diffPct;
     const v = directionVerb(pct);
-    const valueOnly = clean(evidenceLine).replace(/^(Strength|Reps):\s*/, '');
+    const valueOnly = clean(evidenceLine).replace(/^(Strength|Reps|Loading):\s*/, '');
     if (windowSize > 0) {
       return `Your ${subject} has ${v} by ${valueOnly} based on your last ${windowSize} sessions.`;
     }
@@ -66,9 +66,17 @@ export const getTrendEvidenceTitle = (status: StatusResult | undefined, evidence
   if (/^Recent( reps)?:\s/.test(evidenceLine)) {
     if (c?.historyLen && c.historyLen >= 2) {
       const valueOnly = clean(evidenceLine).replace(/^Recent( reps)?:\s*/, '');
-      return `Your latest session ${subject === 'strength' ? 'performance' : 'reps'} changed by ${valueOnly} compared to the session right before it.`;
+      return `Your latest session ${subject === 'reps' ? 'reps' : 'performance'} changed by ${valueOnly} compared to the session right before it.`;
     }
     return `This is your latest-session change: ${clean(evidenceLine)}.`;
+  }
+
+  if (/^Recent load change:\s/.test(evidenceLine)) {
+    const valueOnly = clean(evidenceLine).replace(/^Recent load change:\s*/, '');
+    if (c?.historyLen && c.historyLen >= 2) {
+      return `Your latest assisted/counterweight load changed by ${valueOnly} versus the previous session.`;
+    }
+    return `This is your latest loading change: ${valueOnly}.`;
   }
 
   return clean(evidenceLine);
