@@ -2,16 +2,14 @@ import { supabase } from './client'
 import type { Coach } from './client'
 
 export async function signUp(email: string, password: string, displayName: string) {
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  // Pass display_name in metadata so the DB trigger can create the coach profile
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { display_name: displayName } },
+  })
   if (error) throw error
   if (!data.user) throw new Error('Signup failed')
-
-  // Create coach profile
-  const { error: profileErr } = await supabase
-    .from('training_coaches')
-    .insert({ user_id: data.user.id, display_name: displayName, email })
-
-  if (profileErr) throw profileErr
   return data
 }
 
