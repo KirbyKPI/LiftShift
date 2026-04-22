@@ -3,6 +3,8 @@ export { Page }
 import React, { useState, useEffect } from 'react'
 import { signIn, signUp, getSession, getCoachProfile } from '../../utils/supabase/auth'
 import { navigate } from 'vike/client/router'
+import { ClientOnly } from 'vike-react/ClientOnly'
+import { assetPath } from '../../constants'
 
 function Page() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
@@ -17,8 +19,6 @@ function Page() {
     ;(async () => {
       const session = await getSession()
       if (session) {
-        // Only redirect if the user also has a coach profile —
-        // otherwise they'd bounce between /login and /coach forever
         const profile = await getCoachProfile()
         if (profile) { navigate('/coach'); return }
       }
@@ -28,8 +28,8 @@ function Page() {
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-zinc-600 border-t-lime-400 rounded-full animate-spin" />
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-slate-600 border-t-emerald-400 rounded-full animate-spin" />
       </div>
     )
   }
@@ -55,89 +55,110 @@ function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <a href="/" className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-lime-500/15 border border-lime-500/25 flex items-center justify-center">
-              <span className="text-lime-400 font-bold text-xl">K</span>
-            </div>
-            <div className="text-left">
-              <div className="text-white font-bold text-lg">KPIFit Training</div>
-              <div className="text-zinc-500 text-xs">Coach Portal</div>
-            </div>
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans relative overflow-hidden">
+      {/* Light Rays Background */}
+      <div className="absolute inset-0 z-[1] pointer-events-none">
+        <ClientOnly load={() => import('../../components/landing/lightRays/LightRays')} fallback={null}>
+          {(LightRays) => (
+            <LightRays
+              raysOrigin="top-center"
+              raysColor="#10b981"
+              raysSpeed={0.6}
+              lightSpread={1.0}
+              rayLength={1.2}
+              followMouse={true}
+              mouseInfluence={0.05}
+              noiseAmount={0.04}
+              distortion={0.02}
+              fadeDistance={1.0}
+              saturation={0.8}
+            />
+          )}
+        </ClientOnly>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Header */}
+        <header className="h-20 sm:h-24 flex items-center justify-between px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full">
+          <a href="/" className="flex items-center rounded-xl px-1.5 sm:px-2 py-1 hover:bg-white/5 transition-colors">
+            <img src={assetPath('/UI/kpifit-logo-nav.png')} alt="KPI·FIT" className="h-10 sm:h-12 w-auto" />
           </a>
-        </div>
+        </header>
 
-        {/* Card */}
-        <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800 p-8">
-          <h1 className="text-xl font-bold text-white mb-1">
-            {mode === 'login' ? 'Welcome back' : 'Create your account'}
-          </h1>
-          <p className="text-zinc-500 text-sm mb-6">
-            {mode === 'login'
-              ? 'Sign in to access your coaching dashboard'
-              : 'Set up your coach account to manage clients'}
-          </p>
+        {/* Form — centered */}
+        <div className="flex-1 flex items-center justify-center px-4 pb-16">
+          <div className="w-full max-w-md">
+            {/* Card */}
+            <div className="rounded-2xl border border-white/10 bg-black/30 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.5)] p-8">
+              <h1 className="text-xl font-bold text-white mb-1">
+                {mode === 'login' ? 'Welcome back' : 'Create your account'}
+              </h1>
+              <p className="text-slate-400 text-sm mb-6">
+                {mode === 'login'
+                  ? 'Sign in to your KPI·FIT coaching dashboard'
+                  : 'Set up your coach account to manage clients'}
+              </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'signup' && (
-              <div>
-                <label className="block text-zinc-400 text-xs font-medium mb-1.5">Your Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Coach Kirby"
-                  className="w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-lime-500/50 transition-colors"
-                />
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {mode === 'signup' && (
+                  <div>
+                    <label className="block text-slate-400 text-xs font-medium mb-1.5">Your Name</label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      placeholder="Coach Kirby"
+                      className="w-full px-3.5 py-2.5 bg-slate-900/60 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-slate-400 text-xs font-medium mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="coach@example.com"
+                    required
+                    className="w-full px-3.5 py-2.5 bg-slate-900/60 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-xs font-medium mb-1.5">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                    className="w-full px-3.5 py-2.5 bg-slate-900/60 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                  />
+                </div>
+
+                {error && (
+                  <p className="text-red-300 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/20"
+                >
+                  {loading ? 'Loading...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                </button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}
+                  className="text-slate-500 text-sm hover:text-emerald-300 transition-colors"
+                >
+                  {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+                </button>
               </div>
-            )}
-            <div>
-              <label className="block text-zinc-400 text-xs font-medium mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="coach@example.com"
-                required
-                className="w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-lime-500/50 transition-colors"
-              />
             </div>
-            <div>
-              <label className="block text-zinc-400 text-xs font-medium mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={6}
-                className="w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-lime-500/50 transition-colors"
-              />
-            </div>
-
-            {error && (
-              <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 bg-lime-500 hover:bg-lime-400 text-black font-semibold text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Loading...' : mode === 'login' ? 'Sign In' : 'Create Account'}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}
-              className="text-zinc-500 text-sm hover:text-zinc-300 transition-colors"
-            >
-              {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-            </button>
           </div>
         </div>
       </div>

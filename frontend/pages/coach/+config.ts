@@ -3,5 +3,5 @@ import type { Config } from 'vike/types';
 export default {
   ssr: false,
   prerender: true,
-  title: 'Coach Dashboard - KPIFit Training',
+  title: 'Coach Dashboard - KPI·FIT',
 } satisfies Config;

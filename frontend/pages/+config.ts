@@ -6,9 +6,9 @@ export default {
   // Pre-render only opted-in pages.
   prerender: { partial: true },
   // Default head tags (can be overridden per route group or page).
-  title: 'KPIFit Training - Workout Analytics Dashboard',
+  title: 'KPI·FIT - Workout Analytics Dashboard',
   description:
-    'KPIFit Training transforms workout logs into beautiful analytics dashboards. Privacy-first, runs locally in your browser.',
+    'KPI·FIT transforms workout logs into beautiful analytics dashboards. Privacy-first, runs locally in your browser.',
   // Set baseAssets for GitHub Pages deployment
   baseAssets: process.env.BASE_ASSETS || undefined,
 } satisfies Config;

@@ -43,7 +43,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         {/* Top Row: Logo and Nav Buttons */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <img src={assetPath('/UI/kpifit-logo-nav.png')} alt="KPIFit" className="h-8 sm:h-9 w-auto" decoding="async" />
+            <img src={assetPath('/UI/kpifit-logo-nav.png')} alt="KPI·FIT" className="h-8 sm:h-9 w-auto" decoding="async" />
             <sup className="inline-block rounded-full border border-amber-500/30 bg-amber-500/15 px-1 py-0.5 text-[7px] sm:text-[9px] font-semibold leading-none tracking-wide text-amber-400">
               BETA
             </sup>

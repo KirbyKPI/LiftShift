@@ -2,7 +2,7 @@ import type { Config } from 'vike/types';
 
 export default {
   prerender: true,
-  title: 'KPIFit Training Features',
+  title: 'KPI·FIT Features',
   description:
-    'KPIFit Training features: muscle heatmaps, calendar filtering, PR detection, volume trends, and per-exercise deep dives, computed locally in your browser.',
+    'KPI·FIT features: muscle heatmaps, calendar filtering, PR detection, volume trends, and per-exercise deep dives, computed locally in your browser.',
 } satisfies Config;
