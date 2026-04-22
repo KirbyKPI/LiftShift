@@ -1,11 +1,12 @@
 export { Page }
 
 import React, { useState, useEffect } from 'react'
-import { usePageContext } from 'vike-react/usePageContext'
 
 function Page() {
-  const pageContext = usePageContext()
-  const code = (pageContext.routeParams as any)?.code || ''
+  // Extract the code from the URL path: /connect/ABC123 → ABC123
+  const code = typeof window !== 'undefined'
+    ? window.location.pathname.replace(/^\/connect\/?/, '')
+    : ''
 
   const [apiKey, setApiKey] = useState('')
   const [loading, setLoading] = useState(false)

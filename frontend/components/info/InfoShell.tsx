@@ -1,10 +1,7 @@
 import React from 'react';
 import { Navigation } from '../layout/Navigation';
 import { assetPath } from '../../constants';
-import { clientOnly } from 'vike-react/clientOnly';
-
-const LightRays = clientOnly(() => import('../landing/lightRays/LightRays'));
-const PlatformDock = clientOnly(() => import('../landing/ui/PlatformDock'));
+import { ClientOnly } from 'vike-react/ClientOnly';
 
 type InfoShellProps = {
   activeNav?: 'how-it-works' | 'features' | null;
@@ -53,20 +50,23 @@ export const InfoShell: React.FC<InfoShellProps> = ({ activeNav = null, title, s
   return (
     <div className="min-h-screen bg-black text-white font-sans">
       <div className="fixed inset-0 z-[1] pointer-events-none">
-        <LightRays
-          fallback={null}
-          raysOrigin="top-center"
-          raysColor="#10b981"
-          raysSpeed={0.75}
-          lightSpread={1.2}
-          rayLength={1.5}
-          followMouse={true}
-          mouseInfluence={0.06}
-          noiseAmount={0.05}
-          distortion={0.03}
-          fadeDistance={1.2}
-          saturation={0.9}
-        />
+        <ClientOnly load={() => import('../landing/lightRays/LightRays')} fallback={null}>
+          {(LightRays) => (
+            <LightRays
+              raysOrigin="top-center"
+              raysColor="#10b981"
+              raysSpeed={0.75}
+              lightSpread={1.2}
+              rayLength={1.5}
+              followMouse={true}
+              mouseInfluence={0.06}
+              noiseAmount={0.05}
+              distortion={0.03}
+              fadeDistance={1.2}
+              saturation={0.9}
+            />
+          )}
+        </ClientOnly>
       </div>
 
       {/* Navigation */}
@@ -82,7 +82,9 @@ export const InfoShell: React.FC<InfoShellProps> = ({ activeNav = null, title, s
         </div>
       </main>
 
-      <PlatformDock fallback={null} items={platformDockItems} />
+      <ClientOnly load={() => import('../landing/ui/PlatformDock')} fallback={null}>
+        {(PlatformDock) => <PlatformDock items={platformDockItems} />}
+      </ClientOnly>
     </div>
   );
 };

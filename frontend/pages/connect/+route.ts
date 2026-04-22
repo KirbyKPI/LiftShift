@@ -1,1 +1,1 @@
-export default '/connect/@code';
+export default '/connect';

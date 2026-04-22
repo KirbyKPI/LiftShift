@@ -1,1 +1,1 @@
-export default '/coach/*';
+export default '/coach';
