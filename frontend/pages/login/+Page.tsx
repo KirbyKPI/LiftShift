@@ -1,7 +1,7 @@
 export { Page }
 
 import React, { useState, useEffect } from 'react'
-import { signIn, signUp, getSession } from '../../utils/supabase/auth'
+import { signIn, signUp, getSession, getCoachProfile } from '../../utils/supabase/auth'
 import { navigate } from 'vike/client/router'
 
 function Page() {
@@ -14,10 +14,16 @@ function Page() {
   const [checkingAuth, setCheckingAuth] = useState(true)
 
   useEffect(() => {
-    getSession().then(session => {
-      if (session) navigate('/coach')
-      else setCheckingAuth(false)
-    })
+    ;(async () => {
+      const session = await getSession()
+      if (session) {
+        // Only redirect if the user also has a coach profile —
+        // otherwise they'd bounce between /login and /coach forever
+        const profile = await getCoachProfile()
+        if (profile) { navigate('/coach'); return }
+      }
+      setCheckingAuth(false)
+    })()
   }, [])
 
   if (checkingAuth) {
