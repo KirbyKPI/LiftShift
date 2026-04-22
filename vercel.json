@@ -1,0 +1,30 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/client",
+  "framework": null,
+  "rewrites": [
+    { "source": "/app", "destination": "/index.html" },
+    { "source": "/app/(.*)", "destination": "/index.html" },
+    { "source": "/how-it-works", "destination": "/how-it-works/index.html" },
+    { "source": "/features", "destination": "/features/index.html" },
+    { "source": "/about", "destination": "/about/index.html" },
+    { "source": "/faq", "destination": "/faq/index.html" },
+    { "source": "/privacy", "destination": "/privacy/index.html" },
+    { "source": "/ai", "destination": "/ai/index.html" },
+    { "source": "/supported-apps", "destination": "/supported-apps/index.html" },
+    { "source": "/supported-apps/(.*)", "destination": "/supported-apps/$1/index.html" },
+    { "source": "/metrics", "destination": "/metrics/index.html" },
+    { "source": "/metrics/(.*)", "destination": "/metrics/$1/index.html" },
+    { "source": "/dashboard-analytics", "destination": "/dashboard-analytics/index.html" },
+    { "source": "/free-workout-dashboard", "destination": "/free-workout-dashboard/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ]
+}
