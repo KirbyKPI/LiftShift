@@ -1,15 +1,12 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Github, Info, ArrowUp } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { DataSourceChoice } from '../../../utils/storage/dataSourceStorage';
 import { Navigation } from '../../layout/Navigation';
 import PlatformDock from './PlatformDock';
-import { ReviewsCarousel } from './ReviewsCarousel';
 import LightRays from '../lightRays/LightRays';
 import { Flame, CalendarDays, Trophy, BarChart3, Dumbbell } from 'lucide-react';
 import { FANCY_FONT } from '../../../utils/ui/uiConstants';
 import { assetPath } from '../../../constants';
-import { HowItWorksDoc } from '../../howItWorks/ui/HowItWorksDoc';
 
 interface LandingPageProps {
   onSelectPlatform: (source: DataSourceChoice) => void;
@@ -17,28 +14,6 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlatform, onTryDemo }) => {
-  const [showScrollTop, setShowScrollTop] = React.useState(false);
-  const containerRef = React.useRef<HTMLDivElement>(null);
-
-  // Handle scroll to top visibility
-  React.useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      // Check both scrollTop (standard) and if there's any other scroll behavior
-      const scrollY = container.scrollTop;
-      setShowScrollTop(scrollY > 300);
-    };
-
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToTop = () => {
-    containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   // Platform dock items
   const platformDockItems = [
     {
@@ -69,11 +44,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlatform, onTr
 
   return (
     <motion.div
-      ref={containerRef}
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden bg-slate-950 text-slate-200 font-sans"
+      className="fixed inset-0 z-50 overflow-hidden bg-slate-950 text-slate-200 font-sans"
     >
       {/* Light Rays Effect */}
       <div className="absolute inset-0 z-[1] pointer-events-none">
@@ -91,29 +65,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlatform, onTr
           saturation={0.9}
         />
       </div>
-      {/* ========== HERO SECTION ========== */}
-      <section className="relative z-10 min-h-screen flex flex-col pt-2 pb-32">
+
+      {/* Single-screen layout */}
+      <section className="relative z-10 h-full flex flex-col pt-2">
         <div className="max-w-6xl mx-auto w-full">
-          {/* Navigation */}
           <Navigation variant="landing" className="px-4 sm:px-6 lg:px-8" />
-          {/* Hero Content */}
-          <div className="text-center max-w-5xl mx-auto">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-8">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-sm font-medium text-emerald-300">Its Free!</span>
-            </div>
-            {/* Main Headline - Focus on transformation */}
+        </div>
+
+        {/* Hero Content — vertically centered in remaining space */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-8 leading-[1.2]">
               <span className="block text-yellow-600 font-medium text-2xl sm:text-3xl lg:text-4xl mb-4" style={FANCY_FONT}>
                 Boring workout logs?
               </span>
-              <span className="block text-slate-400 text-3xl sm:text-3xl lg:text-4xl xl:text-5xl mb-4"><span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-green-400 bg-clip-text text-transparent" style={FANCY_FONT}></span> turn them into</span>
-              <span className="block bg-gradient-to-r from-emerald-300 via-emerald-400 to-green-400 bg-clip-text text-transparent pb-2 mt-1 " style={FANCY_FONT}>
+              <span className="block text-slate-400 text-3xl sm:text-3xl lg:text-4xl xl:text-5xl mb-4">
+                <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-green-400 bg-clip-text text-transparent" style={FANCY_FONT}></span> turn them into
+              </span>
+              <span className="block bg-gradient-to-r from-emerald-300 via-emerald-400 to-green-400 bg-clip-text text-transparent pb-2 mt-1" style={FANCY_FONT}>
                 Stunning & actionable insights.
               </span>
             </h1>
-            {/* Feature highlights - what you get */}
+
+            {/* Feature highlights */}
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-slate-400 mb-8">
               <FeatureTag icon={<Flame className="w-4 h-4 text-orange-400" />} text="Muscle Heatmaps" />
               <FeatureTag icon={<CalendarDays className="w-4 h-4 text-blue-400" />} text="Calendar Filtering" />
@@ -124,63 +99,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlatform, onTr
 
             {/* Demo CTA Button */}
             {onTryDemo && (
-              <div className="mb-8">
+              <div className="mb-4">
                 <button
                   onClick={onTryDemo}
                   className="group inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-semibold h-11 px-8 bg-slate-950/75 text-emerald-300 border border-emerald-500/40 hover:border-emerald-400 hover:text-emerald-200 transition-all duration-200"
                 >
                   <span>Try Demo with Sample Data</span>
                 </button>
-                <p className="text-slate-500 text-sm mt-2 text-center">
-                  No signup required • Instantly explore features
-                </p>
               </div>
             )}
           </div>
         </div>
+
+        {/* Platform Dock pinned to bottom */}
+        <PlatformDock items={platformDockItems} />
       </section>
-
-      {/* ========== REVIEWS SECTION ========== */}
-      <section id="reviews" className="relative z-10 px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div className="max-w-6xl mx-auto">
-          <ReviewsCarousel />
-        </div>
-      </section>
-
-      <section id="how-it-works" className="relative z-10 px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-200" style={FANCY_FONT}>
-              How it works
-            </h2>
-            <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-              A documentation-style walkthrough of how KPIFit Training imports data and calculates your insights.
-            </p>
-          </div>
-
-          <div className="mt-8">
-            <HowItWorksDoc showTitle={false} />
-          </div>
-        </div>
-      </section>
-      {/* ========== PLATFORM DOCK ========== */}
-      <PlatformDock items={platformDockItems} />
-
-      {/* Back to Top Button */}
-      <AnimatePresence>
-        {showScrollTop && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={scrollToTop}
-            className="fixed bottom-6 right-6 z-[101] p-3 rounded-full bg-slate-900/80 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-500/50 transition-colors shadow-lg backdrop-blur-sm"
-            aria-label="Scroll to top"
-          >
-            <ArrowUp className="w-5 h-5" />
-          </motion.button>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };

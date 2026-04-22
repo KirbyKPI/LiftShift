@@ -2,7 +2,6 @@ import React from 'react';
 import { Calendar, LayoutDashboard, Pencil, RefreshCw, Settings, X, ArrowLeft } from 'lucide-react';
 import { assetPath } from '../../constants';
 import { Tab } from '../../app/navigation';
-import { SupportLinks } from '../layout/SupportLinks';
 import { ThemeToggleButton } from '../theme/ThemeToggleButton';
 import type { OnboardingFlow } from '../../app/onboarding/types';
 
@@ -59,45 +58,37 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </div>
 
           <div className="flex items-center justify-end gap-2  min-w-0">
-            {/* Desktop: right-aligned support buttons, Update pinned as rightmost */}
-            <div className="hidden md:block">
-              <SupportLinks
-                variant="primary"
-                layout="header"
-                primaryRightSlot={(
-                  <div className="flex items-center gap-2">
-                    {isDemoMode() && (
-                      <button
-                        type="button"
-                        onClick={handleExitDemo}
-                        className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 h-8 px-2 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:border-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/30 transition-all duration-200 gap-1 cursor-pointer"
-                        title="Exit Demo"
-                      >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span>Back</span>
-                      </button>
-                    )}
-                    <ThemeToggleButton />
-                    <button
-                      type="button"
-                      onClick={onOpenPreferences}
-                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 h-10 w-10 bg-transparent border border-black/70 text-slate-200 hover:border-white hover:text-white hover:bg-white/5 transition-all duration-200 cursor-pointer"
-                      title="User Preferences"
-                      aria-label="User Preferences"
-                    >
-                      <Settings className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onOpenUpdateFlow}
-                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 h-8 px-2.5 py-1 bg-transparent border border-black/70 text-slate-200 hover:border-white hover:text-white hover:bg-white/5 transition-all duration-200 gap-2 cursor-pointer"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      <span>Update Data</span>
-                    </button>
-                  </div>
-                )}
-              />
+            {/* Desktop action buttons */}
+            <div className="hidden md:flex items-center gap-2">
+              {isDemoMode() && (
+                <button
+                  type="button"
+                  onClick={handleExitDemo}
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 h-8 px-2 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:border-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/30 transition-all duration-200 gap-1 cursor-pointer"
+                  title="Exit Demo"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+              )}
+              <ThemeToggleButton />
+              <button
+                type="button"
+                onClick={onOpenPreferences}
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 h-10 w-10 bg-transparent border border-black/70 text-slate-200 hover:border-white hover:text-white hover:bg-white/5 transition-all duration-200 cursor-pointer"
+                title="User Preferences"
+                aria-label="User Preferences"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={onOpenUpdateFlow}
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 h-8 px-2.5 py-1 bg-transparent border border-black/70 text-slate-200 hover:border-white hover:text-white hover:bg-white/5 transition-all duration-200 gap-2 cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Update Data</span>
+              </button>
             </div>
 
             {/* Mobile: keep Update action */}

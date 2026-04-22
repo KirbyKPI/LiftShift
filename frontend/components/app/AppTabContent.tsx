@@ -3,7 +3,6 @@ import type { DailySummary, ExerciseStats, WorkoutSet } from '../../types';
 import type { BodyMapGender } from '../bodyMap/BodyMap';
 import type { ExerciseTrendMode, WeightUnit } from '../../utils/storage/localStorage';
 import { Tab } from '../../app/navigation';
-import { SupportLinks } from '../layout/SupportLinks';
 
 const Dashboard = React.lazy(() => import('../dashboard/ui/Dashboard').then((m) => ({ default: m.Dashboard })));
 const ExerciseView = React.lazy(() => import('../exerciseView/ui/ExerciseView').then((m) => ({ default: m.ExerciseView })));
@@ -172,13 +171,7 @@ export const AppTabContent: React.FC<AppTabContentProps> = ({
         )}
       </Suspense>
 
-      <div className="hidden sm:block mt-8">
-        <SupportLinks variant="secondary" layout="footer" />
-      </div>
-
-      <div className="sm:hidden pb-[calc(env(safe-area-inset-bottom)+1.5rem)] mt-8">
-        <SupportLinks variant="all" layout="footer" />
-      </div>
+      <div className="pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:pb-0" />
     </main>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Github, Info, Sparkles, Menu } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import { assetPath } from '../../constants';
 
 type NavigationProps = {
@@ -21,64 +21,25 @@ export const Navigation: React.FC<NavigationProps> = ({
         <span className="text-white font-semibold text-sm sm:text-xl">KPIFit Training</span>
       </a>
 
-      {/* Navigation buttons grouped on the right - Desktop */}
-      <div className="hidden sm:flex items-center gap-4">
+      {/* Sign in button - Desktop */}
+      <div className="hidden sm:flex items-center">
         <a
-          href={assetPath('how-it-works/')}
-          className={`group inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 text-xs font-medium bg-slate-950/50 border shadow-lg ${variant === 'info' && activeNav === 'how-it-works'
-              ? 'border-emerald-400 text-emerald-300 shadow-emerald-500/40'
-              : 'border-emerald-500/30 text-slate-300 shadow-emerald-500/10 hover:border-emerald-400 hover:text-emerald-300 hover:shadow-emerald-500/30'
-            }`}
+          href="/login"
+          className="group inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 text-xs font-medium bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 shadow-lg shadow-emerald-500/10 hover:bg-emerald-500/25 hover:border-emerald-400 hover:text-emerald-200 hover:shadow-emerald-500/30"
         >
-          <Info className="w-3.5 h-3.5 group-hover:text-emerald-300 transition-colors" />
-          <span>How it works</span>
-        </a>
-        <a
-          href={assetPath('features/')}
-          className={`group inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 text-xs font-medium bg-slate-950/50 border shadow-lg ${variant === 'info' && activeNav === 'features'
-              ? 'border-emerald-400 text-emerald-300 shadow-emerald-500/40'
-              : 'border-emerald-500/30 text-slate-300 shadow-emerald-500/10 hover:border-emerald-400 hover:text-emerald-300 hover:shadow-emerald-500/30'
-            }`}
-        >
-          <Sparkles className="w-3.5 h-3.5 group-hover:text-emerald-300 transition-colors" />
-          <span>Features</span>
-        </a>
-        <a
-          href="https://github.com/KirbyKPI/LiftShift"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`group inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 text-xs font-medium bg-slate-950/50 border shadow-lg border-emerald-500/30 text-slate-300 shadow-emerald-500/10 hover:border-emerald-400 hover:text-emerald-300 hover:shadow-emerald-500/30`}
-        >
-          <Github className="w-3.5 h-3.5 group-hover:text-emerald-300 transition-colors" />
-          <span>GitHub</span>
+          <LogIn className="w-3.5 h-3.5 group-hover:text-emerald-200 transition-colors" />
+          <span>Sign in</span>
         </a>
       </div>
 
-      {/* Mobile Navigation - all buttons on the right */}
-      <div className="sm:hidden flex items-center gap-2">
+      {/* Mobile */}
+      <div className="sm:hidden flex items-center">
         <a
-          href={assetPath('how-it-works/')}
-          className={`inline-flex items-center gap-1 text-xs px-1.5 py-1 transition-colors ${variant === 'info' && activeNav === 'how-it-works'
-            ? 'text-emerald-200'
-            : 'text-slate-300 hover:text-emerald-200'
-            }`}
+          href="/login"
+          className="inline-flex items-center gap-1 text-xs text-emerald-300 hover:text-emerald-200 px-1.5 py-1"
         >
-          <Info className="w-2.5 h-2.5" />
-          <span>How it works</span>
-        </a>
-        <a
-          href={assetPath('features/')}
-          className={`inline-flex items-center gap-1 text-xs px-1.5 py-1 transition-colors ${variant === 'info' && activeNav === 'features'
-            ? 'text-emerald-200'
-            : 'text-slate-300 hover:text-emerald-200'
-            }`}
-        >
-          <Sparkles className="w-2.5 h-2.5" />
-          <span>Features</span>
-        </a>
-        <a href="https://github.com/KirbyKPI/LiftShift" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-slate-300 hover:text-emerald-200 px-1.5 py-1">
-          <Github className="w-2.5 h-2.5" />
-          <span>GitHub</span>
+          <LogIn className="w-2.5 h-2.5" />
+          <span>Sign in</span>
         </a>
       </div>
     </header>
