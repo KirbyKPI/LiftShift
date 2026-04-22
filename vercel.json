@@ -17,7 +17,11 @@
     { "source": "/metrics", "destination": "/metrics/index.html" },
     { "source": "/metrics/(.*)", "destination": "/metrics/$1/index.html" },
     { "source": "/dashboard-analytics", "destination": "/dashboard-analytics/index.html" },
-    { "source": "/free-workout-dashboard", "destination": "/free-workout-dashboard/index.html" }
+    { "source": "/free-workout-dashboard", "destination": "/free-workout-dashboard/index.html" },
+    { "source": "/login", "destination": "/login/index.html" },
+    { "source": "/coach", "destination": "/coach/index.html" },
+    { "source": "/coach/(.*)", "destination": "/coach/index.html" },
+    { "source": "/connect/(.*)", "destination": "/connect/index.html" }
   ],
   "headers": [
     {
