@@ -17,8 +17,8 @@ export const Navigation: React.FC<NavigationProps> = ({
     <header className={`h-20 sm:h-24 flex items-center justify-between ${className}`}>
       {/* Logo on the left */}
       <a href={assetPath('/')} className="flex items-center gap-2 sm:gap-3 rounded-xl px-1.5 sm:px-2 py-1 hover:bg-white/5 transition-colors">
-        <img src={assetPath('/UI/logo.png')} alt="LiftShift Logo" className="w-6 h-6 sm:w-8 sm:h-8" />
-        <span className="text-white font-semibold text-sm sm:text-xl">LiftShift</span>
+        <img src={assetPath('/UI/logo.png')} alt="KPIFit Training Logo" className="w-6 h-6 sm:w-8 sm:h-8" />
+        <span className="text-white font-semibold text-sm sm:text-xl">KPIFit Training</span>
       </a>
 
       {/* Navigation buttons grouped on the right - Desktop */}
@@ -44,7 +44,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           <span>Features</span>
         </a>
         <a
-          href="https://github.com/aree6/LiftShift"
+          href="https://github.com/KirbyKPI/LiftShift"
           target="_blank"
           rel="noopener noreferrer"
           className={`group inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 text-xs font-medium bg-slate-950/50 border shadow-lg border-emerald-500/30 text-slate-300 shadow-emerald-500/10 hover:border-emerald-400 hover:text-emerald-300 hover:shadow-emerald-500/30`}
@@ -76,7 +76,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           <Sparkles className="w-2.5 h-2.5" />
           <span>Features</span>
         </a>
-        <a href="https://github.com/aree6/LiftShift" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-slate-300 hover:text-emerald-200 px-1.5 py-1">
+        <a href="https://github.com/KirbyKPI/LiftShift" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-slate-300 hover:text-emerald-200 px-1.5 py-1">
           <Github className="w-2.5 h-2.5" />
           <span>GitHub</span>
         </a>

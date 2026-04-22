@@ -19,7 +19,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'A “set” is one logged set. A “workout” is a full session (a group of sets done in the same workout). LiftShift uses workouts to talk about consistency, and sets to talk about training volume.',
+            'A “set” is one logged set. A “workout” is a full session (a group of sets done in the same workout). KPIFit Training uses workouts to talk about consistency, and sets to talk about training volume.',
         },
       ],
     },
@@ -31,7 +31,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'Volume is a simple “how much work did you do?” signal. LiftShift counts working sets and uses weight × reps (and skips warm-up sets in most summaries).',
+            'Volume is a simple “how much work did you do?” signal. KPIFit Training counts working sets and uses weight × reps (and skips warm-up sets in most summaries).',
         },
         {
           type: 'p',
@@ -60,7 +60,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'A PR in LiftShift means a new all-time best weight for an exercise (based on your logged sets). PRs are tracked per exercise over time and used to show progress “bursts” and droughts.',
+            'A PR in KPIFit Training means a new all-time best weight for an exercise (based on your logged sets). PRs are tracked per exercise over time and used to show progress “bursts” and droughts.',
         },
         {
           type: 'callout',
@@ -91,7 +91,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'Sometimes you hit a big PR, but the next sessions drop hard. LiftShift flags this as a “premature PR”: the jump happened, but it did not hold up over time.',
+            'Sometimes you hit a big PR, but the next sessions drop hard. KPIFit Training flags this as a “premature PR”: the jump happened, but it did not hold up over time.',
         },
         {
           type: 'p',
@@ -108,7 +108,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'LiftShift uses your weight and reps to estimate your “strength level” for an exercise, so it can compare sessions even if you change rep ranges. It is an estimate, not a max-out test.',
+            'KPIFit Training uses your weight and reps to estimate your “strength level” for an exercise, so it can compare sessions even if you change rep ranges. It is an estimate, not a max-out test.',
         },
       ],
     },
@@ -120,7 +120,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'In the exercise view, LiftShift gives each exercise a simple status based on recent sessions. These labels are meant to be coaching hints, not judgments.',
+            'In the exercise view, KPIFit Training gives each exercise a simple status based on recent sessions. These labels are meant to be coaching hints, not judgments.',
         },
         {
           type: 'ul',
@@ -154,7 +154,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'Consistency is tracked week-by-week. LiftShift counts unique workouts and shows streaks based on consecutive weeks with training.',
+            'Consistency is tracked week-by-week. KPIFit Training counts unique workouts and shows streaks based on consecutive weeks with training.',
         },
       ],
     },
@@ -166,7 +166,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'If an exercise looks “stuck” (same load and similar reps across recent sessions), LiftShift flags it as a plateau and suggests a small next-step: a tiny weight increase for weighted lifts, or +1–2 reps for bodyweight-like lifts.',
+            'If an exercise looks “stuck” (same load and similar reps across recent sessions), KPIFit Training flags it as a plateau and suggests a small next-step: a tiny weight increase for weighted lifts, or +1–2 reps for bodyweight-like lifts.',
         },
       ],
     },
@@ -178,7 +178,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'LiftShift also looks inside a single workout to explain what happened from set to set: did you fade from fatigue, did you pace well, or did you jump the weight too fast?',
+            'KPIFit Training also looks inside a single workout to explain what happened from set to set: did you fade from fatigue, did you pace well, or did you jump the weight too fast?',
         },
         {
           type: 'ul',
@@ -206,7 +206,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'Training data is noisy. LiftShift can smooth trend lines so you see the bigger picture without overreacting to one great (or bad) day.',
+            'Training data is noisy. KPIFit Training can smooth trend lines so you see the bigger picture without overreacting to one great (or bad) day.',
         },
         {
           type: 'p',
@@ -223,7 +223,7 @@ export const KEY_METRICS_SECTION: HowItWorksSection = {
         {
           type: 'p',
           text:
-            'For muscle analysis, LiftShift turns each exercise into “muscle work” based on which muscles the movement trains. It uses rolling 7-day windows so “weekly volume” matches how bodies adapt, not just calendar weeks.',
+            'For muscle analysis, KPIFit Training turns each exercise into “muscle work” based on which muscles the movement trains. It uses rolling 7-day windows so “weekly volume” matches how bodies adapt, not just calendar weeks.',
         },
         {
           type: 'p',

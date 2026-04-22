@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get up and running with LiftShift in 5 minutes!
+Get up and running with KPIFit Training in 5 minutes!
 
 ## 🚀 Installation
 
@@ -12,7 +12,7 @@ Get up and running with LiftShift in 5 minutes!
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/aree6/LiftShift.git
+   git clone https://github.com/KirbyKPI/LiftShift.git
    cd LiftShift
    ```
 
@@ -35,7 +35,7 @@ That's it! The app is now running locally. 🎉
 
 ---
 
-## 📊 Using LiftShift
+## 📊 Using KPIFit Training
 
 ### First Time Setup
 
@@ -180,7 +180,7 @@ Fix:
 ## 💪 Tips & Tricks
 
 ### Export Regularly
-Export your Hevy data monthly to keep LiftShift updated.
+Export your Hevy data monthly to keep KPIFit Training updated.
 
 ### Use Filters
 Filter by month to see training trends and seasonal patterns.
@@ -197,7 +197,7 @@ Take screenshots or export data to share progress with coaches/friends.
 
 - Check [Troubleshooting](#troubleshooting) section
 - Read [Full README](./README.md)
-- Open [GitHub Issue](https://github.com/aree6/LiftShift/issues)
+- Open [GitHub Issue](https://github.com/KirbyKPI/LiftShift/issues)
 
 ---
 

@@ -7,7 +7,7 @@ export const DATA_NORMALIZATION_SECTION: HowItWorksSection = {
     {
       type: 'p',
       text:
-        'After import, LiftShift cleans and standardizes your workouts so every chart is consistent (even if the data came from different apps).',
+        'After import, KPIFit Training cleans and standardizes your workouts so every chart is consistent (even if the data came from different apps).',
     },
     {
       type: 'ul',
@@ -23,7 +23,7 @@ export const DATA_NORMALIZATION_SECTION: HowItWorksSection = {
       tone: 'note',
       title: 'What counts as a warm-up?',
       text:
-        'LiftShift treats a set as warm-up when its set type is “w” or contains the word “warmup”. Warm-ups are kept in history, but most totals and charts focus on working sets.',
+        'KPIFit Training treats a set as warm-up when its set type is “w” or contains the word “warmup”. Warm-ups are kept in history, but most totals and charts focus on working sets.',
     },
   ],
 };

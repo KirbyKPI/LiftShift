@@ -1,13 +1,13 @@
 {
-  "name": "LiftShift",
+  "name": "KPIFit Training",
   "version": "1.0.0",
   "description": "A comprehensive workout visualizer that transforms Hevy app CSV exports into powerful insights with analytics, personal records tracking, and training performance analysis.",
-  "author": "Areeb <mohammadar336@gmail.com>",
+  "author": "KirbyKPI <kirby.coggins@gmail.com>",
   "license": "AGPL-3.0-only",
-  "homepage": "https://github.com/aree6/LiftShift",
+  "homepage": "https://github.com/KirbyKPI/LiftShift",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aree6/LiftShift.git"
+    "url": "https://github.com/KirbyKPI/LiftShift.git"
   },
   "keywords": [
     "fitness",

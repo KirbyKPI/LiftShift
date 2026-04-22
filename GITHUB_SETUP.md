@@ -11,7 +11,7 @@ A comprehensive workout visualizer that transforms Hevy app CSV exports into pow
 
 **Full Description:**
 ```
-LiftShift transforms your Hevy app workout CSV exports into comprehensive analytics and visualizations. Track your training volume, monitor personal records, analyze exercise performance, and get real-time feedback on your workout sets.
+KPIFit Training transforms your Hevy app workout CSV exports into comprehensive analytics and visualizations. Track your training volume, monitor personal records, analyze exercise performance, and get real-time feedback on your workout sets.
 
 ✨ Features:
 - Dashboard with volume trends and workout distribution
@@ -42,7 +42,7 @@ Add these topics to improve discoverability (GitHub → Settings → Topics):
 ## 3. Links to Add
 
 ### About Section (GitHub → Settings → Options):
-- **Website:** Your deployed URL (https://liftshift.app)
+- **Website:** Your deployed URL (https://training.kpifit.com)
 - **Discussions:** Enable GitHub Discussions for community support
 
 ### Repository Links (in README):
@@ -101,10 +101,10 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for the recommended split deployment:
 Popular badges to add to README:
 
 ```markdown
-[![GitHub stars](https://img.shields.io/github/stars/aree6/LiftShift.svg?style=flat-square)](https://github.com/aree6/LiftShift)
-[![GitHub forks](https://img.shields.io/github/forks/aree6/LiftShift.svg?style=flat-square)](https://github.com/aree6/LiftShift)
-[![GitHub issues](https://img.shields.io/github/issues/aree6/LiftShift.svg?style=flat-square)](https://github.com/aree6/LiftShift/issues)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/aree6/LiftShift/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/KirbyKPI/LiftShift.svg?style=flat-square)](https://github.com/KirbyKPI/LiftShift)
+[![GitHub forks](https://img.shields.io/github/forks/KirbyKPI/LiftShift.svg?style=flat-square)](https://github.com/KirbyKPI/LiftShift)
+[![GitHub issues](https://img.shields.io/github/issues/KirbyKPI/LiftShift.svg?style=flat-square)](https://github.com/KirbyKPI/LiftShift/issues)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/KirbyKPI/LiftShift/blob/main/LICENSE)
 ```
 
 ## 10. Publish to npm (Optional)

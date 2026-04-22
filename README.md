@@ -1,11 +1,11 @@
 <table align="center">
   <tr>
     <td align="center" style="padding-right: 20px;">
-      <img src="frontend/public/UI/logo.svg" alt="LiftShift Logo" width="200" height="200" />
+      <img src="frontend/public/UI/logo.svg" alt="KPIFit Training Logo" width="200" height="200" />
     </td>
     <td align="center">
-      <a href="https://www.star-history.com/#aree6/LiftShift&type=date&legend=top-left&theme=dark">
-        <img src="https://api.star-history.com/svg?repos=aree6/LiftShift&type=date&legend=top-left&theme=dark" alt="Star History Chart" width="500" />
+      <a href="https://www.star-history.com/#KirbyKPI/LiftShift&type=date&legend=top-left&theme=dark">
+        <img src="https://api.star-history.com/svg?repos=KirbyKPI/LiftShift&type=date&legend=top-left&theme=dark" alt="Star History Chart" width="500" />
       </a>
     </td>
   </tr>
@@ -15,7 +15,7 @@
 
 ## Official Website
 
-https://liftshift.app
+https://training.kpifit.com
 
 
 ## UI Screenshots
@@ -62,9 +62,9 @@ https://liftshift.app
 
 ## Official Deployment
 
-LiftShift has one canonical hosted instance:
+KPIFit Training has one canonical hosted instance:
 
-- **Canonical domain:** https://liftshift.app
+- **Canonical domain:** https://training.kpifit.com
 
 Deployments on any other domain are **unofficial**. Unofficial deployments may be modified and may not follow the same security practices. Do not assume an unofficial deployment is trustworthy with any credentials.
 
@@ -75,7 +75,7 @@ Public deployments must include visible attribution to the upstream project.
 
 Minimum acceptable attribution:
 
-- **Link to official site:** https://liftshift.app
+- **Link to official site:** https://training.kpifit.com
 - **Source link:** a publicly accessible link to the Corresponding Source for the exact version running
 
 Attribution must be reasonably discoverable during normal use (for example: footer, About modal, or Settings). Removing, hiding, or obscuring attribution is treated as non-compliance.
@@ -87,7 +87,7 @@ Attribution must be reasonably discoverable during normal use (for example: foot
 
 <div align="center">
   <img src="./frontend/public/images/steps/Step1.avif" alt="Export data from Hevy app" width="200" />
-  <img src="./frontend/public/images/steps/Step2.avif" alt="Upload CSV to LiftShift" width="200" />
+  <img src="./frontend/public/images/steps/Step2.avif" alt="Upload CSV to KPIFit Training" width="200" />
   <img src="./frontend/public/images/steps/Step3.avif" alt="Explore analytics dashboard" width="200" />
   <img src="./frontend/public/images/steps/Step4.avif" alt="Get real-time feedback and filter data" width="200" />
 </div>
@@ -114,7 +114,7 @@ Do the following:
 
 1. Switch your Hevy app language to **English**
 2. Export your workout CSV again
-3. Re-upload it to LiftShift
+3. Re-upload it to KPIFit Training
 
 <div align="center">
   <img src="./frontend/public/images/steps/step5.avif" alt="Set Hevy export language to English" width="260" />
@@ -145,7 +145,7 @@ Do the following:
 This is intended for local development and contributor workflows. It is not a production deployment guide.
 
 ```bash
-git clone https://github.com/aree6/LiftShift.git
+git clone https://github.com/KirbyKPI/LiftShift.git
 cd LiftShift
 npm install
 npm run dev
@@ -156,9 +156,9 @@ npm run dev
 
 ## Maintainer
 
-- **GitHub repo**: https://github.com/aree6/LiftShift
-- **GitHub profile**: https://github.com/aree6
-- **Email**: mohammadar336@gmail.com
+- **GitHub repo**: https://github.com/KirbyKPI/LiftShift
+- **GitHub profile**: https://github.com/KirbyKPI
+- **Email**: kirby.coggins@gmail.com
 
 ---
 
@@ -173,6 +173,6 @@ If you find this project helpful, you can support it here:
 
 ## Security Notice
 
-- The only official deployment is https://liftshift.app.
+- The only official deployment is https://training.kpifit.com.
 - Any other domain is unofficial. Do not enter credentials into an unofficial deployment.
-- LiftShift stores sync credentials locally in your browser (auth tokens, API keys, and login inputs). Passwords are encrypted at rest when the browser supports WebCrypto + IndexedDB.
+- KPIFit Training stores sync credentials locally in your browser (auth tokens, API keys, and login inputs). Passwords are encrypted at rest when the browser supports WebCrypto + IndexedDB.

@@ -9,7 +9,7 @@ export const IMPORT_METRIC_SECTIONS: HowItWorksSection[] = [
       {
         type: 'p',
         text:
-          'LiftShift groups your sets by rep ranges to show what your training has emphasized lately: lower-rep sets look more strength-focused, mid-range sets look more muscle-focused, and high-rep sets look more endurance-focused.',
+          'KPIFit Training groups your sets by rep ranges to show what your training has emphasized lately: lower-rep sets look more strength-focused, mid-range sets look more muscle-focused, and high-rep sets look more endurance-focused.',
       },
     ],
   },

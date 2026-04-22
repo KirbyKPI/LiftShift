@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://liftshift.app/sitemap.xml
+Sitemap: https://training.kpifit.com/sitemap.xml

@@ -44,13 +44,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         {/* Top Row: Logo and Nav Buttons */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <img src={assetPath('/UI/logo.png')} alt="LiftShift Logo" className="w-6 h-6 sm:w-7 sm:h-7" decoding="async" />
+            <img src={assetPath('/UI/logo.png')} alt="KPIFit Training Logo" className="w-6 h-6 sm:w-7 sm:h-7" decoding="async" />
             <div className="flex items-center gap-3 min-w-0">
               <span
                 className="font-bold text-base sm:text-lg tracking-tight inline-flex items-start whitespace-nowrap"
                 style={{ color: 'var(--app-fg)' }}
               >
-                <span>LiftShift</span>
+                <span>KPIFit Training</span>
                 <sup className="ml-1 inline-block rounded-full border border-amber-500/30 bg-amber-500/15 px-1 py-0.5 text-[7px] sm:text-[9px] font-semibold leading-none tracking-wide text-amber-400 align-super -translate-y-0.5 -translate-x-2">
                   BETA
                 </sup>

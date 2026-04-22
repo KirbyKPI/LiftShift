@@ -8,7 +8,7 @@ export const AI_PRIVACY_SECTIONS: HowItWorksSection[] = [
       {
         type: 'p',
         text:
-          'LiftShift can export a structured summary of your training (sets, exercise stats, trends) so you can paste it into an AI tool or share it with a coach.',
+          'KPIFit Training can export a structured summary of your training (sets, exercise stats, trends) so you can paste it into an AI tool or share it with a coach.',
       },
       {
         type: 'callout',
@@ -26,7 +26,7 @@ export const AI_PRIVACY_SECTIONS: HowItWorksSection[] = [
       {
         type: 'p',
         text:
-          'LiftShift is privacy-first. Your imported data is typically cached in your browser so the dashboard is fast and you don’t have to re-import every time.',
+          'KPIFit Training is privacy-first. Your imported data is typically cached in your browser so the dashboard is fast and you don’t have to re-import every time.',
       },
       {
         type: 'ul',

@@ -73,7 +73,7 @@ app.use(
       return cb(new Error('CORS blocked'), false);
     },
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['content-type', 'authorization', 'x-liftshift-client-id'],
+    allowedHeaders: ['content-type', 'authorization', 'x-kpifit-client-id'],
     maxAge: 86400,
   })
 );
@@ -161,7 +161,7 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`🟢 LiftShift backend listening on :${PORT}`);
+  console.log(`🟢 KPIFit Training backend listening on :${PORT}`);
 
   if (STARTUP_RECAPTCHA_WARMUP_ENABLED) {
     const warmupTimer = setTimeout(() => {

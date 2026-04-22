@@ -9,7 +9,7 @@ export const INTRO_SECTIONS: HowItWorksSection[] = [
       {
         type: 'p',
         text:
-          'LiftShift turns your workout log into clear, useful insights: what changed, what is improving, what is stuck, and what to do next, without you building spreadsheets.',
+          'KPIFit Training turns your workout log into clear, useful insights: what changed, what is improving, what is stuck, and what to do next, without you building spreadsheets.',
       },
       {
         type: 'ul',
@@ -24,7 +24,7 @@ export const INTRO_SECTIONS: HowItWorksSection[] = [
         tone: 'note',
         title: 'Privacy model (simple version)',
         text:
-          'Most analytics run locally in your browser. When you use login / API-key syncing, LiftShift uses your credentials only to retrieve your workout data, the analysis is still done on your device.',
+          'Most analytics run locally in your browser. When you use login / API-key syncing, KPIFit Training uses your credentials only to retrieve your workout data, the analysis is still done on your device.',
       },
     ],
   },
@@ -35,7 +35,7 @@ export const INTRO_SECTIONS: HowItWorksSection[] = [
       {
         type: 'p',
         text:
-          'You can bring data into LiftShift in a few different ways. Pick the method that matches your app and your comfort level.',
+          'You can bring data into KPIFit Training in a few different ways. Pick the method that matches your app and your comfort level.',
       },
     ],
     children: [
@@ -47,14 +47,14 @@ export const INTRO_SECTIONS: HowItWorksSection[] = [
           {
             type: 'p',
             text:
-              'If you choose “Login with Hevy”, LiftShift logs in via your own backend to retrieve a short-lived auth token, then pulls your workouts and converts them into a standard set format used across the app.',
+              'If you choose “Login with Hevy”, KPIFit Training logs in via your own backend to retrieve a short-lived auth token, then pulls your workouts and converts them into a standard set format used across the app.',
           },
           {
             type: 'callout',
             tone: 'warning',
             title: 'Language / date formats',
             text:
-              'Some exports can break date parsing if the source app uses a non-English locale. If LiftShift tells you it “couldn’t parse workout dates”, switch the exporting app’s language to English and try again.',
+              'Some exports can break date parsing if the source app uses a non-English locale. If KPIFit Training tells you it “couldn’t parse workout dates”, switch the exporting app’s language to English and try again.',
           },
         ],
       },
@@ -66,7 +66,7 @@ export const INTRO_SECTIONS: HowItWorksSection[] = [
           {
             type: 'p',
             text:
-              'If you have Hevy Pro, you can use your API key. LiftShift validates the key and fetches workouts through the official API endpoint, then maps them into the same internal set format as CSV imports.',
+              'If you have Hevy Pro, you can use your API key. KPIFit Training validates the key and fetches workouts through the official API endpoint, then maps them into the same internal set format as CSV imports.',
           },
         ],
       },
@@ -78,7 +78,7 @@ export const INTRO_SECTIONS: HowItWorksSection[] = [
           {
             type: 'p',
             text:
-              'Lyfta sync uses your API key to fetch workouts and workout summaries, then normalizes them to LiftShift’s set format for analysis.',
+              'Lyfta sync uses your API key to fetch workouts and workout summaries, then normalizes them to KPIFit Training’s set format for analysis.',
           },
         ],
       },
@@ -90,14 +90,14 @@ export const INTRO_SECTIONS: HowItWorksSection[] = [
           {
             type: 'p',
             text:
-              'CSV import is the most universal option. LiftShift detects column meanings (like exercise name, weight, reps, date, and set type), supports different date formats, and converts units when needed.',
+              'CSV import is the most universal option. KPIFit Training detects column meanings (like exercise name, weight, reps, date, and set type), supports different date formats, and converts units when needed.',
           },
           {
             type: 'callout',
             tone: 'note',
             title: 'Why CSV sometimes needs setup',
             text:
-              'Different apps export slightly different columns and naming conventions. LiftShift uses “best effort” field matching so you can upload more CSV formats without manual mapping.',
+              'Different apps export slightly different columns and naming conventions. KPIFit Training uses “best effort” field matching so you can upload more CSV formats without manual mapping.',
           },
         ],
       },

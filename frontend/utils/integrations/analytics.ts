@@ -2,7 +2,7 @@ import { getAnalyticsClientId } from './analyticsClientId';
 
 type AnalyticsProperties = Record<string, unknown>;
 
-const INIT_FLAG = '__liftshift_analytics_initialized';
+const INIT_FLAG = '__kpifit_analytics_initialized';
 
 type PosthogCapture = { event: string; properties?: AnalyticsProperties };
 type PosthogIdentify = { distinctId: string; properties?: Record<string, unknown> };
@@ -142,8 +142,8 @@ const ensureGtagLoaded = (measurementId: string) => {
     (window as any).dataLayer.push(arguments);
   };
 
-  if ((window as any).__liftshift_ga_loaded) return;
-  (window as any).__liftshift_ga_loaded = true;
+  if ((window as any).__kpifit_ga_loaded) return;
+  (window as any).__kpifit_ga_loaded = true;
 
   const script = document.createElement('script');
   script.async = true;
@@ -160,7 +160,7 @@ const ensureGtagLoaded = (measurementId: string) => {
 
 const getCommonProperties = (): AnalyticsProperties => {
   return {
-    app: 'LiftShift',
+    app: 'KPIFit Training',
     client_id: getAnalyticsClientId(),
     env: (import.meta.env.MODE ?? (import.meta.env.PROD ? 'production' : import.meta.env.DEV ? 'development' : 'unknown')) as string,
   };

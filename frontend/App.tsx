@@ -24,7 +24,7 @@ import { useCalendarSelectionHandlers } from './app/state';
 import { useUpdateFlowHandler } from './app/auth';
 import { createFingerprintMatcher } from './utils/exercise/exerciseFingerprint';
 
-const CHUNK_RELOAD_KEY = 'liftshift_chunk_reload_once';
+const CHUNK_RELOAD_KEY = 'kpifit_chunk_reload_once';
 
 const CHUNK_LOAD_ERROR_PATTERNS = [
   'dynamically imported module',

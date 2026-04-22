@@ -32,7 +32,7 @@ export const SupportLinks: React.FC<{
       {showPrimary && (
         <div className={primaryContainerClass}>
           <a
-            href="https://github.com/aree6/LiftShift"
+            href="https://github.com/KirbyKPI/LiftShift"
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => {
@@ -40,7 +40,7 @@ export const SupportLinks: React.FC<{
                 return;
               }
               e.preventDefault();
-              window.open('https://github.com/aree6/LiftShift', '_blank', 'noopener,noreferrer');
+              window.open('https://github.com/KirbyKPI/LiftShift', '_blank', 'noopener,noreferrer');
             }}
             onMouseDown={(e) => {
               if (e.button === 1) {

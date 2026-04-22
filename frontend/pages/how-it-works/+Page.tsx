@@ -8,7 +8,7 @@ function Page() {
   return (
     <InfoShell
       activeNav="how-it-works"
-      title="How LiftShift works"
+      title="How KPIFit Training works"
       subtitle="Import your workout history, compute insights locally, and explore dashboards that actually help you train smarter."
     >
       <HowItWorksDoc showTitle={false} />

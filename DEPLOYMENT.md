@@ -49,7 +49,7 @@ Note on environment files:
 
 In the “Create a Web Service” form:
 
-- **Name**: `liftshift-backend` (any name is fine)
+- **Name**: `kpifit-training-backend` (any name is fine)
 - **Region**: pick closest to you
 - **Branch**: `main`
 - **Root Directory**: `backend`
@@ -72,7 +72,7 @@ Important:
 3. Add these:
 
 - `HEVY_X_API_KEY` = `klean_kanteen_insulated`
-- `CORS_ORIGINS` = `https://liftshift.app,http://localhost:3000`
+- `CORS_ORIGINS` = `https://training.kpifit.com,http://localhost:3000`
 
 4. Click **Create Web Service**
 
@@ -81,7 +81,7 @@ Important:
 After deploy finishes:
 
 1. Open the service
-2. Find the public URL (looks like `https://liftshift-backend.onrender.com`)
+2. Find the public URL (looks like `https://kpifit-training-backend.onrender.com`)
 3. Copy it
 
 ### 1.6 Quick test
@@ -126,7 +126,7 @@ To ensure it runs the backend:
 2. Add:
 
 - `HEVY_X_API_KEY` = `klean_kanteen_insulated`
-- `CORS_ORIGINS` = `https://liftshift.app,http://localhost:3000`
+- `CORS_ORIGINS` = `https://training.kpifit.com,http://localhost:3000`
 
 ### 2.5 Confirm start command
 
@@ -145,7 +145,7 @@ If it asks:
 Your frontend needs to know where the backend is.
 
 1. Open https://app.netlify.com
-2. Click your site (liftshift)
+2. Click your site (kpifit-training)
 3. Go to **Site configuration**
 4. Go to **Build & deploy**
 5. Go to **Environment**
@@ -157,13 +157,13 @@ Add:
 
 Optional (only if you deploy under a subpath, e.g. GitHub Pages project site):
 
-- `VITE_BASE_PATH` = `/LiftShift/`
+- `VITE_BASE_PATH` = `/`
 
 Notes:
 
 - `VITE_BACKEND_URL` must be the public URL of your deployed backend (Render/Railway), not `localhost`.
 - `VITE_BACKEND_URL` should be the backend *origin* (no trailing `/api`). The frontend will call `${VITE_BACKEND_URL}/api/...`.
-- Example: `https://liftshift-backend.onrender.com`
+- Example: `https://kpifit-training-backend.onrender.com`
 
 Base path notes:
 
@@ -181,7 +181,7 @@ Base path notes:
 
 After both are deployed:
 
-1. Open https://liftshift.app
+1. Open https://training.kpifit.com
 2. You should see the platform selector
 3. Choose:
    - Strong (CSV) or
@@ -196,7 +196,7 @@ Backend verification (recommended):
 If Hevy login fails in production, verify backend environment variables:
 
 - `HEVY_X_API_KEY` is set
-- `CORS_ORIGINS` includes your frontend origin (example: `https://liftshift.app`)
+- `CORS_ORIGINS` includes your frontend origin (example: `https://training.kpifit.com`)
 
 If you see Render logs mentioning `X-Forwarded-For` / `trust proxy` (from `express-rate-limit`), ensure your backend is deployed with the latest code (the backend enables `trust proxy` so rate limiting works correctly behind Render/Cloudflare).
 
@@ -206,13 +206,13 @@ If you ever want to restart onboarding:
 
 - Open DevTools
 - Application → Local Storage
-- Clear keys starting with `hevy_analytics_`
+- Clear keys starting with `kpifit_analytics_`
 - Also clear:
-  - `hevy_username_or_email`
-  - `hevy_analytics_secret:hevy_password`
-  - `hevy_auth_token`
-  - `hevy_pro_api_key`
-  - `lyfta_api_key`
+  - `kpifit_username_or_email`
+  - `kpifit_analytics_secret:hevy_password`
+  - `kpifit_auth_token`
+  - `kpifit_pro_api_key`
+  - `kpifit_api_key`
 
 If your browser is missing WebCrypto/IndexedDB support (or the page isn't a secure context), the app may fall back to storing passwords in Session Storage.
 

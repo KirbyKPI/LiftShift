@@ -71,7 +71,7 @@ export const ReviewsCarousel: React.FC<ReviewsCarouselProps> = ({ className = ''
           Loved by <span className="text-emerald-400" style={FANCY_FONT}>Lifters</span> Worldwide
         </h2>
         <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-          See what the fitness community is saying about LiftShift on Reddit
+          See what the fitness community is saying about KPIFit Training on Reddit
         </p>
       </div>
 

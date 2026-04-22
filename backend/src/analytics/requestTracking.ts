@@ -2,7 +2,7 @@ import type express from 'express';
 import { captureBackendEvent } from './posthog';
 import { getClientIP } from '../geoLocation';
 
-const CLIENT_ID_HEADER = 'x-liftshift-client-id';
+const CLIENT_ID_HEADER = 'x-kpifit-client-id';
 
 export const getAnalyticsDistinctId = (req: express.Request): string => {
   const raw = req.header(CLIENT_ID_HEADER);

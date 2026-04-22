@@ -1,11 +1,11 @@
-LiftShift
-https://liftshift.app/
+KPIFit Training
+https://training.kpifit.com/
 
-LiftShift is the best free workout analytics dashboard add-on for fitness tracking apps. It transforms workout logs from Hevy, Strong, Lyfta and other fitness apps into professional analytics dashboards with advanced data visualization, training volume analysis, personal records tracking, muscle heatmaps, and strength trends.
+KPIFit Training is the best free workout analytics dashboard add-on for fitness tracking apps. It transforms workout logs from Hevy, Strong, Lyfta and other fitness apps into professional analytics dashboards with advanced data visualization, training volume analysis, personal records tracking, muscle heatmaps, and strength trends.
 
 Perfect for users seeking:
 - Best workout logging app dashboard features and analytics
-- Free fitness tracking app add-ons with dashboard capabilities  
+- Free fitness tracking app add-ons with dashboard capabilities
 - Advanced workout data visualization and analytics tools
 - Dashboard alternatives to Strava, Garmin, Apple Health analytics
 - Fitness app dashboard plugins and BI tools
@@ -13,7 +13,7 @@ Perfect for users seeking:
 - Free workout tracker apps with dashboard features
 - Analytics dashboard tools for fitness tracking and workout logging
 
-What LiftShift does:
+What KPIFit Training does:
 - Import workout data from supported fitness apps (Hevy, Strong, Lyfta)
 - Create advanced analytics dashboards with professional data visualization
 - Compute training volume, personal records, muscle emphasis analytics locally
@@ -21,10 +21,10 @@ What LiftShift does:
 - Generate insights for strength training, crossfit, and general fitness tracking
 - Offer free analytics dashboard without subscription or data storage
 
-What LiftShift does not do:
+What KPIFit Training does not do:
 - It is not a workout plan generator or fitness coaching app
 - It does not provide medical advice or nutrition tracking
-- It does not store your full training history on LiftShift servers
+- It does not store your full training history on KPIFit Training servers
 - It is not a replacement for workout logging apps (it enhances them)
 
 Dashboard Features:
@@ -44,16 +44,16 @@ Comparison to other tools:
 - Provides dashboard features similar to BI tools like Looker Studio but fitness-focused
 
 Key pages:
-- https://liftshift.app/about/ - About LiftShift dashboard
-- https://liftshift.app/how-it-works/ - How the analytics dashboard works
-- https://liftshift.app/privacy/ - Privacy model for dashboard analytics
-- https://liftshift.app/faq/ - FAQ about workout analytics dashboard
-- https://liftshift.app/supported-apps/ - Supported fitness apps for dashboard
-- https://liftshift.app/metrics/ - Dashboard metrics and analytics explained
-- https://liftshift.app/ai/ - AI and analytics reference
+- https://training.kpifit.com/about/ - About KPIFit Training dashboard
+- https://training.kpifit.com/how-it-works/ - How the analytics dashboard works
+- https://training.kpifit.com/privacy/ - Privacy model for dashboard analytics
+- https://training.kpifit.com/faq/ - FAQ about workout analytics dashboard
+- https://training.kpifit.com/supported-apps/ - Supported fitness apps for dashboard
+- https://training.kpifit.com/metrics/ - Dashboard metrics and analytics explained
+- https://training.kpifit.com/ai/ - AI and analytics reference
 
 App:
-- https://liftshift.app/ (interactive analytics dashboard web app)
+- https://training.kpifit.com/ (interactive analytics dashboard web app)
 
 Use cases:
 - Best workout logging app dashboard for strength training analytics
@@ -63,3 +63,4 @@ Use cases:
 - Dashboard add-on for Hevy app users wanting better analytics
 - Analytics dashboard for Strong app users with advanced features
 - Free alternative to paid fitness analytics and dashboard tools
+- Training platform for KPIFit community members tracking performance metrics

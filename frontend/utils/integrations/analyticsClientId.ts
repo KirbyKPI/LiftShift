@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'liftshift_analytics_client_id';
+const STORAGE_KEY = 'kpifit_analytics_client_id';
 
 const generateId = (): string => {
   try {
@@ -29,7 +29,7 @@ export const getAnalyticsClientId = (): string => {
 
 export const getAnalyticsRequestHeaders = (): Record<string, string> => {
   return {
-    'x-liftshift-client-id': getAnalyticsClientId(),
+    'x-kpifit-client-id': getAnalyticsClientId(),
   };
 };
 

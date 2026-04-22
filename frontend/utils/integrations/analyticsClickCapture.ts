@@ -30,8 +30,8 @@ const getClickMeta = (el: Element): ClickMeta => {
 
 export const installGlobalClickCapture = (): void => {
   if (typeof window === 'undefined') return;
-  if ((window as any).__liftshift_click_capture_installed) return;
-  (window as any).__liftshift_click_capture_installed = true;
+  if ((window as any).__kpifit_click_capture_installed) return;
+  (window as any).__kpifit_click_capture_installed = true;
 
   document.addEventListener(
     'click',

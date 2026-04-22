@@ -5,7 +5,7 @@ type CacheEntry<T> = {
   timestamp: number;
 };
 
-const getCacheKey = (prefix: string, id: string): string => `liftshift:cache:${prefix}:${id}`;
+const getCacheKey = (prefix: string, id: string): string => `kpifit:cache:${prefix}:${id}`;
 
 const getCached = <T>(key: string): T | null => {
   try {
@@ -47,7 +47,7 @@ const clearAllCache = (): void => {
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key?.startsWith('liftshift:cache:')) {
+    if (key?.startsWith('kpifit:cache:')) {
       keysToRemove.push(key);
     }
   }

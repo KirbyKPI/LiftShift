@@ -154,7 +154,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlatform, onTr
               How it works
             </h2>
             <p className="mt-3 text-slate-400 max-w-2xl mx-auto">
-              A documentation-style walkthrough of how LiftShift imports data and calculates your insights.
+              A documentation-style walkthrough of how KPIFit Training imports data and calculates your insights.
             </p>
           </div>
 

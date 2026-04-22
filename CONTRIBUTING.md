@@ -1,6 +1,6 @@
-# Contributing to LiftShift
+# Contributing to KPIFit Training
 
-Thank you for your interest in contributing to LiftShift! We welcome contributions from everyone. This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to KPIFit Training! We welcome contributions from everyone. This document provides guidelines and instructions for contributing.
 
 ## Table of Contents
 
@@ -36,7 +36,7 @@ This project is committed to providing a welcoming and inspiring community for a
 
 1. **Fork the repository**
    ```bash
-   # Visit https://github.com/aree6/LiftShift
+   # Visit https://github.com/KirbyKPI/LiftShift
    # Click "Fork" button
    ```
 
@@ -48,7 +48,7 @@ This project is committed to providing a welcoming and inspiring community for a
 
 3. **Add upstream remote**
    ```bash
-   git remote add upstream https://github.com/aree6/LiftShift.git
+   git remote add upstream https://github.com/KirbyKPI/LiftShift.git
    ```
 
 4. **Install dependencies**
@@ -79,7 +79,7 @@ We appreciate all types of contributions:
 
 ### Before Submitting a Bug Report
 
-- Check if the bug has already been reported in [Issues](https://github.com/aree6/LiftShift/issues)
+- Check if the bug has already been reported in [Issues](https://github.com/KirbyKPI/LiftShift/issues)
 - Try to reproduce with the latest code
 - Collect information about the bug
 

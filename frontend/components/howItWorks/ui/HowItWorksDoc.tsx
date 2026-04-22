@@ -176,7 +176,7 @@ export const HowItWorksDoc: React.FC<Props> = ({ className = '', showTitle = tru
     <div className={`space-y-8 ${className}`}>
       {showTitle ? (
         <div className="px-5 sm:px-6">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">How LiftShift works</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">How KPIFit Training works</h1>
           <p className="mt-2 text-slate-300">
             A user-friendly overview of the features, assumptions, and definitions behind the workout analytics dashboard.
           </p>
