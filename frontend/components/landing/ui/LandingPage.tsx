@@ -5,8 +5,20 @@ import { Navigation } from '../../layout/Navigation';
 import PlatformDock from './PlatformDock';
 import LightRays from '../lightRays/LightRays';
 import { Flame, CalendarDays, Trophy, BarChart3, Dumbbell } from 'lucide-react';
-import { FANCY_FONT } from '../../../utils/ui/uiConstants';
 import { assetPath } from '../../../constants';
+
+const SMART_FONT: React.CSSProperties = {
+  fontFamily: '"Orbitron", sans-serif',
+  fontWeight: 900,
+  letterSpacing: '0.05em',
+};
+
+const HARD_FONT: React.CSSProperties = {
+  fontFamily: '"Anton", sans-serif',
+  fontWeight: 400,
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase' as const,
+};
 
 interface LandingPageProps {
   onSelectPlatform: (source: DataSourceChoice) => void;
@@ -76,12 +88,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlatform, onTr
         <div className="flex-1 flex items-center justify-center pb-48 sm:pb-40">
           <div className="text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Main Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-[1.3]">
-              <span className="block text-slate-300 mb-2">
-                Track smarter.
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-[1.4]">
+              <span className="block text-slate-300 mb-1">
+                Track <span className="text-emerald-400" style={SMART_FONT}>smarter.</span>
               </span>
-              <span className="block bg-gradient-to-r from-emerald-300 via-emerald-400 to-green-400 bg-clip-text text-transparent pb-1" style={FANCY_FONT}>
-                Train harder.
+              <span className="block text-slate-300">
+                Train <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-green-400 bg-clip-text text-transparent" style={HARD_FONT}>harder.</span>
               </span>
             </h1>
 

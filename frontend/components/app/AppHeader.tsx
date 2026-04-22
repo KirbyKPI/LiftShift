@@ -42,19 +42,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div className="px-2 sm:px-3 py-1 flex flex-col gap-1">
         {/* Top Row: Logo and Nav Buttons */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <img src={assetPath('/UI/logo.svg')} alt="KPIFit Training Logo" className="w-7 h-7 sm:w-8 sm:h-8" decoding="async" />
-            <div className="flex items-center gap-3 min-w-0">
-              <span
-                className="font-bold text-base sm:text-lg tracking-tight inline-flex items-start whitespace-nowrap"
-                style={{ color: 'var(--app-fg)' }}
-              >
-                <span>KPIFit Training</span>
-                <sup className="ml-1 inline-block rounded-full border border-amber-500/30 bg-amber-500/15 px-1 py-0.5 text-[7px] sm:text-[9px] font-semibold leading-none tracking-wide text-amber-400 align-super -translate-y-0.5 -translate-x-2">
-                  BETA
-                </sup>
-              </span>
-            </div>
+          <div className="flex items-center gap-2 min-w-0">
+            <img src={assetPath('/UI/kpifit-logo-nav.png')} alt="KPIFit" className="h-8 sm:h-9 w-auto" decoding="async" />
+            <sup className="inline-block rounded-full border border-amber-500/30 bg-amber-500/15 px-1 py-0.5 text-[7px] sm:text-[9px] font-semibold leading-none tracking-wide text-amber-400">
+              BETA
+            </sup>
           </div>
 
           <div className="flex items-center justify-end gap-2  min-w-0">
