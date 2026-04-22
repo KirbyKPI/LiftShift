@@ -73,23 +73,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlatform, onTr
         </div>
 
         {/* Hero Content — vertically centered in remaining space */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex-1 flex items-center justify-center pb-48 sm:pb-40">
+          <div className="text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Main Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-8 leading-[1.2]">
-              <span className="block text-yellow-600 font-medium text-2xl sm:text-3xl lg:text-4xl mb-4" style={FANCY_FONT}>
-                Boring workout logs?
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-[1.3]">
+              <span className="block text-slate-300 mb-2">
+                Track smarter.
               </span>
-              <span className="block text-slate-400 text-3xl sm:text-3xl lg:text-4xl xl:text-5xl mb-4">
-                <span className="bg-gradient-to-r from-emerald-300 via-emerald-400 to-green-400 bg-clip-text text-transparent" style={FANCY_FONT}></span> turn them into
-              </span>
-              <span className="block bg-gradient-to-r from-emerald-300 via-emerald-400 to-green-400 bg-clip-text text-transparent pb-2 mt-1" style={FANCY_FONT}>
-                Stunning & actionable insights.
+              <span className="block bg-gradient-to-r from-emerald-300 via-emerald-400 to-green-400 bg-clip-text text-transparent pb-1" style={FANCY_FONT}>
+                Train harder.
               </span>
             </h1>
 
             {/* Feature highlights */}
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-slate-400 mb-8">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5 text-slate-400 mb-6 text-sm">
               <FeatureTag icon={<Flame className="w-4 h-4 text-orange-400" />} text="Muscle Heatmaps" />
               <FeatureTag icon={<CalendarDays className="w-4 h-4 text-blue-400" />} text="Calendar Filtering" />
               <FeatureTag icon={<Trophy className="w-4 h-4 text-yellow-400" />} text="PR Detection" />
@@ -99,7 +96,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlatform, onTr
 
             {/* Demo CTA Button */}
             {onTryDemo && (
-              <div className="mb-4">
+              <div className="mb-2">
                 <button
                   onClick={onTryDemo}
                   className="group inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-semibold h-11 px-8 bg-slate-950/75 text-emerald-300 border border-emerald-500/40 hover:border-emerald-400 hover:text-emerald-200 transition-all duration-200"
@@ -112,7 +109,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectPlatform, onTr
         </div>
 
         {/* Platform Dock pinned to bottom */}
-        <PlatformDock items={platformDockItems} />
+        <div className="flex-shrink-0">
+          <PlatformDock items={platformDockItems} />
+        </div>
       </section>
     </motion.div>
   );
