@@ -15,12 +15,15 @@ import { supabase } from '../../utils/supabase/client'
 
 interface CoachNotesPanelProps {
   clientId: string
+  /** When 'embedded', skips the panel chrome (header, border) and renders
+   *  the content area always-open — used inside CoachWorkspaceTabs. */
+  mode?: 'standalone' | 'embedded'
 }
 
 type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
 
-export function CoachNotesPanel({ clientId }: CoachNotesPanelProps) {
-  const [expanded, setExpanded] = useState(false)
+export function CoachNotesPanel({ clientId, mode = 'standalone' }: CoachNotesPanelProps) {
+  const [expanded, setExpanded] = useState(mode === 'embedded')
   const [notes, setNotes] = useState<string>('')
   const [loadState, setLoadState] = useState<'loading' | 'loaded' | 'error'>('loading')
   const [saveState, setSaveState] = useState<SaveState>('idle')
@@ -107,6 +110,62 @@ export function CoachNotesPanel({ clientId }: CoachNotesPanelProps) {
             ? 'Error'
             : ''
 
+  // ─── Body content (textarea + status) — used in both modes ────────────────
+  const body = (
+    <div className={mode === 'embedded' ? 'pb-3' : 'pt-2 pb-3'}>
+      {loadState === 'loading' ? (
+        <div className="text-zinc-500 text-sm py-4">Loading notes…</div>
+      ) : loadState === 'error' ? (
+        <div className="text-red-400 text-sm py-4">
+          Failed to load notes{error ? `: ${error}` : ''}
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] uppercase tracking-wide text-zinc-500">
+              Used as context when generating AI routine recommendations
+            </span>
+            {saveLabel && (
+              <span
+                className={`text-[11px] ${
+                  saveState === 'error'
+                    ? 'text-red-400'
+                    : saveState === 'saved'
+                      ? 'text-lime-400'
+                      : 'text-zinc-500'
+                }`}
+              >
+                {saveLabel}
+              </span>
+            )}
+          </div>
+          <textarea
+            value={notes}
+            onChange={(e) => {
+              setNotes(e.target.value)
+              setSaveState('dirty')
+            }}
+            onBlur={() => {
+              if (saveState === 'dirty') void save()
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Goals, injuries, preferences, schedule constraints, etc.&#10;Markdown supported. ⌘↩ to save."
+            className="w-full min-h-[160px] px-3 py-2.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-zinc-100 text-sm font-mono placeholder:text-zinc-600 focus:outline-none focus:border-lime-500/40 transition-colors resize-y"
+          />
+          {error && saveState === 'error' && (
+            <p className="text-red-400 text-xs mt-1">{error}</p>
+          )}
+        </>
+      )}
+    </div>
+  )
+
+  // Embedded mode: just the body (the parent owns the chrome).
+  if (mode === 'embedded') {
+    return <div className="max-w-6xl mx-auto px-6 py-3">{body}</div>
+  }
+
+  // Standalone mode: full collapsible panel with its own header.
   return (
     <div className="border-b border-zinc-800 bg-zinc-950/60">
       <div className="max-w-6xl mx-auto px-6 py-2">
@@ -137,40 +196,32 @@ export function CoachNotesPanel({ clientId }: CoachNotesPanelProps) {
           <span className="text-zinc-600 text-xs">{expanded ? '▲' : '▼'}</span>
         </button>
 
-        {expanded && (
-          <div className="pt-2 pb-3">
-            {loadState === 'loading' ? (
-              <div className="text-zinc-500 text-sm py-4">Loading notes…</div>
-            ) : loadState === 'error' ? (
-              <div className="text-red-400 text-sm py-4">
-                Failed to load notes{error ? `: ${error}` : ''}
-              </div>
-            ) : (
-              <>
-                <textarea
-                  value={notes}
-                  onChange={(e) => {
-                    setNotes(e.target.value)
-                    setSaveState('dirty')
-                  }}
-                  onBlur={() => {
-                    if (saveState === 'dirty') void save()
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Goals, injuries, preferences, schedule constraints, etc.&#10;Markdown supported. ⌘↩ to save."
-                  className="w-full min-h-[160px] px-3 py-2.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-zinc-100 text-sm font-mono placeholder:text-zinc-600 focus:outline-none focus:border-lime-500/40 transition-colors resize-y"
-                />
-                {error && saveState === 'error' && (
-                  <p className="text-red-400 text-xs mt-1">{error}</p>
-                )}
-                <p className="text-zinc-600 text-[11px] mt-1">
-                  Auto-saves on blur. Used as context when generating AI routine recommendations.
-                </p>
-              </>
-            )}
-          </div>
-        )}
+        {expanded && body}
       </div>
     </div>
   )
+}
+
+/** Compact preview of the notes (first non-empty line) — exported so the
+ *  CoachWorkspace toolbar can show it inline next to its tab buttons. */
+export function useCoachNotesPreview(clientId: string): string {
+  const [preview, setPreview] = useState<string>('')
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase
+        .from('training_clients')
+        .select('notes')
+        .eq('id', clientId)
+        .single()
+      if (cancelled) return
+      const text = (data?.notes as string | null) ?? ''
+      const first = text.split('\n').map((l) => l.trim()).find((l) => l.length > 0) ?? ''
+      setPreview(first.length > 60 ? `${first.slice(0, 57)}…` : first)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [clientId])
+  return preview
 }

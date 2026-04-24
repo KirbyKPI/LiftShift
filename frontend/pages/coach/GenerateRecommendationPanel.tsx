@@ -94,14 +94,17 @@ interface GenerateRecommendationPanelProps {
   externalResult?: AiResult | null
   /** Bumped when a new rec is generated so parent can refresh its saved list. */
   onNewResult?: () => void
+  /** When 'embedded', hides the panel's own collapsible header — used inside CoachWorkspaceTabs. */
+  mode?: 'standalone' | 'embedded'
 }
 
 export function GenerateRecommendationPanel({
   externalResult,
   onNewResult,
+  mode = 'standalone',
 }: GenerateRecommendationPanelProps = {}) {
   const coachView = useCoachView()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(mode === 'embedded')
   const [level, setLevel] = useState<AdjustmentLevel>('load_only')
   const [phase, setPhase] = useState<PhaseState>({ kind: 'idle' })
 
@@ -249,26 +252,32 @@ export function GenerateRecommendationPanel({
 
   const isBusy = phase.kind === 'building_snapshot' || phase.kind === 'running_ai'
 
-  return (
-    <div className="border-b border-zinc-800 bg-zinc-950/60">
-      <div className="max-w-6xl mx-auto px-6 py-2">
-        <button
-          onClick={() => setExpanded((e) => !e)}
-          className="w-full flex items-center gap-3 text-left group"
-          aria-expanded={expanded}
-        >
-          <span className="text-xs uppercase tracking-wide text-zinc-500 group-hover:text-zinc-300 transition-colors">
-            AI recommendation
-          </span>
-          {!expanded && (
-            <span className="text-sm text-zinc-400 flex-1">
-              Generate an adjusted routine from this client's data
-            </span>
-          )}
-          <span className="text-zinc-600 text-xs">{expanded ? '▲' : '▼'}</span>
-        </button>
+  // In embedded mode, the parent owns the chrome (CoachWorkspaceTabs has the
+  // tab bar). Skip our own header button and always render the body.
+  const isEmbedded = mode === 'embedded'
 
-        {expanded && (
+  return (
+    <div className={isEmbedded ? '' : 'border-b border-zinc-800 bg-zinc-950/60'}>
+      <div className="max-w-6xl mx-auto px-6 py-2">
+        {!isEmbedded && (
+          <button
+            onClick={() => setExpanded((e) => !e)}
+            className="w-full flex items-center gap-3 text-left group"
+            aria-expanded={expanded}
+          >
+            <span className="text-xs uppercase tracking-wide text-zinc-500 group-hover:text-zinc-300 transition-colors">
+              AI recommendation
+            </span>
+            {!expanded && (
+              <span className="text-sm text-zinc-400 flex-1">
+                Generate an adjusted routine from this client's data
+              </span>
+            )}
+            <span className="text-zinc-600 text-xs">{expanded ? '▲' : '▼'}</span>
+          </button>
+        )}
+
+        {(isEmbedded || expanded) && (
           <div className="pt-3 pb-4 space-y-3">
             {/* Routine picker — only relevant when adjusting an existing routine */}
             {!isCreateFromScratch && (

@@ -49,14 +49,17 @@ interface SavedRecommendationsPanelProps {
   onLoad: (rec: LoadedRecommendation) => void
   /** Parent increments this to signal a new rec landed and we should refetch. */
   refreshKey: number
+  /** When 'embedded', skips the panel chrome (parent owns it). */
+  mode?: 'standalone' | 'embedded'
 }
 
 export function SavedRecommendationsPanel({
   clientId,
   onLoad,
   refreshKey,
+  mode = 'standalone',
 }: SavedRecommendationsPanelProps) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(mode === 'embedded')
   const [list, setList] = useState<SavedRecommendationListItem[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -179,28 +182,32 @@ export function SavedRecommendationsPanel({
     setEditNoteDraft('')
   }
 
-  return (
-    <div className="border-b border-zinc-800 bg-zinc-950/60">
-      <div className="max-w-6xl mx-auto px-6 py-2">
-        <button
-          onClick={() => setExpanded((e) => !e)}
-          className="w-full flex items-center gap-3 text-left group"
-          aria-expanded={expanded}
-        >
-          <span className="text-xs uppercase tracking-wide text-zinc-500 group-hover:text-zinc-300 transition-colors">
-            Saved recommendations
-          </span>
-          {!expanded && list && (
-            <span className="text-sm text-zinc-400 flex-1">
-              {list.length === 0
-                ? 'No saved recommendations yet'
-                : `${list.length} saved — click to manage`}
-            </span>
-          )}
-          <span className="text-zinc-600 text-xs">{expanded ? '▲' : '▼'}</span>
-        </button>
+  const isEmbedded = mode === 'embedded'
 
-        {expanded && (
+  return (
+    <div className={isEmbedded ? '' : 'border-b border-zinc-800 bg-zinc-950/60'}>
+      <div className="max-w-6xl mx-auto px-6 py-2">
+        {!isEmbedded && (
+          <button
+            onClick={() => setExpanded((e) => !e)}
+            className="w-full flex items-center gap-3 text-left group"
+            aria-expanded={expanded}
+          >
+            <span className="text-xs uppercase tracking-wide text-zinc-500 group-hover:text-zinc-300 transition-colors">
+              Saved recommendations
+            </span>
+            {!expanded && list && (
+              <span className="text-sm text-zinc-400 flex-1">
+                {list.length === 0
+                  ? 'No saved recommendations yet'
+                  : `${list.length} saved — click to manage`}
+              </span>
+            )}
+            <span className="text-zinc-600 text-xs">{expanded ? '▲' : '▼'}</span>
+          </button>
+        )}
+
+        {(isEmbedded || expanded) && (
           <div className="pt-3 pb-3 space-y-2">
             {list === null && <div className="text-zinc-500 text-sm py-2">Loading…</div>}
             {error && (

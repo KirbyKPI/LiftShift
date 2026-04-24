@@ -24,9 +24,7 @@ import { getSession } from '../../utils/supabase/auth'
 import { supabase } from '../../utils/supabase/client'
 import type { Coach, ClientWithConnection } from '../../utils/supabase/client'
 import type { WorkoutSet } from '../../types'
-import { CoachNotesPanel } from './CoachNotesPanel'
-import { GenerateRecommendationPanel } from './GenerateRecommendationPanel'
-import { SavedRecommendationsPanel } from './SavedRecommendationsPanel'
+import { CoachWorkspaceTabs } from './CoachWorkspaceTabs'
 
 type SyncSource = 'live' | 'cached' | 'stale_cache'
 
@@ -239,20 +237,10 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
         syncSource={syncSource}
         lastSyncAt={lastSyncAt}
       >
-        <CoachNotesPanel clientId={clientId} />
-        <CoachAiSection clientId={clientId} />
-
-        {/* Divider — separates the coach workspace (notes, AI) from the
-            embedded client dashboard below. The dashboard is the "client's
-            view" — same experience they'd see in their own account. */}
-        <div className="border-t border-zinc-800 bg-zinc-950/60">
-          <div className="max-w-6xl mx-auto px-6 py-2 flex items-center gap-2">
-            <span className="text-[11px] uppercase tracking-wide text-zinc-500">
-              Client dashboard
-            </span>
-            <span className="text-zinc-700 text-xs">— scroll for full view</span>
-          </div>
-        </div>
+        {/* Compact one-row toolbar with Notes / AI / Saved tabs.
+            Replaces three stacked collapsible panels — same functionality,
+            ~⅓ the chrome when nothing's open. */}
+        <CoachWorkspaceTabs clientId={clientId} />
 
         <div className="h-[100dvh]" key={clientId}>
           <HashRouter>
@@ -261,46 +249,6 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
         </div>
       </CoachViewProvider>
     </div>
-  )
-}
-
-// ─── AI section: generate panel + saved-recommendations list ──────────────
-// Glue so they can coordinate: generating a new rec refreshes the saved
-// list; loading a saved rec pushes it into the generate panel's result view.
-
-function CoachAiSection({ clientId }: { clientId: string }) {
-  const [externalResult, setExternalResult] = useState<any>(null)
-  const [refreshKey, setRefreshKey] = useState(0)
-
-  const handleLoadSaved = (rec: {
-    id: string
-    summary: string
-    items: any[]
-    adjustment_level: string
-    status: string
-    coach_note: string | null
-  }) => {
-    setExternalResult({
-      recommendation_id: rec.id,
-      summary: rec.summary,
-      items: rec.items,
-      usage: { input_tokens: null, output_tokens: null },
-      model: '(loaded from save)',
-    })
-  }
-
-  return (
-    <>
-      <GenerateRecommendationPanel
-        externalResult={externalResult}
-        onNewResult={() => setRefreshKey((k) => k + 1)}
-      />
-      <SavedRecommendationsPanel
-        clientId={clientId}
-        onLoad={handleLoadSaved}
-        refreshKey={refreshKey}
-      />
-    </>
   )
 }
 
