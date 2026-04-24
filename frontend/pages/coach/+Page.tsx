@@ -5,6 +5,7 @@ import { getSession, getCoachProfile, signOut } from '../../utils/supabase/auth'
 import { supabase } from '../../utils/supabase/client'
 import type { Coach, TrainingClient, ClientWithConnection } from '../../utils/supabase/client'
 import { navigate } from 'vike/client/router'
+import { CoachClientDashboard } from './CoachClientDashboard'
 
 // ─── Sub-views ──────────────────────────────────────────────────────────────
 
@@ -494,7 +495,8 @@ function ConnectClientModal({ clientId, coachId, onClose, onConnected }: {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Client Detail View
+// Client Detail View — delegates to CoachClientDashboard, which embeds the
+// full /app dashboard seeded with this client's Hevy-synced sets.
 // ═══════════════════════════════════════════════════════════════════════════
 
 function ClientDetailView({ clientId, coach, onBack }: {
@@ -502,225 +504,10 @@ function ClientDetailView({ clientId, coach, onBack }: {
   coach: Coach
   onBack: () => void
 }) {
-  const [client, setClient] = useState<ClientWithConnection | null>(null)
-  const [workouts, setWorkouts] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
-  const [syncSource, setSyncSource] = useState('')
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    ;(async () => {
-      // Load client info
-      const { data: c } = await supabase
-        .from('training_clients')
-        .select('*')
-        .eq('id', clientId)
-        .single()
-
-      if (!c) { setLoading(false); return }
-
-      const { data: conn } = await supabase
-        .from('training_hevy_connections')
-        .select('*')
-        .eq('client_id', clientId)
-        .single()
-
-      setClient({ ...c, hevy_connection: conn || null })
-
-      // If connected, fetch/sync workout data
-      if (conn && conn.connection_status !== 'expired') {
-        await syncWorkouts(false)
-      }
-      setLoading(false)
-    })()
-  }, [clientId])
-
-  const syncWorkouts = async (forceRefresh = false) => {
-    setSyncing(true)
-    setError('')
-    try {
-      const session = await getSession()
-      const res = await fetch('/api/hevy/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          client_id: clientId,
-          coach_token: session?.access_token,
-          force_refresh: forceRefresh,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Sync failed')
-      setWorkouts(data.rows || [])
-      setSyncSource(data.source || '')
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setSyncing(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-zinc-600 border-t-lime-400 rounded-full animate-spin" />
-      </div>
-    )
-  }
-
-  if (!client) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
-        <div className="text-center">
-          <p className="text-zinc-500 mb-4">Client not found</p>
-          <button onClick={onBack} className="text-lime-400 hover:text-lime-300">← Back to Dashboard</button>
-        </div>
-      </div>
-    )
-  }
-
-  // Group workouts by date
-  const workoutsByDate = workouts.reduce<Record<string, typeof workouts>>((acc, row) => {
-    const d = row.date?.split('T')[0] || 'Unknown'
-    ;(acc[d] = acc[d] || []).push(row)
-    return acc
-  }, {})
-
-  const sortedDates = Object.keys(workoutsByDate).sort((a, b) => b.localeCompare(a))
-
-  // Quick stats
-  const totalWorkouts = new Set(workouts.map(r => `${r.date}-${r.workout_name}`)).size
-  const totalSets = workouts.length
-  const uniqueExercises = new Set(workouts.map(r => r.exercise_name)).size
-  const maxWeight = Math.max(0, ...workouts.map(r => r.weight_lbs || 0))
-
-  return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Header */}
-      <header className="border-b border-zinc-800 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <button onClick={onBack} className="text-zinc-500 hover:text-zinc-300 transition-colors text-sm">
-            ← Back
-          </button>
-          <div className="flex-1">
-            <h1 className="text-lg font-bold">{client.name}</h1>
-            {client.email && <p className="text-zinc-500 text-xs">{client.email}</p>}
-          </div>
-          {client.hevy_connection?.connection_status === 'active' && (
-            <button
-              onClick={() => syncWorkouts(true)}
-              disabled={syncing}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-sm rounded-lg transition-colors disabled:opacity-50"
-            >
-              {syncing ? 'Syncing...' : 'Force Sync'}
-            </button>
-          )}
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        {/* Connection status banner */}
-        {!client.hevy_connection && (
-          <div className="bg-zinc-900/60 rounded-xl border border-zinc-800 p-6 mb-6 text-center">
-            <p className="text-zinc-400 mb-3">This client hasn't connected their Hevy account yet.</p>
-            <p className="text-zinc-600 text-sm">Go back to the dashboard and use "Connect Hevy" on their card.</p>
-          </div>
-        )}
-
-        {client.hevy_connection?.connection_status === 'expired' && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
-            <p className="text-red-400 text-sm">This client's Hevy API key has expired. They'll need to reconnect with a new key.</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
-            <p className="text-red-400 text-sm">{error}</p>
-          </div>
-        )}
-
-        {syncSource && (
-          <div className="flex items-center gap-2 mb-6">
-            <span className={`text-xs px-2 py-0.5 rounded-full border ${
-              syncSource === 'live' ? 'bg-lime-500/15 text-lime-400 border-lime-500/25' :
-              syncSource === 'cached' ? 'bg-blue-500/15 text-blue-400 border-blue-500/25' :
-              'bg-yellow-500/15 text-yellow-400 border-yellow-500/25'
-            }`}>
-              {syncSource === 'live' ? 'Live data' : syncSource === 'cached' ? 'Cached' : 'Stale cache'}
-            </span>
-            {syncing && <span className="text-zinc-500 text-xs">Refreshing...</span>}
-          </div>
-        )}
-
-        {/* Stats Cards */}
-        {workouts.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <StatCard label="Workouts" value={totalWorkouts} />
-            <StatCard label="Total Sets" value={totalSets} />
-            <StatCard label="Exercises" value={uniqueExercises} />
-            <StatCard label="Max Weight" value={`${maxWeight} lbs`} />
-          </div>
-        )}
-
-        {/* Workout History */}
-        {sortedDates.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold mb-4">Workout History</h2>
-            {sortedDates.slice(0, 20).map(date => {
-              const rows = workoutsByDate[date]
-              const workoutName = rows[0]?.workout_name || 'Workout'
-              // Group by exercise
-              const byExercise = rows.reduce<Record<string, typeof rows>>((acc, r) => {
-                ;(acc[r.exercise_name] = acc[r.exercise_name] || []).push(r)
-                return acc
-              }, {})
-
-              return (
-                <div key={date} className="bg-zinc-900/60 rounded-xl border border-zinc-800 p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-white">{workoutName}</h3>
-                    <span className="text-zinc-500 text-sm">{formatDate(date)}</span>
-                  </div>
-                  <div className="space-y-2">
-                    {Object.entries(byExercise).map(([exName, sets]) => (
-                      <div key={exName} className="flex items-center justify-between text-sm">
-                        <span className="text-zinc-300">{exName}</span>
-                        <span className="text-zinc-500">
-                          {sets.map(s => s.weight_lbs > 0 ? `${s.weight_lbs}×${s.reps}` : `${s.reps} reps`).join(', ')}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
-            {sortedDates.length > 20 && (
-              <p className="text-zinc-600 text-sm text-center">Showing most recent 20 workouts of {sortedDates.length} total</p>
-            )}
-          </div>
-        )}
-
-        {workouts.length === 0 && client.hevy_connection?.connection_status === 'active' && !syncing && (
-          <div className="text-center py-16 bg-zinc-900/40 rounded-2xl border border-zinc-800">
-            <p className="text-zinc-500">No workout data yet. Try a force sync or wait for the client to log workouts in Hevy.</p>
-          </div>
-        )}
-      </main>
-    </div>
-  )
+  return <CoachClientDashboard clientId={clientId} coach={coach} onBack={onBack} />
 }
 
 // ─── Utility Components ───────────────────────────────────────────────────
-
-function StatCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="bg-zinc-900/60 rounded-xl border border-zinc-800 p-4">
-      <div className="text-zinc-500 text-xs mb-1">{label}</div>
-      <div className="text-xl font-bold text-white">{value}</div>
-    </div>
-  )
-}
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -731,12 +518,4 @@ function timeAgo(dateStr: string): string {
   if (hrs < 24) return `${hrs}h ago`
   const days = Math.floor(hrs / 24)
   return `${days}d ago`
-}
-
-function formatDate(dateStr: string): string {
-  try {
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
-      weekday: 'short', month: 'short', day: 'numeric'
-    })
-  } catch { return dateStr }
 }

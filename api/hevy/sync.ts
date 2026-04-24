@@ -112,6 +112,120 @@ function workoutsToRows(workouts: HevyWorkout[]): WorkoutRow[] {
   return rows
 }
 
+// ─── Rich WorkoutSet mapping (for the embedded /app dashboard) ──────────────
+// Shape mirrors frontend/types.ts WorkoutSet so the coach-facing dashboard
+// can consume the same data pipeline the standalone /app uses.
+
+interface CoachWorkoutSet {
+  title: string
+  start_time: string
+  end_time: string
+  description: string
+  exercise_title: string
+  exercise_index: number
+  superset_id: string
+  exercise_notes: string
+  set_index: number
+  set_type: string
+  weight_kg: number
+  reps: number
+  distance_km: number
+  duration_seconds: number
+  rpe: number | null
+  source: 'hevy'
+}
+
+function workoutsToWorkoutSets(workouts: HevyWorkout[]): CoachWorkoutSet[] {
+  const sets: CoachWorkoutSet[] = []
+  for (const w of workouts) {
+    const exList = Array.isArray(w.exercises) ? w.exercises : []
+    for (const ex of exList) {
+      const exSets = Array.isArray(ex.sets) ? ex.sets : []
+      for (const s of exSets) {
+        sets.push({
+          title: w.title || 'Workout',
+          start_time: w.start_time,
+          end_time: w.end_time || w.start_time,
+          description: '',
+          exercise_title: ex.title || '',
+          exercise_index: ex.index ?? 0,
+          superset_id:
+            ex.superset_id === null || ex.superset_id === undefined
+              ? ''
+              : String(ex.superset_id),
+          exercise_notes: ex.notes || '',
+          set_index: s.index ?? 0,
+          set_type: s.set_type || 'normal',
+          weight_kg: s.weight_kg ?? 0,
+          reps: s.reps ?? 0,
+          distance_km:
+            s.distance_meters != null ? s.distance_meters / 1000 : 0,
+          duration_seconds: s.duration_seconds ?? 0,
+          rpe: s.rpe ?? null,
+          source: 'hevy',
+        })
+      }
+    }
+  }
+  return sets
+}
+
+/**
+ * Reconstruct rich WorkoutSets from the flattened `training_workout_cache`
+ * rows. Cached rows preserve the original Hevy `exercises` JSON blob, so we
+ * can rebuild the same shape live fetches produce.
+ */
+function cachedWorkoutsToWorkoutSets(
+  cached: Array<{
+    exercises: any
+    workout_date: string
+    workout_name: string
+    duration_seconds: number
+  }>,
+): CoachWorkoutSet[] {
+  const sets: CoachWorkoutSet[] = []
+  for (const c of cached) {
+    const exercises = Array.isArray(c.exercises) ? c.exercises : []
+    // Approximate start/end from workout_date (date-only) + duration.
+    const startIso = c.workout_date?.includes('T')
+      ? c.workout_date
+      : `${c.workout_date}T00:00:00.000Z`
+    const startMs = new Date(startIso).getTime()
+    const endIso = Number.isFinite(startMs)
+      ? new Date(startMs + (c.duration_seconds ?? 0) * 1000).toISOString()
+      : startIso
+
+    for (const ex of exercises) {
+      const exSets = Array.isArray(ex.sets) ? ex.sets : []
+      for (const s of exSets) {
+        sets.push({
+          title: c.workout_name || 'Workout',
+          start_time: startIso,
+          end_time: endIso,
+          description: '',
+          exercise_title: ex.title || ex.exercise_name || '',
+          exercise_index: ex.index ?? 0,
+          superset_id:
+            ex.superset_id === null || ex.superset_id === undefined
+              ? ''
+              : String(ex.superset_id),
+          exercise_notes: ex.notes || '',
+          set_index: s.index ?? 0,
+          set_type: s.set_type || 'normal',
+          weight_kg: s.weight_kg ?? 0,
+          reps: s.reps ?? 0,
+          distance_km:
+            s.distance_meters != null ? s.distance_meters / 1000 : 0,
+          duration_seconds: s.duration_seconds ?? 0,
+          rpe: s.rpe ?? null,
+          source: 'hevy',
+        })
+      }
+    }
+  }
+  return sets
+}
+
 // ─── Handler ────────────────────────────────────────────────────────────────
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -159,8 +273,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .order('workout_date', { ascending: false })
 
       const rows = flattenCachedRows(cached || [])
+      const sets = cachedWorkoutsToWorkoutSets(cached || [])
       return res.status(200).json({
         rows,
+        sets,
         source: 'cached',
         last_sync_at: syncMeta?.last_api_fetch_at,
         workouts_fetched: cached?.length || 0,
@@ -201,6 +317,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (stale && stale.length > 0) {
         return res.status(200).json({
           rows: flattenCachedRows(stale),
+          sets: cachedWorkoutsToWorkoutSets(stale),
           source: 'stale_cache',
           warning: `Sync failed: ${err.message}`,
           last_sync_at: syncMeta?.last_api_fetch_at,
@@ -251,8 +368,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('client_id', client_id)
 
     const rows = workoutsToRows(workouts)
+    const sets = workoutsToWorkoutSets(workouts)
     return res.status(200).json({
       rows,
+      sets,
       source: 'live',
       last_sync_at: new Date().toISOString(),
       workouts_fetched: workouts.length,

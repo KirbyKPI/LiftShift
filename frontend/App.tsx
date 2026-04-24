@@ -23,6 +23,8 @@ import { useAppDerivedData } from './app/state';
 import { useCalendarSelectionHandlers } from './app/state';
 import { useUpdateFlowHandler } from './app/auth';
 import { createFingerprintMatcher } from './utils/exercise/exerciseFingerprint';
+import { useCoachView } from './app/coachView';
+import { hydrateBackendWorkoutSetsWithSource } from './app/auth/hydrateBackendWorkoutSets';
 
 const CHUNK_RELOAD_KEY = 'kpifit_chunk_reload_once';
 
@@ -116,10 +118,30 @@ const App: React.FC = () => {
     }
   }, [navigate]);
 
-  const [parsedData, setParsedData] = useState<WorkoutSet[]>([]);
-  const [dataBySource, setDataBySource] = useState<Partial<Record<'hevy' | 'lyfta' | 'strong' | 'other', WorkoutSet[]>>>({});
-  const [hasHydratedData, setHasHydratedData] = useState(false);
+  const coachView = useCoachView();
+
+  // Seed sets come from the coach dashboard when reviewing a specific client.
+  // We hydrate them once and use as initial `parsedData` so the whole /app
+  // pipeline (muscle analysis, history, flex, etc.) has something to render
+  // on first paint. Subsequent coach interactions stay client-side.
+  const seedSetsHydrated = useMemo(() => {
+    if (!coachView) return null;
+    return hydrateBackendWorkoutSetsWithSource(coachView.seedSets, 'hevy');
+  }, [coachView]);
+
+  const [parsedData, setParsedData] = useState<WorkoutSet[]>(() =>
+    seedSetsHydrated ?? [],
+  );
+  const [dataBySource, setDataBySource] = useState<Partial<Record<'hevy' | 'lyfta' | 'strong' | 'other', WorkoutSet[]>>>(() =>
+    seedSetsHydrated ? { hevy: seedSetsHydrated } : {},
+  );
+  const [hasHydratedData, setHasHydratedData] = useState<boolean>(() =>
+    (seedSetsHydrated?.length ?? 0) > 0,
+  );
   const [onboarding, setOnboarding] = useState<OnboardingFlow | null>(() => {
+    // Coach-view never shows onboarding — coach is piggybacking on a
+    // client that already connected; no need for the platform picker.
+    if (coachView) return null;
     return getSetupComplete() ? null : { intent: 'initial', step: 'platform' };
   });
   const [dataSource, setDataSource] = useState(() => getDataSourceChoice());
