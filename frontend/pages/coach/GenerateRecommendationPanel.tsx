@@ -100,6 +100,16 @@ export function GenerateRecommendationPanel() {
   const [focusPrompt, setFocusPrompt] = useState('')
   const [planPrefs, setPlanPrefs] = useState<PlanPreferences>({})
 
+  // Smooth-scroll the result into view when a generation completes, so the
+  // coach sees the proposal immediately instead of having to scroll past
+  // the form. Attached to the ResultView wrapper below.
+  const resultRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (phase.kind === 'done' && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [phase.kind])
+
   const isCreateFromScratch = CREATE_FROM_SCRATCH.includes(level)
   const hasAnyPlanPref = Object.keys(planPrefs).some((k) => {
     const v = (planPrefs as any)[k]
@@ -395,7 +405,11 @@ export function GenerateRecommendationPanel() {
               </div>
             )}
 
-            {phase.kind === 'done' && <ResultView result={phase.result} />}
+            {phase.kind === 'done' && (
+              <div ref={resultRef} className="scroll-mt-20">
+                <ResultView result={phase.result} />
+              </div>
+            )}
           </div>
         )}
       </div>

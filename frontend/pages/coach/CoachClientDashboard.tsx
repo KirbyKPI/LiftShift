@@ -206,37 +206,58 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
   // `key={clientId}` forces a fresh App tree per client so the internal
   // initial-state seeding re-runs on client switch.
 
+  // Natural page scroll: header is sticky, notes + recommendation panels flow
+  // as normal blocks above the embedded App. The App itself stays at a fixed
+  // viewport height in its own block below — the coach scrolls past the
+  // panels to reach it when needed. Previously a flex parent + App's
+  // `h-[100dvh]` combined to make the page unscrollable when panels expanded.
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
-      <CoachHeader
-        clientName={client.name}
-        coachName={coach.display_name}
-        syncSource={syncSource}
-        lastSyncAt={lastSyncAt}
-        syncing={syncing}
-        onBack={onBack}
-        onForceSync={() => runSync(true)}
-      />
-      {error && (
-        <div className="px-6 py-2 border-b border-red-500/20 bg-red-500/5">
-          <p className="text-red-400 text-sm max-w-6xl mx-auto">{error}</p>
-        </div>
-      )}
-      <div className="flex-1 min-h-0" key={clientId}>
-        <CoachViewProvider
-          clientId={clientId}
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
+      <div className="sticky top-0 z-20">
+        <CoachHeader
           clientName={client.name}
-          seedSets={seedSets}
+          coachName={coach.display_name}
           syncSource={syncSource}
           lastSyncAt={lastSyncAt}
-        >
-          <CoachNotesPanel clientId={clientId} />
-          <GenerateRecommendationPanel />
+          syncing={syncing}
+          onBack={onBack}
+          onForceSync={() => runSync(true)}
+        />
+        {error && (
+          <div className="px-6 py-2 border-b border-red-500/20 bg-red-500/95 backdrop-blur">
+            <p className="text-red-400 text-sm max-w-6xl mx-auto">{error}</p>
+          </div>
+        )}
+      </div>
+
+      <CoachViewProvider
+        clientId={clientId}
+        clientName={client.name}
+        seedSets={seedSets}
+        syncSource={syncSource}
+        lastSyncAt={lastSyncAt}
+      >
+        <CoachNotesPanel clientId={clientId} />
+        <GenerateRecommendationPanel />
+
+        {/* Divider — separates the coach workspace (notes, AI) from the
+            embedded client dashboard below. The dashboard is the "client's
+            view" — same experience they'd see in their own account. */}
+        <div className="border-t border-zinc-800 bg-zinc-950/60">
+          <div className="max-w-6xl mx-auto px-6 py-2 flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wide text-zinc-500">
+              Client dashboard
+            </span>
+            <span className="text-zinc-700 text-xs">— scroll for full view</span>
+          </div>
+        </div>
+
+        <div className="h-[100dvh]" key={clientId}>
           <HashRouter>
             <App />
           </HashRouter>
-        </CoachViewProvider>
-      </div>
+        </div>
+      </CoachViewProvider>
     </div>
   )
 }
