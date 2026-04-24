@@ -49,7 +49,12 @@ export const config = {
 
 // ─── Prompt building ───────────────────────────────────────────────────────
 
-type AdjustmentLevel = 'load_only' | 'load_plus_swap' | 'full_authoring'
+type AdjustmentLevel =
+  | 'load_only'
+  | 'load_plus_swap'
+  | 'full_authoring'
+  | 'overhaul'
+  | 'week_plan'
 
 const SCOPE_GUIDANCE: Record<AdjustmentLevel, string> = {
   load_only: `
@@ -64,6 +69,7 @@ ADJUSTMENT SCOPE: **Load progression only.**
   — but still return the same slot.
 - Each proposed item's exercise_template_id MUST exactly match the current
   routine's slot at that position.
+- Leave day_label null on every item.
 `.trim(),
   load_plus_swap: `
 ADJUSTMENT SCOPE: **Load progression + targeted exercise swaps.**
@@ -78,6 +84,7 @@ ADJUSTMENT SCOPE: **Load progression + targeted exercise swaps.**
 - Prefer exercise_template_ids that appear in the snapshot's recent_workout_sets
   or current_hevy_routines so we know Hevy has them in its library.
   For novel swaps, set exercise_template_id to null and we'll resolve it later.
+- Leave day_label null on every item.
 `.trim(),
   full_authoring: `
 ADJUSTMENT SCOPE: **Full program authoring.**
@@ -91,6 +98,37 @@ ADJUSTMENT SCOPE: **Full program authoring.**
 - Respect any client notes re: injuries, equipment, time availability.
 - Be principled: state your rationale for each slot so the coach can
   evaluate whether your reasoning matches their intent.
+- Leave day_label null on every item (single routine).
+`.trim(),
+  overhaul: `
+ADJUSTMENT SCOPE: **Overhaul — build a single fresh routine.**
+
+- The coach has asked for a fresh start. Ignore the structural bones of
+  any current Hevy routine; build what the client actually needs.
+- The coach's focus_prompt (see below) is the north star. Read it carefully
+  — it may specify the split type, session length, equipment, or goals.
+- Use recent_workout_sets and insights_summary to inform exercise selection
+  (what the client has actually been doing, what's working, what's stagnant)
+  but don't feel bound by the existing routine's exercise list.
+- If the client has minimal history, lean on the focus_prompt + conservative
+  defaults (moderate rep ranges, moderate loads relative to their observed
+  top sets, clear progression plan).
+- Output: ONE routine. All items share the same day_label (or null).
+`.trim(),
+  week_plan: `
+ADJUSTMENT SCOPE: **Weekly program — multiple routines, one per training day.**
+
+- Produce a full week of training. Each day is its own routine.
+- MANDATORY: set day_label on every item to group items into days.
+  Use labels like "Day 1 - Upper" / "Day 2 - Lower" / "Day 3 - Pull"
+  — short, descriptive, consistent within the week.
+- Items across days should still have unique positions (1, 2, 3... across
+  the whole plan); position determines order WITHIN a day via item order.
+- Read focus_prompt for split type and days-per-week. If unspecified,
+  infer from the client's insights_summary (workout_days_per_week_avg).
+- Balance volume across the week; don't double-up fatigued muscles on
+  back-to-back days unless the split explicitly calls for it.
+- summary should describe the week's structure and training intent.
 `.trim(),
 }
 
@@ -148,7 +186,29 @@ function pickPrimaryRoutine(snapshot: any): { primary: any | null; others: any[]
   return { primary: sorted[0], others: sorted.slice(1) }
 }
 
-function buildUserMessage(snapshot: any, adjustmentLevel: AdjustmentLevel): string {
+function formatPlanPreferences(prefs: Record<string, unknown> | null): string {
+  if (!prefs || typeof prefs !== 'object') return ''
+  const lines: string[] = []
+  if (prefs.goal) lines.push(`- Goal: ${String(prefs.goal).replace(/_/g, ' ')}`)
+  if (prefs.days_per_week) lines.push(`- Days per week: ${prefs.days_per_week}`)
+  if (prefs.session_minutes)
+    lines.push(`- Session length: ${prefs.session_minutes} minutes`)
+  if (prefs.split) lines.push(`- Split: ${String(prefs.split).replace(/_/g, ' ')}`)
+  if (Array.isArray(prefs.equipment) && prefs.equipment.length) {
+    lines.push(`- Equipment available: ${prefs.equipment.join(', ')}`)
+  }
+  if (!lines.length) return ''
+  return ['STRUCTURED PLAN PREFERENCES (coach-set):', ...lines, ''].join('\n')
+}
+
+function buildUserMessage(
+  snapshot: any,
+  adjustmentLevel: AdjustmentLevel,
+  focusPrompt: string | null,
+  planPreferences: Record<string, unknown> | null,
+): string {
+  const isCreateFromScratch = adjustmentLevel === 'overhaul' || adjustmentLevel === 'week_plan'
+
   // Snapshot may already be narrowed to a coach-picked routine (via
   // target_routine_id on generate-recommendation). If so, current_hevy_routines
   // will have exactly one entry and other_routines_summary carries context.
@@ -204,21 +264,65 @@ based on their recent workout patterns.
     current_hevy_routines: primary ? [primary] : [],
   }
 
-  return [
-    SCOPE_GUIDANCE[adjustmentLevel],
-    '',
-    primaryBanner,
-    '',
-    'OTHER ROUTINES (context only):',
-    otherList,
-    '',
-    '---',
-    '',
-    'CLIENT SNAPSHOT:',
-    '```json',
-    JSON.stringify(trimmedSnapshot, null, 2),
-    '```',
-  ].join('\n')
+  const prefsBlock = formatPlanPreferences(planPreferences)
+
+  const focusBlock =
+    focusPrompt && focusPrompt.trim()
+      ? [
+          'COACH FOCUS / CONSTRAINTS (read carefully — this is the coach\'s intent):',
+          focusPrompt.trim(),
+          '',
+        ].join('\n')
+      : isCreateFromScratch && !prefsBlock
+        ? 'COACH FOCUS / CONSTRAINTS: (none provided — the coach did not narrow further)'
+        : ''
+
+  const coachIntent = [prefsBlock, focusBlock].filter(Boolean).join('\n')
+
+  // For overhaul/week_plan modes, current-routine context is secondary —
+  // lead with the focus prompt instead.
+  const sections = isCreateFromScratch
+    ? [
+        SCOPE_GUIDANCE[adjustmentLevel],
+        '',
+        coachIntent,
+        '---',
+        '',
+        'CLIENT CONTEXT:',
+        primary
+          ? `The client has an existing routine "${primary.title}" with ${
+              Array.isArray(primary.exercises) ? primary.exercises.length : 0
+            } exercises — use it as reference but you are NOT bound by it.`
+          : 'The client has no current Hevy routine. Build from history + focus alone.',
+        '',
+        'OTHER ROUTINES (reference only):',
+        otherList,
+        '',
+        '---',
+        '',
+        'SNAPSHOT:',
+        '```json',
+        JSON.stringify(trimmedSnapshot, null, 2),
+        '```',
+      ]
+    : [
+        SCOPE_GUIDANCE[adjustmentLevel],
+        '',
+        coachIntent,
+        primaryBanner,
+        '',
+        'OTHER ROUTINES (context only):',
+        otherList,
+        '',
+        '---',
+        '',
+        'CLIENT SNAPSHOT:',
+        '```json',
+        JSON.stringify(trimmedSnapshot, null, 2),
+        '```',
+      ]
+
+  return sections.join('\n')
 }
 
 // ─── Tool schema — forces structured output ────────────────────────────────
@@ -297,6 +401,11 @@ const PROPOSE_TOOL = {
               description:
                 'Short justification for THIS specific slot. Rendered inline with the diff. Be honest — cite the data point that drove the change.',
             },
+            day_label: {
+              type: ['string', 'null'],
+              description:
+                'For week_plan mode, the training day this item belongs to (e.g. "Day 1 - Upper"). For single-routine modes (load_only, load_plus_swap, full_authoring, overhaul), leave null.',
+            },
           },
           required: ['position', 'exercise_title', 'is_new_slot', 'proposed', 'rationale'],
         },
@@ -318,6 +427,7 @@ type ToolInput = {
     is_new_slot: boolean
     proposed: any
     rationale: string
+    day_label: string | null
   }>
 }
 
@@ -401,7 +511,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Load the draft recommendation and confirm it's owned by this coach.
     const { data: rec, error: recErr } = await supabase
       .from('training_coach_recommendations')
-      .select('id, client_id, coach_id, adjustment_level, status, ai_snapshot')
+      .select(
+        'id, client_id, coach_id, adjustment_level, status, ai_snapshot, focus_prompt, plan_preferences',
+      )
       .eq('id', recommendation_id)
       .single()
 
@@ -430,7 +542,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Call Claude with tool-use.
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
-    const userMessage = buildUserMessage(rec.ai_snapshot, rec.adjustment_level as AdjustmentLevel)
+    const userMessage = buildUserMessage(
+      rec.ai_snapshot,
+      rec.adjustment_level as AdjustmentLevel,
+      (rec.focus_prompt as string | null) ?? null,
+      (rec.plan_preferences as Record<string, unknown> | null) ?? null,
+    )
 
     let aiResponse: Anthropic.Messages.Message
     try {
@@ -496,6 +613,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         proposed_json: item.proposed,
         rationale: item.rationale,
         coach_action: 'pending' as const,
+        day_label: item.day_label ?? null,
       }
     })
 

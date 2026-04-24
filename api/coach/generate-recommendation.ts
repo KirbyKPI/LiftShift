@@ -117,7 +117,12 @@ async function fetchAllRoutines(apiKey: string): Promise<HevyRoutine[]> {
 
 // ─── Snapshot shape ────────────────────────────────────────────────────────
 
-type AdjustmentLevel = 'load_only' | 'load_plus_swap' | 'full_authoring'
+type AdjustmentLevel =
+  | 'load_only'
+  | 'load_plus_swap'
+  | 'full_authoring'
+  | 'overhaul'
+  | 'week_plan'
 
 interface Snapshot {
   version: 1
@@ -263,6 +268,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     coach_token,
     coach_note,
     target_routine_id,
+    focus_prompt,
+    plan_preferences,
   } = (req.body || {}) as {
     client_id?: string
     adjustment_level?: AdjustmentLevel
@@ -270,6 +277,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     coach_token?: string
     coach_note?: string
     target_routine_id?: string
+    focus_prompt?: string
+    plan_preferences?: Record<string, unknown>
   }
 
   if (!client_id || !coach_token || !adjustment_level) {
@@ -278,9 +287,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
   }
 
-  const validLevels: AdjustmentLevel[] = ['load_only', 'load_plus_swap', 'full_authoring']
+  const validLevels: AdjustmentLevel[] = [
+    'load_only',
+    'load_plus_swap',
+    'full_authoring',
+    'overhaul',
+    'week_plan',
+  ]
   if (!validLevels.includes(adjustment_level)) {
     return res.status(400).json({ error: `adjustment_level must be one of ${validLevels.join(', ')}` })
+  }
+
+  // overhaul and week_plan need SOME coach intent — either structured
+  // plan_preferences, a focus_prompt, or ideally both. Reject if completely
+  // empty so Claude isn't guessing.
+  const hasStructuredPrefs =
+    plan_preferences &&
+    typeof plan_preferences === 'object' &&
+    Object.keys(plan_preferences).length > 0
+  if (
+    (adjustment_level === 'overhaul' || adjustment_level === 'week_plan') &&
+    !hasStructuredPrefs &&
+    (!focus_prompt || !focus_prompt.trim())
+  ) {
+    return res.status(400).json({
+      error: `${adjustment_level} requires plan_preferences or focus_prompt describing the coach's intent`,
+    })
   }
 
   try {
@@ -383,16 +415,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }),
     } as Snapshot & Record<string, unknown>
 
+    // For overhaul/week_plan we don't treat "no routine fetched" as a failure —
+    // the whole point is that there may not be one to start from.
+    const isCreateFromScratch =
+      adjustment_level === 'overhaul' || adjustment_level === 'week_plan'
+    const effectiveStatus =
+      routineFetchError && !isCreateFromScratch ? 'failed' : 'draft'
+
     const { data: inserted, error: insertErr } = await supabase
       .from('training_coach_recommendations')
       .insert({
         client_id: client.id,
         coach_id: coach.id,
         adjustment_level,
-        status: routineFetchError ? 'failed' : 'draft',
-        error_message: routineFetchError,
+        status: effectiveStatus,
+        error_message: isCreateFromScratch ? null : routineFetchError,
         ai_snapshot: snapshot,
         coach_note: coach_note ?? null,
+        focus_prompt: focus_prompt?.trim() || null,
+        plan_preferences: hasStructuredPrefs ? plan_preferences : null,
       })
       .select('id, status, created_at')
       .single()

@@ -18,22 +18,37 @@ import React, { useEffect, useState } from 'react'
 import { getSession } from '../../utils/supabase/auth'
 import { useCoachView } from '../../app/coachView'
 import { buildInsightsSummary } from './buildInsightsSummary'
+import { PlanBuilderForm } from './PlanBuilderForm'
+import type { PlanPreferences } from './planPreferencesTypes'
 
 const MAX_ROUTINE_SLOTS = 7
 
-type AdjustmentLevel = 'load_only' | 'load_plus_swap' | 'full_authoring'
+type AdjustmentLevel =
+  | 'load_only'
+  | 'load_plus_swap'
+  | 'full_authoring'
+  | 'overhaul'
+  | 'week_plan'
 
 const LEVEL_LABELS: Record<AdjustmentLevel, string> = {
   load_only: 'Load only',
   load_plus_swap: 'Load + swaps',
   full_authoring: 'Full authoring',
+  overhaul: 'Overhaul',
+  week_plan: 'Week plan',
 }
 
 const LEVEL_DESCRIPTIONS: Record<AdjustmentLevel, string> = {
   load_only: 'Just weight / rep / set adjustments on the existing exercises.',
   load_plus_swap: 'Load tweaks plus targeted exercise swaps where the data justifies them.',
   full_authoring: 'Claude can restructure the whole routine — exercises, order, scheme.',
+  overhaul:
+    'Fresh single routine built from the ground up. Good for a messy current routine or no clear program. Requires focus below.',
+  week_plan:
+    'Full weekly program, one routine per training day. Requires focus below.',
 }
+
+const CREATE_FROM_SCRATCH: AdjustmentLevel[] = ['overhaul', 'week_plan']
 
 type PhaseState =
   | { kind: 'idle' }
@@ -50,6 +65,7 @@ interface AiResultItem {
   current_json: any
   proposed_json: any
   rationale: string | null
+  day_label: string | null
 }
 
 interface AiResult {
@@ -81,6 +97,14 @@ export function GenerateRecommendationPanel() {
 
   const [routinesState, setRoutinesState] = useState<RoutinesLoadState>({ kind: 'idle' })
   const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null)
+  const [focusPrompt, setFocusPrompt] = useState('')
+  const [planPrefs, setPlanPrefs] = useState<PlanPreferences>({})
+
+  const isCreateFromScratch = CREATE_FROM_SCRATCH.includes(level)
+  const hasAnyPlanPref = Object.keys(planPrefs).some((k) => {
+    const v = (planPrefs as any)[k]
+    return v !== undefined && v !== null && (!Array.isArray(v) || v.length > 0)
+  })
 
   // Lazy-load the routine list the first time the panel expands so we don't
   // pay a Hevy round-trip on every client view.
@@ -154,7 +178,12 @@ export function GenerateRecommendationPanel() {
           adjustment_level: level,
           insights_summary: insights,
           coach_token: session.access_token,
-          target_routine_id: selectedRoutineId ?? undefined,
+          // Create-from-scratch modes don't target a specific existing routine.
+          target_routine_id: isCreateFromScratch
+            ? undefined
+            : selectedRoutineId ?? undefined,
+          focus_prompt: focusPrompt.trim() || undefined,
+          plan_preferences: isCreateFromScratch && hasAnyPlanPref ? planPrefs : undefined,
         }),
       })
       const genData = await genRes.json()
@@ -205,7 +234,8 @@ export function GenerateRecommendationPanel() {
 
         {expanded && (
           <div className="pt-3 pb-4 space-y-3">
-            {/* Routine picker */}
+            {/* Routine picker — only relevant when adjusting an existing routine */}
+            {!isCreateFromScratch && (
             <div>
               <div className="text-[11px] uppercase tracking-wide text-zinc-500 mb-1.5">
                 Routine to adjust
@@ -250,6 +280,7 @@ export function GenerateRecommendationPanel() {
                 </div>
               )}
             </div>
+            )}
 
             {/* Level picker */}
             <div>
@@ -275,16 +306,64 @@ export function GenerateRecommendationPanel() {
             </div>
             <p className="text-zinc-500 text-xs">{LEVEL_DESCRIPTIONS[level]}</p>
 
+            {/* Plan-builder form — only shown for create-from-scratch modes */}
+            {isCreateFromScratch && (
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+                <PlanBuilderForm
+                  value={planPrefs}
+                  onChange={setPlanPrefs}
+                  disabled={isBusy}
+                />
+              </div>
+            )}
+
+            {/* Focus prompt — required for create-from-scratch modes unless the plan-builder form has been used */}
+            <div>
+              <div className="flex items-baseline justify-between mb-1.5">
+                <div className="text-[11px] uppercase tracking-wide text-zinc-500">
+                  {isCreateFromScratch
+                    ? hasAnyPlanPref
+                      ? 'Anything else? (optional)'
+                      : 'Focus / constraints'
+                    : 'Focus (optional)'}
+                </div>
+                {isCreateFromScratch && !focusPrompt.trim() && !hasAnyPlanPref && (
+                  <span className="text-[10px] text-amber-400">
+                    Pick options above or describe here
+                  </span>
+                )}
+              </div>
+              <textarea
+                value={focusPrompt}
+                onChange={(e) => setFocusPrompt(e.target.value)}
+                disabled={isBusy}
+                placeholder={
+                  isCreateFromScratch
+                    ? hasAnyPlanPref
+                      ? 'Anything the form can\'t capture: injuries, equipment quirks, "avoid overhead pressing", etc.'
+                      : level === 'week_plan'
+                        ? 'e.g. 4-day upper/lower split, ~60 min sessions, strength-focused with moderate hypertrophy work. Avoid overhead pressing (shoulder flare-up).'
+                        : 'e.g. Fresh hypertrophy routine for chest + back, 3 days/wk, 45-min sessions. No deadlifts (low-back flare-up last month).'
+                    : 'Optional context for Claude: "conservative progression this block", "returning from vacation — deload", etc.'
+                }
+                className="w-full min-h-[96px] px-3 py-2 bg-zinc-900/60 border border-zinc-800 rounded-lg text-zinc-100 text-sm placeholder:text-zinc-600 focus:outline-none focus:border-lime-500/40 transition-colors resize-y disabled:opacity-60"
+              />
+            </div>
+
             {/* Action */}
             <div className="flex items-center gap-3">
               <button
                 onClick={handleGenerate}
                 disabled={
                   isBusy ||
-                  routinesState.kind === 'loading' ||
-                  (routinesState.kind === 'loaded' &&
-                    routinesState.routines.length > 0 &&
-                    !selectedRoutineId)
+                  // Create-from-scratch: require either structured prefs OR free-text focus.
+                  (isCreateFromScratch && !focusPrompt.trim() && !hasAnyPlanPref) ||
+                  // Adjust-existing modes: require a routine selection once loaded.
+                  (!isCreateFromScratch &&
+                    (routinesState.kind === 'loading' ||
+                      (routinesState.kind === 'loaded' &&
+                        routinesState.routines.length > 0 &&
+                        !selectedRoutineId)))
                 }
                 className="px-4 py-2 bg-lime-500 hover:bg-lime-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-black font-semibold text-sm rounded-lg transition-colors"
               >
@@ -320,6 +399,28 @@ export function GenerateRecommendationPanel() {
 // ─── v0 result view ────────────────────────────────────────────────────────
 
 function ResultView({ result }: { result: AiResult }) {
+  // Group by day_label if any items have one (week_plan mode). Preserve the
+  // original ordering by first-appearance of each label.
+  const hasDayLabels = result.items.some((i) => i.day_label)
+  const groups: Array<{ label: string | null; items: AiResultItem[] }> = []
+  if (hasDayLabels) {
+    const seen = new Map<string, AiResultItem[]>()
+    const order: string[] = []
+    for (const item of result.items) {
+      const key = item.day_label ?? '(unlabeled)'
+      if (!seen.has(key)) {
+        seen.set(key, [])
+        order.push(key)
+      }
+      seen.get(key)!.push(item)
+    }
+    for (const label of order) {
+      groups.push({ label, items: seen.get(label)! })
+    }
+  } else {
+    groups.push({ label: null, items: result.items })
+  }
+
   return (
     <div className="space-y-3 pt-3 border-t border-zinc-800">
       <div>
@@ -327,10 +428,20 @@ function ResultView({ result }: { result: AiResult }) {
         <p className="text-sm text-zinc-400 whitespace-pre-wrap">{result.summary}</p>
       </div>
 
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-zinc-200">Proposed slots</h3>
-        {result.items.map((item) => (
-          <ItemRow key={item.id} item={item} />
+      <div className="space-y-4">
+        {groups.map((group, gi) => (
+          <div key={group.label ?? `group-${gi}`}>
+            {group.label ? (
+              <h3 className="text-sm font-semibold text-lime-400 mb-2">{group.label}</h3>
+            ) : (
+              <h3 className="text-sm font-semibold text-zinc-200 mb-2">Proposed slots</h3>
+            )}
+            <div className="space-y-2">
+              {group.items.map((item) => (
+                <ItemRow key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 
