@@ -25,6 +25,7 @@ import { useUpdateFlowHandler } from './app/auth';
 import { createFingerprintMatcher } from './utils/exercise/exerciseFingerprint';
 import { useCoachView } from './app/coachView';
 import { hydrateBackendWorkoutSetsWithSource } from './app/auth/hydrateBackendWorkoutSets';
+import { identifyPersonalRecords } from './utils/analysis/core';
 
 const CHUNK_RELOAD_KEY = 'kpifit_chunk_reload_once';
 
@@ -124,9 +125,14 @@ const App: React.FC = () => {
   // We hydrate them once and use as initial `parsedData` so the whole /app
   // pipeline (muscle analysis, history, flex, etc.) has something to render
   // on first paint. Subsequent coach interactions stay client-side.
+  //
+  // Mirror the normal auto-load path: hydrate → identifyPersonalRecords.
+  // Skipping PR identification leaves `isPr` / `prTypes` unset, which makes
+  // the "PRs Over Time" chart render empty even with a full workout history.
   const seedSetsHydrated = useMemo(() => {
     if (!coachView) return null;
-    return hydrateBackendWorkoutSetsWithSource(coachView.seedSets, 'hevy');
+    const hydrated = hydrateBackendWorkoutSetsWithSource(coachView.seedSets, 'hevy');
+    return identifyPersonalRecords(hydrated);
   }, [coachView]);
 
   const [parsedData, setParsedData] = useState<WorkoutSet[]>(() =>
