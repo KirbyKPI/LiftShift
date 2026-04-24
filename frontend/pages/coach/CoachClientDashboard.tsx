@@ -26,6 +26,7 @@ import type { Coach, ClientWithConnection } from '../../utils/supabase/client'
 import type { WorkoutSet } from '../../types'
 import { CoachNotesPanel } from './CoachNotesPanel'
 import { GenerateRecommendationPanel } from './GenerateRecommendationPanel'
+import { SavedRecommendationsPanel } from './SavedRecommendationsPanel'
 
 type SyncSource = 'live' | 'cached' | 'stale_cache'
 
@@ -206,13 +207,14 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
   // `key={clientId}` forces a fresh App tree per client so the internal
   // initial-state seeding re-runs on client switch.
 
-  // Natural page scroll: header is sticky, notes + recommendation panels flow
-  // as normal blocks above the embedded App. The App itself stays at a fixed
-  // viewport height in its own block below — the coach scrolls past the
-  // panels to reach it when needed. Previously a flex parent + App's
-  // `h-[100dvh]` combined to make the page unscrollable when panels expanded.
+  // Own scrollable viewport: `<body>` is locked to `h-screen overflow-hidden`
+  // for the /app SPA's fixed-layout behavior. This page needs scroll (notes +
+  // AI recommendation + embedded dashboard can easily exceed viewport) so we
+  // give the coach dashboard its own `h-screen overflow-y-auto` container
+  // that scrolls internally, without touching the body style. Header below
+  // is sticky *within* this container.
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="h-screen overflow-y-auto bg-[#0a0a0a] text-white">
       <div className="sticky top-0 z-20">
         <CoachHeader
           clientName={client.name}
@@ -238,7 +240,7 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
         lastSyncAt={lastSyncAt}
       >
         <CoachNotesPanel clientId={clientId} />
-        <GenerateRecommendationPanel />
+        <CoachAiSection clientId={clientId} />
 
         {/* Divider — separates the coach workspace (notes, AI) from the
             embedded client dashboard below. The dashboard is the "client's
@@ -259,6 +261,46 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
         </div>
       </CoachViewProvider>
     </div>
+  )
+}
+
+// ─── AI section: generate panel + saved-recommendations list ──────────────
+// Glue so they can coordinate: generating a new rec refreshes the saved
+// list; loading a saved rec pushes it into the generate panel's result view.
+
+function CoachAiSection({ clientId }: { clientId: string }) {
+  const [externalResult, setExternalResult] = useState<any>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleLoadSaved = (rec: {
+    id: string
+    summary: string
+    items: any[]
+    adjustment_level: string
+    status: string
+    coach_note: string | null
+  }) => {
+    setExternalResult({
+      recommendation_id: rec.id,
+      summary: rec.summary,
+      items: rec.items,
+      usage: { input_tokens: null, output_tokens: null },
+      model: '(loaded from save)',
+    })
+  }
+
+  return (
+    <>
+      <GenerateRecommendationPanel
+        externalResult={externalResult}
+        onNewResult={() => setRefreshKey((k) => k + 1)}
+      />
+      <SavedRecommendationsPanel
+        clientId={clientId}
+        onLoad={handleLoadSaved}
+        refreshKey={refreshKey}
+      />
+    </>
   )
 }
 

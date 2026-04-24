@@ -89,11 +89,29 @@ type RoutinesLoadState =
   | { kind: 'loaded'; routines: RoutineOption[]; total: number }
   | { kind: 'error'; message: string }
 
-export function GenerateRecommendationPanel() {
+interface GenerateRecommendationPanelProps {
+  /** Parent can push a previously-generated recommendation in (from the saved list). */
+  externalResult?: AiResult | null
+  /** Bumped when a new rec is generated so parent can refresh its saved list. */
+  onNewResult?: () => void
+}
+
+export function GenerateRecommendationPanel({
+  externalResult,
+  onNewResult,
+}: GenerateRecommendationPanelProps = {}) {
   const coachView = useCoachView()
   const [expanded, setExpanded] = useState(false)
   const [level, setLevel] = useState<AdjustmentLevel>('load_only')
   const [phase, setPhase] = useState<PhaseState>({ kind: 'idle' })
+
+  // When a saved rec is loaded from the parent, swap it into the result view.
+  useEffect(() => {
+    if (externalResult) {
+      setPhase({ kind: 'done', result: externalResult })
+      setExpanded(true)
+    }
+  }, [externalResult])
 
   const [routinesState, setRoutinesState] = useState<RoutinesLoadState>({ kind: 'idle' })
   const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null)
@@ -223,6 +241,7 @@ export function GenerateRecommendationPanel() {
       if (!aiRes.ok) throw new Error(aiData.error || 'AI call failed')
 
       setPhase({ kind: 'done', result: aiData })
+      onNewResult?.()
     } catch (err: any) {
       setPhase({ kind: 'error', message: err?.message || 'Unexpected error' })
     }
