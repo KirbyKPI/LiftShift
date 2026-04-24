@@ -24,6 +24,7 @@ import { getSession } from '../../utils/supabase/auth'
 import { supabase } from '../../utils/supabase/client'
 import type { Coach, ClientWithConnection } from '../../utils/supabase/client'
 import type { WorkoutSet } from '../../types'
+import { CoachNotesPanel } from './CoachNotesPanel'
 
 type SyncSource = 'live' | 'cached' | 'stale_cache'
 
@@ -220,6 +221,7 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
           <p className="text-red-400 text-sm max-w-6xl mx-auto">{error}</p>
         </div>
       )}
+      <CoachNotesPanel clientId={clientId} />
       <div className="flex-1 min-h-0" key={clientId}>
         <CoachViewProvider
           clientId={clientId}
