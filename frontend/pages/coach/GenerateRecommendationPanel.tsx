@@ -14,10 +14,12 @@
  * before we invest in the review UX.
  */
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { getSession } from '../../utils/supabase/auth'
 import { useCoachView } from '../../app/coachView'
 import { buildInsightsSummary } from './buildInsightsSummary'
+
+const MAX_ROUTINE_SLOTS = 7
 
 type AdjustmentLevel = 'load_only' | 'load_plus_swap' | 'full_authoring'
 
@@ -58,11 +60,80 @@ interface AiResult {
   model: string
 }
 
+interface RoutineOption {
+  id: string
+  title: string
+  exercise_count: number
+  updated_at: string
+}
+
+type RoutinesLoadState =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'loaded'; routines: RoutineOption[]; total: number }
+  | { kind: 'error'; message: string }
+
 export function GenerateRecommendationPanel() {
   const coachView = useCoachView()
   const [expanded, setExpanded] = useState(false)
   const [level, setLevel] = useState<AdjustmentLevel>('load_only')
   const [phase, setPhase] = useState<PhaseState>({ kind: 'idle' })
+
+  const [routinesState, setRoutinesState] = useState<RoutinesLoadState>({ kind: 'idle' })
+  const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null)
+
+  // Lazy-load the routine list the first time the panel expands so we don't
+  // pay a Hevy round-trip on every client view.
+  useEffect(() => {
+    if (!expanded || !coachView) return
+    if (routinesState.kind !== 'idle') return
+
+    let cancelled = false
+    ;(async () => {
+      setRoutinesState({ kind: 'loading' })
+      try {
+        const session = await getSession()
+        if (!session?.access_token) throw new Error('Not signed in')
+        const res = await fetch('/api/coach/list-routines', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            client_id: coachView.clientId,
+            coach_token: session.access_token,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to load routines')
+        if (cancelled) return
+
+        const all: RoutineOption[] = (data.routines || []).map((r: any) => ({
+          id: r.id,
+          title: r.title,
+          exercise_count: r.exercise_count ?? 0,
+          updated_at: r.updated_at,
+        }))
+        // Cap the number of toggle chips to a manageable number — most-recently
+        // updated win if the client has more.
+        const sorted = all.slice().sort(
+          (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+        )
+        const visible = sorted.slice(0, MAX_ROUTINE_SLOTS)
+        setRoutinesState({ kind: 'loaded', routines: visible, total: all.length })
+        if (visible.length > 0) setSelectedRoutineId(visible[0].id)
+      } catch (err: any) {
+        if (!cancelled) {
+          setRoutinesState({
+            kind: 'error',
+            message: err?.message || 'Failed to load routines',
+          })
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [expanded, coachView, routinesState.kind])
 
   if (!coachView) return null
 
@@ -83,6 +154,7 @@ export function GenerateRecommendationPanel() {
           adjustment_level: level,
           insights_summary: insights,
           coach_token: session.access_token,
+          target_routine_id: selectedRoutineId ?? undefined,
         }),
       })
       const genData = await genRes.json()
@@ -133,22 +205,73 @@ export function GenerateRecommendationPanel() {
 
         {expanded && (
           <div className="pt-3 pb-4 space-y-3">
+            {/* Routine picker */}
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-500 mb-1.5">
+                Routine to adjust
+              </div>
+              {routinesState.kind === 'loading' && (
+                <div className="text-zinc-500 text-xs">Loading routines from Hevy…</div>
+              )}
+              {routinesState.kind === 'error' && (
+                <div className="text-red-400 text-xs">
+                  Failed to load routines: {routinesState.message}
+                </div>
+              )}
+              {routinesState.kind === 'loaded' && routinesState.routines.length === 0 && (
+                <div className="text-zinc-500 text-xs">
+                  No routines found in this client's Hevy account.
+                </div>
+              )}
+              {routinesState.kind === 'loaded' && routinesState.routines.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {routinesState.routines.map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={() => setSelectedRoutineId(r.id)}
+                      disabled={isBusy}
+                      title={`Updated ${new Date(r.updated_at).toLocaleDateString()}`}
+                      className={`px-3 py-1.5 text-xs rounded-lg border transition-colors disabled:opacity-50 text-left ${
+                        selectedRoutineId === r.id
+                          ? 'bg-lime-500/15 text-lime-400 border-lime-500/40'
+                          : 'bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:border-zinc-700'
+                      }`}
+                    >
+                      <div className="font-medium truncate max-w-[180px]">{r.title}</div>
+                      <div className="text-[10px] opacity-70">{r.exercise_count} exercises</div>
+                    </button>
+                  ))}
+                  {routinesState.total > routinesState.routines.length && (
+                    <span className="text-zinc-600 text-xs self-center">
+                      +{routinesState.total - routinesState.routines.length} more (not shown;
+                      older)
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Level picker */}
-            <div className="flex flex-wrap gap-2">
-              {(Object.keys(LEVEL_LABELS) as AdjustmentLevel[]).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setLevel(key)}
-                  disabled={isBusy}
-                  className={`px-3 py-1.5 text-xs rounded-lg border transition-colors disabled:opacity-50 ${
-                    level === key
-                      ? 'bg-lime-500/15 text-lime-400 border-lime-500/40'
-                      : 'bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:border-zinc-700'
-                  }`}
-                >
-                  {LEVEL_LABELS[key]}
-                </button>
-              ))}
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-500 mb-1.5">
+                Adjustment scope
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(LEVEL_LABELS) as AdjustmentLevel[]).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setLevel(key)}
+                    disabled={isBusy}
+                    className={`px-3 py-1.5 text-xs rounded-lg border transition-colors disabled:opacity-50 ${
+                      level === key
+                        ? 'bg-lime-500/15 text-lime-400 border-lime-500/40'
+                        : 'bg-zinc-900/60 text-zinc-400 border-zinc-800 hover:border-zinc-700'
+                    }`}
+                  >
+                    {LEVEL_LABELS[key]}
+                  </button>
+                ))}
+              </div>
             </div>
             <p className="text-zinc-500 text-xs">{LEVEL_DESCRIPTIONS[level]}</p>
 
@@ -156,7 +279,13 @@ export function GenerateRecommendationPanel() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleGenerate}
-                disabled={isBusy}
+                disabled={
+                  isBusy ||
+                  routinesState.kind === 'loading' ||
+                  (routinesState.kind === 'loaded' &&
+                    routinesState.routines.length > 0 &&
+                    !selectedRoutineId)
+                }
                 className="px-4 py-2 bg-lime-500 hover:bg-lime-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-black font-semibold text-sm rounded-lg transition-colors"
               >
                 {phase.kind === 'building_snapshot'

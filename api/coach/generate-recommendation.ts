@@ -262,12 +262,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     insights_summary,
     coach_token,
     coach_note,
+    target_routine_id,
   } = (req.body || {}) as {
     client_id?: string
     adjustment_level?: AdjustmentLevel
     insights_summary?: unknown
     coach_token?: string
     coach_note?: string
+    target_routine_id?: string
   }
 
   if (!client_id || !coach_token || !adjustment_level) {
@@ -331,6 +333,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const recent_workout_sets = await fetchRecentSetSummaries(client_id, 12)
     const hevy_workout_notes = await fetchHevyWorkoutNotes(client_id, 12)
 
+    // If the coach picked a specific routine to target, narrow the snapshot
+    // to just that one so Claude can't mix exercises from other routines
+    // into the proposal. Include the others as a compact summary for context.
+    let targetRoutines = currentRoutines
+    let otherRoutinesSummary: Array<{ id: string; title: string; exercise_count: number }> = []
+    let targetRoutineNotFound = false
+
+    if (target_routine_id) {
+      const match = currentRoutines.find((r) => r.id === target_routine_id)
+      if (match) {
+        targetRoutines = [match]
+        otherRoutinesSummary = currentRoutines
+          .filter((r) => r.id !== target_routine_id)
+          .map((r) => ({
+            id: r.id,
+            title: r.title,
+            exercise_count: Array.isArray(r.exercises) ? r.exercises.length : 0,
+          }))
+      } else {
+        // Target wasn't found in the fetched list (maybe just deleted in Hevy).
+        // Fall back to all routines + mark for the coach to see.
+        targetRoutineNotFound = true
+      }
+    }
+
     const snapshot: Snapshot = {
       version: 1,
       generated_at: new Date().toISOString(),
@@ -342,10 +369,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         notes: client.notes ?? null,
       },
       insights_summary: insights_summary ?? null,
-      current_hevy_routines: currentRoutines,
+      current_hevy_routines: targetRoutines,
       recent_workout_sets,
       hevy_workout_notes,
-    }
+      // Non-typed extras — persisted verbatim in ai_snapshot, visible to the
+      // AI through the raw JSON dump.
+      ...(otherRoutinesSummary.length > 0 && {
+        other_routines_summary: otherRoutinesSummary,
+      }),
+      ...(target_routine_id && {
+        target_routine_id,
+        target_routine_not_found: targetRoutineNotFound,
+      }),
+    } as Snapshot & Record<string, unknown>
 
     const { data: inserted, error: insertErr } = await supabase
       .from('training_coach_recommendations')

@@ -38,6 +38,14 @@ const supabase = createClient(
 )
 
 const DEFAULT_MODEL = 'claude-opus-4-6'
+const MAX_OUTPUT_TOKENS = 16000
+
+// Opus on large clients (1k+ sets, multiple routines) can run well past
+// Vercel's 10s default. Bump to 5 min — safe ceiling for this call.
+// Only takes effect on Pro plans; Hobby is capped at 60s.
+export const config = {
+  maxDuration: 300,
+}
 
 // ─── Prompt building ───────────────────────────────────────────────────────
 
@@ -118,15 +126,97 @@ Do not produce any prose outside the tool call — the coach will review in a
 diff UI that reads the tool_use input.
 `.trim()
 
+/**
+ * Pick the single routine the coach is adjusting. Heuristic: most recently
+ * updated in Hevy. Clients often have multiple routines (different training
+ * days, old experiments, a "warmup" skeleton) and if we give Claude all of
+ * them it has to pick one to adjust — sometimes it refuses rather than guess.
+ * Explicit is better.
+ */
+function pickPrimaryRoutine(snapshot: any): { primary: any | null; others: any[] } {
+  const routines: any[] = Array.isArray(snapshot?.current_hevy_routines)
+    ? snapshot.current_hevy_routines
+    : []
+  if (routines.length === 0) return { primary: null, others: [] }
+  if (routines.length === 1) return { primary: routines[0], others: [] }
+
+  const sorted = [...routines].sort((a, b) => {
+    const au = new Date(a?.updated_at || 0).getTime()
+    const bu = new Date(b?.updated_at || 0).getTime()
+    return bu - au
+  })
+  return { primary: sorted[0], others: sorted.slice(1) }
+}
+
 function buildUserMessage(snapshot: any, adjustmentLevel: AdjustmentLevel): string {
+  // Snapshot may already be narrowed to a coach-picked routine (via
+  // target_routine_id on generate-recommendation). If so, current_hevy_routines
+  // will have exactly one entry and other_routines_summary carries context.
+  // Otherwise fall back to picking the most recent as primary.
+  const { primary, others } = pickPrimaryRoutine(snapshot)
+  const coachPicked = !!snapshot?.target_routine_id
+
+  const primaryBanner = primary
+    ? `
+PRIMARY ROUTINE FOR THIS ADJUSTMENT: "${primary.title}" (id: ${primary.id})
+— Updated in Hevy at ${primary.updated_at}
+— Has ${Array.isArray(primary.exercises) ? primary.exercises.length : 0} exercises
+${coachPicked ? '— Coach explicitly selected this routine as the target.' : '— Auto-picked (most recently updated).'}
+
+Your proposal should adjust THIS routine, not the others. The other routines
+are included below as context only (so you can see the broader program) —
+do NOT include their exercises in your proposal.
+`.trim()
+    : `
+THIS CLIENT HAS NO HEVY ROUTINES YET.
+
+For load_only mode you cannot propose load changes without a current
+routine. Return an empty items array and explain in summary.
+
+For load_plus_swap or full_authoring: you may propose a brand-new routine
+based on their recent workout patterns.
+`.trim()
+
+  // Prefer the summary from generate-recommendation (set when coach picked a
+  // specific routine). Fall back to the others-from-primary-pick helper.
+  const otherFromSnapshot: Array<{ id: string; title: string; exercise_count: number }> =
+    Array.isArray(snapshot?.other_routines_summary) ? snapshot.other_routines_summary : []
+
+  const otherList = otherFromSnapshot.length
+    ? otherFromSnapshot
+        .map(
+          (r, i) => `${i + 1}. "${r.title}" (id: ${r.id}, ${r.exercise_count} exercises)`,
+        )
+        .join('\n')
+    : others.length
+      ? others
+          .map(
+            (r, i) =>
+              `${i + 1}. "${r.title}" (id: ${r.id}, ${
+                Array.isArray(r.exercises) ? r.exercises.length : 0
+              } exercises, updated ${r.updated_at})`,
+          )
+          .join('\n')
+      : '(none)'
+
+  const trimmedSnapshot = {
+    ...snapshot,
+    current_hevy_routines: primary ? [primary] : [],
+  }
+
   return [
     SCOPE_GUIDANCE[adjustmentLevel],
+    '',
+    primaryBanner,
+    '',
+    'OTHER ROUTINES (context only):',
+    otherList,
     '',
     '---',
     '',
     'CLIENT SNAPSHOT:',
     '```json',
-    JSON.stringify(snapshot, null, 2),
+    JSON.stringify(trimmedSnapshot, null, 2),
     '```',
   ].join('\n')
 }
@@ -263,11 +353,14 @@ function findCurrentSlot(snapshot: any, item: ToolInput['items'][number]): any |
   return byTitle ?? null
 }
 
-async function updateRecommendationFailed(id: string, msg: string): Promise<void> {
-  await supabase
-    .from('training_coach_recommendations')
-    .update({ status: 'failed', error_message: msg })
-    .eq('id', id)
+async function updateRecommendationFailed(
+  id: string,
+  msg: string,
+  raw?: unknown,
+): Promise<void> {
+  const update: Record<string, unknown> = { status: 'failed', error_message: msg }
+  if (raw !== undefined) update.ai_response_raw = raw as object
+  await supabase.from('training_coach_recommendations').update(update).eq('id', id)
 }
 
 // ─── Handler ───────────────────────────────────────────────────────────────
@@ -343,7 +436,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       aiResponse = await anthropic.messages.create({
         model: model || DEFAULT_MODEL,
-        max_tokens: 8000,
+        max_tokens: MAX_OUTPUT_TOKENS,
         system: SYSTEM_PROMPT,
         tools: [PROPOSE_TOOL as unknown as Anthropic.Messages.Tool],
         tool_choice: { type: 'tool', name: PROPOSE_TOOL.name },
@@ -364,14 +457,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const msg =
         'Claude did not call propose_routine_adjustment. ' +
         `stop_reason=${aiResponse.stop_reason}`
-      await updateRecommendationFailed(rec.id, msg)
+      await updateRecommendationFailed(rec.id, msg, aiResponse)
       return res.status(502).json({ error: msg, raw: aiResponse })
     }
 
     const parsed = toolBlock.input as ToolInput
     if (!parsed?.items || !Array.isArray(parsed.items) || parsed.items.length === 0) {
-      const msg = 'Claude returned no items in its proposal.'
-      await updateRecommendationFailed(rec.id, msg)
+      const stop = aiResponse.stop_reason
+      const msg =
+        stop === 'max_tokens'
+          ? 'Claude hit max_tokens before finishing its proposal. Bump MAX_OUTPUT_TOKENS and retry.'
+          : `Claude returned no items in its proposal (stop_reason=${stop}). ` +
+            `Summary: ${parsed?.summary || '(none)'}.`
+      await updateRecommendationFailed(rec.id, msg, aiResponse)
       return res.status(502).json({ error: msg, raw: aiResponse })
     }
 
