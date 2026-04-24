@@ -14,7 +14,7 @@
  * before we invest in the review UX.
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { getSession } from '../../utils/supabase/auth'
 import { useCoachView } from '../../app/coachView'
 import { buildInsightsSummary } from './buildInsightsSummary'
@@ -108,13 +108,20 @@ export function GenerateRecommendationPanel() {
 
   // Lazy-load the routine list the first time the panel expands so we don't
   // pay a Hevy round-trip on every client view.
+  //
+  // A ref (not state) guards against double-fetch — using state in deps here
+  // causes the effect to re-run when we set 'loading', the cleanup fires
+  // mid-fetch, and the cancelled flag drops the successful response.
+  const hasLoadedRef = useRef(false)
+
   useEffect(() => {
     if (!expanded || !coachView) return
-    if (routinesState.kind !== 'idle') return
+    if (hasLoadedRef.current) return
+    hasLoadedRef.current = true
 
     let cancelled = false
+    setRoutinesState({ kind: 'loading' })
     ;(async () => {
-      setRoutinesState({ kind: 'loading' })
       try {
         const session = await getSession()
         if (!session?.access_token) throw new Error('Not signed in')
@@ -136,8 +143,6 @@ export function GenerateRecommendationPanel() {
           exercise_count: r.exercise_count ?? 0,
           updated_at: r.updated_at,
         }))
-        // Cap the number of toggle chips to a manageable number — most-recently
-        // updated win if the client has more.
         const sorted = all.slice().sort(
           (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
         )
@@ -150,6 +155,8 @@ export function GenerateRecommendationPanel() {
             kind: 'error',
             message: err?.message || 'Failed to load routines',
           })
+          // Let a manual retry try again by clearing the one-shot guard.
+          hasLoadedRef.current = false
         }
       }
     })()
@@ -157,7 +164,7 @@ export function GenerateRecommendationPanel() {
     return () => {
       cancelled = true
     }
-  }, [expanded, coachView, routinesState.kind])
+  }, [expanded, coachView])
 
   if (!coachView) return null
 
