@@ -174,6 +174,15 @@ submit it via the propose_routine_adjustment tool. Coaching principles:
   dashboard plateau suggestion in your rationale, name it explicitly so the
   coach can verify ("dashboard suggested 'Pick 8 reps and chase 9' — applying
   here").
+- KETTLEBELL EXERCISES use kg increments (8 / 12 / 16 / 20 / 24 / 28 / 32 kg).
+  When the exercise title indicates kettlebells (e.g. "Kettlebell Swing",
+  "Farmers Walk" when KB-loaded, "KB Goblet Squat") OR the client's recent
+  logs show kg-snapped weights for that movement, propose weights that snap
+  to those kg increments — not lbs values converted to kg. ADDITIONALLY,
+  always include a short note in the proposed exercise's notes field
+  spelling out the kettlebell weight (e.g., "Use 16 kg KB" or "20 kg per
+  hand for farmers walk") so the client knows what to grab. This also
+  applies to plate-loaded carries when the implement is kg-marked.
 
 Call the propose_routine_adjustment tool exactly once with your full proposal.
 Do not produce any prose outside the tool call — the coach will review in a

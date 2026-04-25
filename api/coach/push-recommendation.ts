@@ -102,6 +102,17 @@ function effectiveExerciseJson(item: ItemRow): any {
   return item.proposed_json
 }
 
+// Kettlebell-loaded exercises live in kg increments; everything else lives
+// in lbs (US default for our coach base). Mirrored client-side in
+// frontend/pages/coach/exerciseUnits.ts.
+const KG_NATIVE_PATTERN =
+  /\b(kettlebell|kettlebells|kb|farmer'?s?\s*walk|farmer'?s?\s*carry|farmer\s*walk)\b/i
+
+function isKgNativeExercise(title: string | null | undefined): boolean {
+  if (!title) return false
+  return KG_NATIVE_PATTERN.test(title)
+}
+
 function toHevyExercise(item: ItemRow): HevyExerciseInput | null {
   const ex = effectiveExerciseJson(item)
   if (!ex) return null
@@ -118,6 +129,7 @@ function toHevyExercise(item: ItemRow): HevyExerciseInput | null {
     return null
   }
 
+  const kgNative = isKgNativeExercise(item.exercise_title)
   const sets = Array.isArray(ex?.sets) ? ex.sets : []
   return {
     exercise_template_id: templateId,
@@ -129,7 +141,10 @@ function toHevyExercise(item: ItemRow): HevyExerciseInput | null {
     notes: typeof ex?.notes === 'string' ? ex.notes : '',
     sets: sets.map((s: any) => ({
       type: s?.type || 'normal',
-      weight_kg: snapToWholePoundKg(s?.weight_kg),
+      // Kettlebell-loaded exercises: keep the kg as-is (16/20/24 etc).
+      // Other exercises: snap to nearest whole-pound equivalent so Hevy
+      // displays clean values for clients on lbs preference.
+      weight_kg: kgNative ? s?.weight_kg ?? null : snapToWholePoundKg(s?.weight_kg),
       reps: s?.reps ?? null,
       distance_meters: s?.distance_meters ?? null,
       duration_seconds: s?.duration_seconds ?? null,

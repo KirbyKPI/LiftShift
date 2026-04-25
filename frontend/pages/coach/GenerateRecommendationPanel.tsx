@@ -21,6 +21,7 @@ import { useCoachView } from '../../app/coachView'
 import { buildInsightsSummary } from './buildInsightsSummary'
 import { PlanBuilderForm } from './PlanBuilderForm'
 import type { PlanPreferences } from './planPreferencesTypes'
+import { displayWeight, unitForExercise } from './exerciseUnits'
 
 const MAX_ROUTINE_SLOTS = 7
 
@@ -810,7 +811,7 @@ function ItemRow({
         <div>
           <div className="text-zinc-500 mb-1">Current</div>
           {currentSets.length ? (
-            <SetList sets={currentSets} />
+            <SetList sets={currentSets} exerciseTitle={item.exercise_title} />
           ) : (
             <div className="text-zinc-600 italic">— not in current routine —</div>
           )}
@@ -824,9 +825,14 @@ function ItemRow({
             {action === 'edit' ? 'Edited' : action === 'substitute' ? 'Substitute' : 'Proposed'}
           </div>
           {editing ? (
-            <SetEditor initial={effectiveProposed} onCancel={() => setEditing(false)} onSave={onSaveEdit} />
+            <SetEditor
+              initial={effectiveProposed}
+              exerciseTitle={item.exercise_title}
+              onCancel={() => setEditing(false)}
+              onSave={onSaveEdit}
+            />
           ) : (
-            <SetList sets={proposedSets} />
+            <SetList sets={proposedSets} exerciseTitle={item.exercise_title} />
           )}
         </div>
       </div>
@@ -984,15 +990,21 @@ function ActionStatusBadge({ action }: { action: CoachAction }) {
 
 function SetEditor({
   initial,
+  exerciseTitle,
   onCancel,
   onSave,
 }: {
   initial: any
+  exerciseTitle?: string | null
   onCancel: () => void
   onSave: (next: any) => void
 }) {
   const initSets: any[] = Array.isArray(initial?.sets) ? initial.sets : []
   const [sets, setSets] = useState<any[]>(() => initSets.map((s) => ({ ...s })))
+
+  // Kettlebell-loaded exercises: input directly in kg. Everything else
+  // uses lbs (US default) and converts to kg behind the scenes.
+  const unit = unitForExercise(exerciseTitle)
 
   const updateSet = (i: number, patch: any) => {
     setSets((prev) => prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s)))
@@ -1009,16 +1021,23 @@ function SetEditor({
     onSave({ ...initial, sets })
   }
 
-  // Coach inputs in lbs (US-defaulted), but the underlying storage and Hevy
-  // payload stays in kg. Convert in/out so the inputs feel natural while
-  // weight_kg remains the source of truth.
-  const lbsDisplay = (kg: number | null | undefined): string =>
-    kg == null ? '' : String(Math.round(kg * 2.20462))
-  const parseLbsToKg = (raw: string): number | null => {
+  // Coach input adapts per-exercise. lbs (whole-pound) for most exercises;
+  // kg (one decimal) for kettlebell-loaded exercises since those come in
+  // kg increments. Storage and Hevy payload stay in kg either way.
+  const displayValue = (kg: number | null | undefined): string => {
+    if (kg == null) return ''
+    if (unit === 'kg') {
+      const rounded = Math.round(kg * 10) / 10
+      return String(rounded)
+    }
+    return String(Math.round(kg * 2.20462))
+  }
+  const parseToKg = (raw: string): number | null => {
     if (raw === '' || raw == null) return null
-    const lbs = Number(raw)
-    if (!Number.isFinite(lbs)) return null
-    return Math.round((lbs / 2.20462) * 1000) / 1000
+    const n = Number(raw)
+    if (!Number.isFinite(n)) return null
+    if (unit === 'kg') return Math.round(n * 1000) / 1000
+    return Math.round((n / 2.20462) * 1000) / 1000
   }
 
   return (
@@ -1028,7 +1047,7 @@ function SetEditor({
           <tr className="text-zinc-500">
             <th className="text-left font-normal">#</th>
             <th className="text-left font-normal">Type</th>
-            <th className="text-left font-normal">Wt (lbs)</th>
+            <th className="text-left font-normal">Wt ({unit})</th>
             <th className="text-left font-normal">Reps</th>
             <th className="text-left font-normal">RPE</th>
             <th></th>
@@ -1053,10 +1072,10 @@ function SetEditor({
               <td>
                 <input
                   type="number"
-                  step="0.5"
-                  value={lbsDisplay(s.weight_kg)}
+                  step={unit === 'kg' ? '0.5' : '1'}
+                  value={displayValue(s.weight_kg)}
                   onChange={(e) =>
-                    updateSet(i, { weight_kg: parseLbsToKg(e.target.value) })
+                    updateSet(i, { weight_kg: parseToKg(e.target.value) })
                   }
                   className="w-16 bg-zinc-800 border border-zinc-700 rounded px-1 text-zinc-100"
                 />
@@ -1185,7 +1204,7 @@ function SubstitutePreview({
           ↔ Suggested swap: {alternative.exercise_title}
         </h5>
       </div>
-      <SetList sets={sets} />
+      <SetList sets={sets} exerciseTitle={alternative.exercise_title} />
       <p className="text-zinc-400 text-xs mt-2 italic border-l-2 border-blue-500/30 pl-2">
         {alternative.rationale}
       </p>
@@ -1213,7 +1232,13 @@ function SubstitutePreview({
   )
 }
 
-function SetList({ sets }: { sets: any[] }) {
+function SetList({
+  sets,
+  exerciseTitle,
+}: {
+  sets: any[]
+  exerciseTitle?: string | null
+}) {
   return (
     <ul className="space-y-0.5">
       {sets.map((s, i) => {
@@ -1221,7 +1246,7 @@ function SetList({ sets }: { sets: any[] }) {
         const r = s.reps
         const rpe = s.rpe
         const parts: string[] = []
-        if (w != null) parts.push(`${kgToLbs(w)} lbs`)
+        if (w != null) parts.push(displayWeight(w, exerciseTitle))
         if (r != null) parts.push(`×${r}`)
         if (rpe != null) parts.push(`@${rpe}`)
         if (!parts.length && s.duration_seconds) parts.push(`${s.duration_seconds}s`)
