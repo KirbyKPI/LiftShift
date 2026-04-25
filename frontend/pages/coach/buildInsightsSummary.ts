@@ -12,6 +12,9 @@
  */
 
 import type { WorkoutSet } from '../../types'
+import { getDailySummaries, getExerciseStats } from '../../utils/analysis/core'
+import { calculateDashboardInsights } from '../../utils/analysis/insights/insightsDashboard'
+import { detectPlateaus } from '../../utils/analysis/insights/insightsPlateaus'
 
 export interface InsightsSummary {
   window: { weeks: number; from: string; to: string }
@@ -37,6 +40,36 @@ export interface InsightsSummary {
   }>
   recent_pr_count: number // PRs hit in last 4 weeks
   notes: string[] // human-readable bullets for the coach / AI context
+
+  // ─── Dashboard-aligned insights (the coach sees these on screen too) ────
+  // These mirror the same computations the LiftShift dashboard uses, so
+  // Claude reasons over the same surface the coach is looking at.
+  dashboard_insights?: {
+    rolling_7d?: { workouts: number; sets: number; prs: number; delta_pct: number | null }
+    rolling_30d?: { workouts: number; sets: number; prs: number; delta_pct: number | null }
+    rolling_365d?: { workouts: number; sets: number; prs: number; delta_pct: number | null }
+    streak?: { current_streak_weeks: number; longest_streak_weeks: number }
+    pr_drought_days?: number | null
+    last_pr?: { exercise: string; date: string } | null
+    overall_trend?: 'improving' | 'maintaining' | 'declining'
+  }
+
+  /** Plateau detection — exercises with no recent progress, plus the
+   *  same per-exercise advice text shown on the dashboard's lightbulb tips
+   *  ("Pick 8 reps and chase 9 on ALL sets", etc.). */
+  plateaus?: Array<{
+    exercise: string
+    sessions_since_progress: number
+    suggestion: string
+    last_weight_kg: number
+    last_reps: number
+    is_bodyweight_like: boolean
+    load_direction: string
+  }>
+
+  /** Exercises trending positively per the same algorithm — useful for
+   *  "what's working" context vs. "what's stalled". */
+  improving_exercises?: string[]
 }
 
 const WEEKS_BACK = 12
@@ -196,6 +229,62 @@ export function buildInsightsSummary(sets: WorkoutSet[]): InsightsSummary {
     notes.push('No PRs hit in the last 4 weeks — consider deload or stimulus change.')
   }
 
+  // ─── Dashboard-aligned signals ─────────────────────────────────────────
+  // Reuse the same pure analyzers the in-app dashboard uses, so Claude
+  // sees the same plateau detection, PR drought, and rolling deltas the
+  // coach is looking at on screen.
+  let dashboardInsights: InsightsSummary['dashboard_insights']
+  let plateaus: InsightsSummary['plateaus']
+  let improvingExercises: string[] = []
+
+  try {
+    // The full set library — not just the 12-week window — gives the
+    // dashboard analyzers enough history to compute year-over-year deltas
+    // and lifetime PRs. Filtering to window happened earlier for our
+    // own per-exercise stats.
+    const dailySummaries = getDailySummaries(sets)
+    const exerciseStats = getExerciseStats(sets)
+
+    const dashboard = calculateDashboardInsights(sets, dailySummaries, now)
+    dashboardInsights = {
+      rolling_7d: deltaSummary(dashboard.rolling7d),
+      rolling_30d: deltaSummary(dashboard.rolling30d),
+      rolling_365d: deltaSummary(dashboard.rolling365d),
+      streak: dashboard.streakInfo
+        ? {
+            current_streak_weeks: dashboard.streakInfo.currentStreak ?? 0,
+            longest_streak_weeks: dashboard.streakInfo.longestStreak ?? 0,
+          }
+        : undefined,
+      pr_drought_days: dashboard.prInsights?.daysSinceLastPR ?? null,
+      last_pr:
+        dashboard.prInsights?.lastPRExercise && dashboard.prInsights?.lastPRDate
+          ? {
+              exercise: dashboard.prInsights.lastPRExercise,
+              date: dashboard.prInsights.lastPRDate.toISOString().slice(0, 10),
+            }
+          : null,
+    }
+
+    const plateauAnalysis = detectPlateaus(sets, exerciseStats)
+    dashboardInsights.overall_trend = plateauAnalysis.overallTrend
+    plateaus = plateauAnalysis.plateauedExercises.slice(0, 20).map((p) => ({
+      exercise: p.exerciseName,
+      sessions_since_progress: p.sessionsSinceProgress,
+      suggestion: p.suggestion,
+      last_weight_kg: Math.round((p.lastWeight ?? 0) * 100) / 100,
+      last_reps: p.lastReps ?? 0,
+      is_bodyweight_like: !!p.isBodyweightLike,
+      load_direction: String(p.loadProgressionDirection ?? 'higher'),
+    }))
+    improvingExercises = plateauAnalysis.improvingExercises.slice(0, 20)
+  } catch (err) {
+    // The dashboard analyzers shouldn't throw on well-formed data, but if
+    // something goes sideways we'd rather generate without the extra
+    // context than block the whole flow.
+    console.warn('[buildInsightsSummary] dashboard analyzers failed:', err)
+  }
+
   return {
     window: {
       weeks: WEEKS_BACK,
@@ -217,5 +306,24 @@ export function buildInsightsSummary(sets: WorkoutSet[]): InsightsSummary {
       .slice(0, 40), // cap; otherwise some clients blow the token budget
     recent_pr_count: recentPrCount,
     notes,
+    dashboard_insights: dashboardInsights,
+    plateaus,
+    improving_exercises: improvingExercises.length ? improvingExercises : undefined,
+  }
+}
+
+/** Compress a RollingWindowComparison into a flat record so it round-trips
+ *  through JSON cleanly. The dashboard cares about deltas; we keep the same
+ *  shape so Claude can reason about "down 14% week-over-week". */
+function deltaSummary(
+  rw: { current?: any; previous?: any; deltaPct?: number | null } | undefined,
+): { workouts: number; sets: number; prs: number; delta_pct: number | null } | undefined {
+  if (!rw) return undefined
+  const cur = rw.current ?? {}
+  return {
+    workouts: cur.workouts ?? cur.workoutCount ?? 0,
+    sets: cur.sets ?? cur.totalSets ?? 0,
+    prs: cur.prs ?? cur.prCount ?? 0,
+    delta_pct: rw.deltaPct ?? null,
   }
 }

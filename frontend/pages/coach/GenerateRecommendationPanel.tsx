@@ -1009,6 +1009,18 @@ function SetEditor({
     onSave({ ...initial, sets })
   }
 
+  // Coach inputs in lbs (US-defaulted), but the underlying storage and Hevy
+  // payload stays in kg. Convert in/out so the inputs feel natural while
+  // weight_kg remains the source of truth.
+  const lbsDisplay = (kg: number | null | undefined): string =>
+    kg == null ? '' : String(Math.round(kg * 2.20462 * 10) / 10)
+  const parseLbsToKg = (raw: string): number | null => {
+    if (raw === '' || raw == null) return null
+    const lbs = Number(raw)
+    if (!Number.isFinite(lbs)) return null
+    return Math.round((lbs / 2.20462) * 1000) / 1000
+  }
+
   return (
     <div className="space-y-1.5">
       <table className="w-full text-[11px] font-mono">
@@ -1016,7 +1028,7 @@ function SetEditor({
           <tr className="text-zinc-500">
             <th className="text-left font-normal">#</th>
             <th className="text-left font-normal">Type</th>
-            <th className="text-left font-normal">Wt (kg)</th>
+            <th className="text-left font-normal">Wt (lbs)</th>
             <th className="text-left font-normal">Reps</th>
             <th className="text-left font-normal">RPE</th>
             <th></th>
@@ -1042,9 +1054,9 @@ function SetEditor({
                 <input
                   type="number"
                   step="0.5"
-                  value={s.weight_kg ?? ''}
+                  value={lbsDisplay(s.weight_kg)}
                   onChange={(e) =>
-                    updateSet(i, { weight_kg: e.target.value === '' ? null : Number(e.target.value) })
+                    updateSet(i, { weight_kg: parseLbsToKg(e.target.value) })
                   }
                   className="w-16 bg-zinc-800 border border-zinc-700 rounded px-1 text-zinc-100"
                 />
