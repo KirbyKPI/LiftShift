@@ -1013,7 +1013,7 @@ function SetEditor({
   // payload stays in kg. Convert in/out so the inputs feel natural while
   // weight_kg remains the source of truth.
   const lbsDisplay = (kg: number | null | undefined): string =>
-    kg == null ? '' : String(Math.round(kg * 2.20462 * 10) / 10)
+    kg == null ? '' : String(Math.round(kg * 2.20462))
   const parseLbsToKg = (raw: string): number | null => {
     if (raw === '' || raw == null) return null
     const lbs = Number(raw)
@@ -1238,5 +1238,10 @@ function SetList({ sets }: { sets: any[] }) {
 }
 
 function kgToLbs(kg: number): number {
-  return Math.round(kg * 2.20462 * 10) / 10
+  // Round to nearest whole pound. Hevy stores prescriptions in kg, but
+  // small decimal lbs values like "104.9 lbs" come from kg→lbs conversion
+  // of weights that were originally entered in whole pounds (e.g., 47.627
+  // kg = 105 lbs). Whole-pound display matches what the client sees in
+  // Hevy with their lbs preference.
+  return Math.round(kg * 2.20462)
 }

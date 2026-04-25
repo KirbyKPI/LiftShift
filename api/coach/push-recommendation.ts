@@ -129,7 +129,7 @@ function toHevyExercise(item: ItemRow): HevyExerciseInput | null {
     notes: typeof ex?.notes === 'string' ? ex.notes : '',
     sets: sets.map((s: any) => ({
       type: s?.type || 'normal',
-      weight_kg: s?.weight_kg ?? null,
+      weight_kg: snapToWholePoundKg(s?.weight_kg),
       reps: s?.reps ?? null,
       distance_meters: s?.distance_meters ?? null,
       duration_seconds: s?.duration_seconds ?? null,
@@ -137,6 +137,23 @@ function toHevyExercise(item: ItemRow): HevyExerciseInput | null {
       rpe: s?.rpe ?? null,
     })),
   }
+}
+
+/**
+ * Snap a kg weight to the nearest whole-pound equivalent.
+ *
+ * Claude often proposes weights like 47.6 kg because that's what it sees in
+ * the client's logs (Hevy stores 105 lbs as 47.627 kg internally). Pushing
+ * 47.6 kg back would have Hevy display 104.9 lbs — slightly off. Round-trip
+ * through whole pounds so the prescription is clean: 47.6 kg → 105 lbs →
+ * 47.627 kg, which Hevy renders as exactly 105 lbs in the client's app.
+ */
+function snapToWholePoundKg(kg: number | null | undefined): number | null {
+  if (kg == null) return null
+  if (!Number.isFinite(kg)) return null
+  if (kg === 0) return 0
+  const lbs = Math.round(kg * 2.20462)
+  return Math.round((lbs / 2.20462) * 1000) / 1000
 }
 
 // ─── Handler ───────────────────────────────────────────────────────────────
