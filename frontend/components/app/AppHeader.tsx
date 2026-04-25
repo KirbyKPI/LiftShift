@@ -38,7 +38,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   return (
-    <header className="bg-black/70 flex-shrink-0">
+    // Sticky-pinned beneath the coach chrome (header + optional workspace
+    // toolbar) when embedded in /coach/client/[id]. The CSS variable
+    // --coach-chrome-height is set on the coach scroll container; defaults
+    // to 0 in standalone /app, where there's no scroll for sticky to react
+    // to anyway. Lower z-index than coach chrome so it stacks correctly.
+    <header
+      className="bg-black/70 flex-shrink-0 sticky z-[5] backdrop-blur"
+      style={{ top: 'var(--coach-chrome-height, 0px)' }}
+    >
       <div className="px-2 sm:px-3 py-1 flex flex-col gap-1">
         {/* Top Row: Logo and Nav Buttons */}
         <div className="flex items-center justify-between">

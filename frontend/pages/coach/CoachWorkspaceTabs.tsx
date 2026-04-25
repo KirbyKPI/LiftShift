@@ -22,33 +22,24 @@ type Tab = 'notes' | 'ai' | 'saved'
 
 interface CoachWorkspaceTabsProps {
   clientId: string
+  /** Controlled by the parent — when false, no toolbar renders at all
+   *  (the show/hide toggle lives in CoachHeader instead). */
+  visible: boolean
 }
 
-export function CoachWorkspaceTabs({ clientId }: CoachWorkspaceTabsProps) {
+export function CoachWorkspaceTabs({ clientId, visible }: CoachWorkspaceTabsProps) {
   const [active, setActive] = useState<Tab | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [externalResult, setExternalResult] = useState<any>(null)
-  // Lets the coach reclaim ~50px of viewport when they're working in the
-  // dashboard below and don't need the workspace surfaces. Persists per
-  // client in sessionStorage so it survives tab switches but doesn't leak
-  // across browser sessions.
-  const [minimized, setMinimized] = useState<boolean>(() => {
-    try {
-      return sessionStorage.getItem(`coachToolbarMin:${clientId}`) === '1'
-    } catch {
-      return false
-    }
-  })
-  useEffect(() => {
-    try {
-      sessionStorage.setItem(`coachToolbarMin:${clientId}`, minimized ? '1' : '0')
-    } catch {
-      // sessionStorage may not be available; fall through silently.
-    }
-  }, [clientId, minimized])
 
   const notesPreview = useCoachNotesPreview(clientId)
   const savedCount = useSavedCount(clientId, refreshKey)
+
+  // When the toolbar gets hidden, also collapse any open tab content so we
+  // don't leave orphaned panels showing without their toolbar context.
+  useEffect(() => {
+    if (!visible) setActive(null)
+  }, [visible])
 
   const toggle = (tab: Tab) => {
     setActive((current) => (current === tab ? null : tab))
@@ -79,36 +70,19 @@ export function CoachWorkspaceTabs({ clientId }: CoachWorkspaceTabsProps) {
     setActive('ai')
   }
 
+  // When parent hides the toolbar (via the toggle in the header), render
+  // nothing — including no "Coach tools" pill, since the toggle now lives
+  // in the header itself.
+  if (!visible) return null
+
   // Sticky beneath the coach header so the toolbar is always reachable,
   // even when working in the embedded dashboard far below.
   const toolbarSticky =
     'sticky top-[44px] z-10 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur'
 
-  // Minimized state — single tiny pill that expands to the full bar on click.
-  if (minimized) {
-    return (
-      <div className={toolbarSticky}>
-        <div className="max-w-6xl mx-auto px-6 py-1 flex items-center gap-2">
-          <button
-            onClick={() => setMinimized(false)}
-            className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-0.5 rounded border border-zinc-800 hover:border-zinc-700"
-            title="Show coach tools"
-          >
-            ▼ Coach tools
-          </button>
-          {savedCount != null && savedCount > 0 && (
-            <span className="text-[10px] text-zinc-600">
-              {savedCount} saved
-            </span>
-          )}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <>
-      {/* Toolbar — always visible, single row, sticky below the header */}
+      {/* Toolbar — single row, sticky below the header */}
       <div className={toolbarSticky}>
         <div className="max-w-6xl mx-auto px-6 py-2 flex items-center gap-2 flex-wrap">
           <TabChip
@@ -135,27 +109,15 @@ export function CoachWorkspaceTabs({ clientId }: CoachWorkspaceTabsProps) {
             active={active === 'saved'}
             onClick={() => toggle('saved')}
           />
-          <div className="ml-auto flex items-center gap-2">
-            {active && (
-              <button
-                onClick={() => setActive(null)}
-                className="text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors"
-                title="Close active section"
-              >
-                ✕ Close
-              </button>
-            )}
+          {active && (
             <button
-              onClick={() => {
-                setActive(null)
-                setMinimized(true)
-              }}
-              className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-0.5 rounded border border-zinc-800 hover:border-zinc-700"
-              title="Hide coach tools to see more dashboard"
+              onClick={() => setActive(null)}
+              className="ml-auto text-zinc-500 hover:text-zinc-300 text-sm px-2 py-1 transition-colors"
+              title="Close active section"
             >
-              ▲ Hide
+              ✕ Close
             </button>
-          </div>
+          )}
         </div>
       </div>
 

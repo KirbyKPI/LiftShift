@@ -53,6 +53,29 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
   const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Show/hide the coach workspace toolbar (Notes / AI / Saved tabs). When
+  // hidden, only the slim header is visible above the dashboard. Persists
+  // per-client in sessionStorage so navigation within the dashboard doesn't
+  // lose the preference.
+  const [toolbarVisible, setToolbarVisible] = useState<boolean>(() => {
+    try {
+      const v = sessionStorage.getItem(`coachToolbarVisible:${clientId}`)
+      return v === null ? true : v === '1'
+    } catch {
+      return true
+    }
+  })
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        `coachToolbarVisible:${clientId}`,
+        toolbarVisible ? '1' : '0',
+      )
+    } catch {
+      /* ignore */
+    }
+  }, [clientId, toolbarVisible])
+
   // Initial load: pull client info + first sync (server decides cached vs live).
   useEffect(() => {
     let cancelled = false
@@ -211,8 +234,21 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
   // give the coach dashboard its own `h-screen overflow-y-auto` container
   // that scrolls internally, without touching the body style. Header below
   // is sticky *within* this container.
+  //
+  // The CSS variable --coach-chrome-height is set on the scroll container so
+  // the embedded App's <AppHeader> (KPI Fit logo + dashboard tabs) can stick
+  // BELOW the coach chrome via `sticky top-[var(--coach-chrome-height)]`.
+  // It updates whenever the coach toggles the toolbar so the offset stays
+  // accurate.
+  const COACH_HEADER_HEIGHT = 44
+  const TOOLBAR_HEIGHT = 50
+  const chromeHeight = toolbarVisible ? COACH_HEADER_HEIGHT + TOOLBAR_HEIGHT : COACH_HEADER_HEIGHT
+
   return (
-    <div className="h-screen overflow-y-auto bg-[#0a0a0a] text-white">
+    <div
+      className="h-screen overflow-y-auto bg-[#0a0a0a] text-white"
+      style={{ ['--coach-chrome-height' as string]: `${chromeHeight}px` }}
+    >
       <div className="sticky top-0 z-20">
         <CoachHeader
           clientName={client.name}
@@ -222,6 +258,8 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
           syncing={syncing}
           onBack={onBack}
           onForceSync={() => runSync(true)}
+          toolbarVisible={toolbarVisible}
+          onToggleToolbar={() => setToolbarVisible((v) => !v)}
         />
         {error && (
           <div className="px-6 py-2 border-b border-red-500/20 bg-red-500/95 backdrop-blur">
@@ -238,9 +276,8 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
         lastSyncAt={lastSyncAt}
       >
         {/* Compact one-row toolbar with Notes / AI / Saved tabs.
-            Replaces three stacked collapsible panels — same functionality,
-            ~⅓ the chrome when nothing's open. */}
-        <CoachWorkspaceTabs clientId={clientId} />
+            Visibility is controlled by the toggle in CoachHeader. */}
+        <CoachWorkspaceTabs clientId={clientId} visible={toolbarVisible} />
 
         <div className="h-[100dvh]" key={clientId}>
           <HashRouter>
@@ -262,6 +299,8 @@ function CoachHeader({
   syncing,
   onBack,
   onForceSync,
+  toolbarVisible,
+  onToggleToolbar,
 }: {
   clientName: string
   coachName: string
@@ -270,10 +309,12 @@ function CoachHeader({
   syncing: boolean
   onBack: () => void
   onForceSync: () => void
+  toolbarVisible: boolean
+  onToggleToolbar: () => void
 }) {
   return (
     <header className="border-b border-zinc-800 px-6 py-3 bg-[#0a0a0a]/95 backdrop-blur">
-      <div className="max-w-6xl mx-auto flex items-center gap-4">
+      <div className="max-w-6xl mx-auto flex items-center gap-3">
         <button onClick={onBack} className="text-zinc-500 hover:text-zinc-300 transition-colors text-sm">
           ← Back
         </button>
@@ -285,6 +326,13 @@ function CoachHeader({
               Synced {timeAgo(lastSyncAt)}
             </span>
           )}
+          <button
+            onClick={onToggleToolbar}
+            className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-0.5 rounded border border-zinc-800 hover:border-zinc-700"
+            title={toolbarVisible ? 'Hide coach tools to reclaim viewport' : 'Show Notes / AI / Saved tools'}
+          >
+            {toolbarVisible ? '▲' : '▼'} Coach tools
+          </button>
         </div>
         <span className="text-zinc-600 text-xs hidden md:inline">Coach: {coachName}</span>
         <button
