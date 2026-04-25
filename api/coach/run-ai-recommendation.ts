@@ -448,19 +448,38 @@ function findCurrentSlot(snapshot: any, item: ToolInput['items'][number]): any |
   const primary = routines[0]
   const exercises: any[] = Array.isArray(primary?.exercises) ? primary.exercises : []
 
-  if (item.matched_current_slot_position != null) {
-    const byPosition = exercises.find((ex) => (ex.index ?? -1) + 1 === item.matched_current_slot_position)
-    if (byPosition) return byPosition
-  }
-
+  // 1) exercise_template_id is unique and authoritative — try it first.
+  //    Claude reliably echoes the snapshot's template_ids when not adding
+  //    novel slots, so this catches the common case cleanly.
   if (item.exercise_template_id) {
     const byTemplate = exercises.find((ex) => ex.exercise_template_id === item.exercise_template_id)
     if (byTemplate) return byTemplate
   }
 
+  // 2) Fuzzy title match for renamed slots.
   const titleLc = (item.exercise_title || '').toLowerCase()
-  const byTitle = exercises.find((ex) => (ex.title || '').toLowerCase() === titleLc)
-  return byTitle ?? null
+  if (titleLc) {
+    const byTitle = exercises.find((ex) => (ex.title || '').toLowerCase() === titleLc)
+    if (byTitle) return byTitle
+  }
+
+  // 3) Position-based match as a last resort. Tool schema doesn't pin down
+  //    0-indexed vs 1-indexed and Claude has been observed to use either,
+  //    which produced an off-by-one bug where every item showed the
+  //    *previous* slot's data. Try both interpretations and prefer the one
+  //    whose template_id matches the proposal — if neither does, return
+  //    the 1-indexed match (more common interpretation) but only if the
+  //    proposal didn't supply a template_id (which would have matched above).
+  if (item.matched_current_slot_position != null) {
+    const oneIndexed = exercises.find(
+      (ex) => (ex.index ?? -1) + 1 === item.matched_current_slot_position,
+    )
+    const zeroIndexed = exercises.find((ex) => ex.index === item.matched_current_slot_position)
+    if (oneIndexed) return oneIndexed
+    if (zeroIndexed) return zeroIndexed
+  }
+
+  return null
 }
 
 async function updateRecommendationFailed(
