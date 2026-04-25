@@ -445,6 +445,89 @@ export function GenerateRecommendationPanel({
   )
 }
 
+// ─── Push action — Approve & Assign to client's Hevy ──────────────────────
+
+type PushState =
+  | { kind: 'idle' }
+  | { kind: 'pushing' }
+  | { kind: 'pushed'; routine_id: string | null; routine_title: string; dropped: string[] }
+  | { kind: 'error'; message: string }
+
+function PushBar({ recommendationId }: { recommendationId: string }) {
+  const [state, setState] = useState<PushState>({ kind: 'idle' })
+
+  const handlePush = async () => {
+    if (
+      !confirm(
+        "Push this routine to the client's Hevy account now?\n\n" +
+          'It will be created as a new dated routine. The client will see ' +
+          'it in their Hevy app immediately.',
+      )
+    ) {
+      return
+    }
+    setState({ kind: 'pushing' })
+    try {
+      const session = await getSession()
+      if (!session?.access_token) throw new Error('Not signed in')
+      const res = await fetch('/api/coach/push-recommendation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recommendation_id: recommendationId,
+          coach_token: session.access_token,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Push failed')
+      setState({
+        kind: 'pushed',
+        routine_id: data.hevy_routine_id,
+        routine_title: data.hevy_routine_title,
+        dropped: data.dropped_novel || [],
+      })
+    } catch (err: any) {
+      setState({ kind: 'error', message: err?.message || 'Push failed' })
+    }
+  }
+
+  if (state.kind === 'pushed') {
+    return (
+      <div className="rounded-lg border border-lime-500/30 bg-lime-500/10 p-3 mt-3">
+        <div className="flex items-baseline gap-2">
+          <span className="text-lime-400 text-sm font-medium">✓ Pushed to Hevy</span>
+          <span className="text-zinc-300 text-sm">{state.routine_title}</span>
+        </div>
+        {state.dropped.length > 0 && (
+          <p className="text-amber-400 text-xs mt-1">
+            Skipped {state.dropped.length} item(s) without an exercise template id:{' '}
+            {state.dropped.join(', ')}
+          </p>
+        )}
+        <p className="text-zinc-500 text-[11px] mt-1">
+          The client now sees this routine in their Hevy app.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <button
+        onClick={handlePush}
+        disabled={state.kind === 'pushing'}
+        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-black font-semibold text-sm rounded-lg transition-colors"
+        title="Create as a new dated routine on the client's Hevy account"
+      >
+        {state.kind === 'pushing' ? 'Pushing to Hevy…' : '✓ Approve & Assign to Hevy'}
+      </button>
+      {state.kind === 'error' && (
+        <span className="text-red-400 text-xs">{state.message}</span>
+      )}
+    </div>
+  )
+}
+
 // ─── v0 result view ────────────────────────────────────────────────────────
 
 function ResultView({ result }: { result: AiResult }) {
@@ -477,6 +560,8 @@ function ResultView({ result }: { result: AiResult }) {
         <p className="text-sm text-zinc-400 whitespace-pre-wrap">{result.summary}</p>
       </div>
 
+      <PushBar recommendationId={result.recommendation_id} />
+
       <div className="space-y-4">
         {groups.map((group, gi) => (
           <div key={group.label ?? `group-${gi}`}>
@@ -495,7 +580,8 @@ function ResultView({ result }: { result: AiResult }) {
       </div>
 
       <p className="text-zinc-600 text-[11px] pt-2">
-        This is a v0 preview. Accept / edit / reject controls arrive in Phase 3.
+        Per-item Accept / Edit / Reject controls arrive in a future phase.
+        Pushing now sends every item that isn't rejected.
       </p>
     </div>
   )
