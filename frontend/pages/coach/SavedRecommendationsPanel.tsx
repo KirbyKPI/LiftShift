@@ -38,6 +38,9 @@ interface LoadedRecommendation {
     proposed_json: any
     rationale: string | null
     day_label: string | null
+    coach_action?: 'pending' | 'accept' | 'edit' | 'reject' | 'substitute'
+    coach_edited_json?: any
+    substitution_context?: any
   }>
   adjustment_level: string
   status: string
