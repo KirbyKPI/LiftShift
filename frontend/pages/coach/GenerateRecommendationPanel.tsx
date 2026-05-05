@@ -22,6 +22,7 @@ import { buildInsightsSummary } from './buildInsightsSummary'
 import { PlanBuilderForm } from './PlanBuilderForm'
 import type { PlanPreferences } from './planPreferencesTypes'
 import { displayWeight, unitForExercise } from './exerciseUnits'
+import { HevyTemplatePicker, type HevyTemplate } from './HevyTemplatePicker'
 
 const MAX_ROUTINE_SLOTS = 7
 
@@ -723,6 +724,7 @@ function ItemRow({
   onUpdate: (id: string, patch: Partial<AiResultItem>) => void
 }) {
   const [editing, setEditing] = useState(false)
+  const [pickingTemplate, setPickingTemplate] = useState(false)
   const [substituting, setSubstituting] = useState<
     | { kind: 'idle' }
     | { kind: 'asking' }
@@ -797,6 +799,20 @@ function ItemRow({
     })
   }
 
+  const onPickTemplate = (template: HevyTemplate) => {
+    // Persist template + title to the row. Use coach_action='edit' so push
+    // can tell this was coach-resolved (and so the badge updates). Don't
+    // touch coach_edited_json — sets/notes from the proposal stay intact.
+    void (async () => {
+      const ok = await persist({
+        coach_action: 'edit',
+        exercise_title: template.title,
+        exercise_template_id: template.id,
+      })
+      if (ok) setPickingTemplate(false)
+    })()
+  }
+
   const requestSubstitute = async (reason: string) => {
     setSubstituting({ kind: 'loading' })
     try {
@@ -853,9 +869,32 @@ function ItemRow({
               NEW
             </span>
           )}
+          {!item.exercise_template_id && action !== 'reject' && (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300"
+              title="No Hevy template_id — this item will be dropped on push until you pick one."
+            >
+              NEEDS TEMPLATE
+            </span>
+          )}
           <ActionStatusBadge action={action} />
         </div>
       </div>
+
+      {!item.exercise_template_id && action !== 'reject' && (
+        <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 flex items-center justify-between gap-3">
+          <p className="text-amber-200/80 text-xs">
+            No Hevy template assigned. This item will be skipped on push until
+            you pick one.
+          </p>
+          <button
+            onClick={() => setPickingTemplate(true)}
+            className="shrink-0 px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs rounded transition-colors"
+          >
+            Pick Hevy template
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
         <div>
@@ -973,6 +1012,15 @@ function ItemRow({
             </button>
           )}
         </div>
+      )}
+
+      {pickingTemplate && (
+        <HevyTemplatePicker
+          suggestedTitle={item.exercise_title}
+          currentTemplateId={item.exercise_template_id}
+          onSelect={onPickTemplate}
+          onClose={() => setPickingTemplate(false)}
+        />
       )}
     </div>
   )
