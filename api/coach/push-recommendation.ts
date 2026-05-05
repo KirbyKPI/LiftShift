@@ -220,15 +220,23 @@ function toHevyExercise(item: ItemRow): HevyExerciseInput | null {
   const ex = effectiveExerciseJson(item)
   if (!ex) return null
 
-  // Need a template_id — Hevy requires one. Fall back to current slot's id.
-  const templateId =
-    item.exercise_template_id ||
-    item.current_json?.exercise_template_id ||
-    ex?.exercise_template_id
+  // Need a template_id — Hevy requires one. Use ONLY the row's resolved
+  // exercise_template_id; do NOT fall back to current_json.exercise_template_id.
+  //
+  // The fallback used to make sense when AI omitted template_id for slots that
+  // mapped to existing exercises. But after we added server-side validation
+  // that NULLs out mismatched template_ids, the fallback would resurrect the
+  // original (wrong) template — pushing the wrong exercise on Hevy under a
+  // different title. For substitutes especially this was unsafe: an item
+  // titled "Lateral Raise (Cable)" with a nullified template_id would fall
+  // back to the original "Single Arm Triceps Pushdown" template_id from the
+  // current slot.
+  //
+  // If item.exercise_template_id is null, we return null here so the caller
+  // drops the item and reports it as needing manual resolution. The coach
+  // must Edit the item in the UI to pick a valid template before pushing.
+  const templateId = item.exercise_template_id
   if (!templateId) {
-    // Caller filters these out — represents a novel slot that we can't push
-    // without resolving template_id. For Phase 4a we drop them and surface
-    // a warning in the response.
     return null
   }
 
