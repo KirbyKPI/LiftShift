@@ -25,6 +25,7 @@ import type { WorkoutSet } from '../../types';
 import { setCoachViewActive, resetCoachViewStorage } from '../../utils/storage/createStorageManager';
 import { saveSetupComplete } from '../../utils/storage/dataSourceStorage';
 import { saveDataSourceChoice } from '../../utils/storage/dataSourceStorage';
+import { saveWeightUnit } from '../../utils/storage/localStorage';
 
 export interface CoachViewContextValue {
   isCoachView: true;
@@ -70,6 +71,11 @@ export function CoachViewProvider({
     // seedSets all come from Hevy today; mark data source so the app doesn't
     // try to prompt the coach to pick a source.
     saveDataSourceChoice('hevy');
+    // Coach + clients are US-based (lbs). The global default is kg, but every
+    // coach view starts fresh (storage is shimmed to in-memory) so without
+    // this every PR/plateau card shows Hevy's internal kg values. Override
+    // for the duration of the coach view.
+    saveWeightUnit('lbs');
     return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
