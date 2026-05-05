@@ -1,26 +1,31 @@
 /**
  * POST /api/coach/push-recommendation
  * ────────────────────────────────────────────────────────────────────────────
- * Phase 4a — takes an approved (or awaiting-review) recommendation and pushes
- * it as a new dated routine to the client's Hevy account using their stored
- * API key.
+ * Takes an approved (or awaiting-review) recommendation and pushes it as a
+ * new routine to the COACH'S Hevy account, organized into a per-client
+ * folder. The coach then uses Hevy Coach's "Assign Workout Program" UI to
+ * deliver it to the client (which gives Hevy Coach completion tracking,
+ * activity feed, etc).
  *
- * Title convention: keep the source routine's existing name (or fallback to
- *   "KPI·FIT") and append the current date as " MM.DD.YY". A trailing
- *   date suffix from a prior push is stripped first so we don't double-stamp.
+ * (Earlier versions pushed directly to the client's Hevy account using the
+ * client's API key. That bypassed Hevy Coach entirely, leaving the coach
+ * blind to whether the client adopted the routine. The current flow keeps
+ * everything inside Hevy Coach's normal workflow.)
  *
- * Hevy push: POST https://api.hevyapp.com/v1/routines with `{ routine: {…} }`.
- * The created routine appears on the client's Hevy account as a new
- * standalone routine — they can start it from the app immediately.
+ * Title format: "{Client name} — {Source routine title} — {Month Day, Year}"
+ *   e.g. "Jared Fur — Upper A — May 5, 2026"
+ * Folder: one per client, auto-created on first push, cached as
+ *   training_clients.hevy_coach_folder_id.
+ *
+ * Hevy call: POST https://api.hevyapp.com/v1/routines with `{ routine: {…} }`,
+ * authenticated via the coach's stored API key in
+ * training_coach_hevy_connections.
  *
  * Out of scope (later phases):
- *   - Per-item accept/edit/reject UI (we currently push every item that
- *     doesn't have coach_action='reject')
- *   - week_plan mode, which produces multiple routines (one per day) —
- *     v1 pushes the first day_label group only; future phases will iterate
- *     and push N routines.
- *   - Promoting the pushed routine to a "Program" with auto-progression
- *     (Phase 4b/4c)
+ *   - week_plan mode currently pushes the first day_label group only;
+ *     future phases will iterate and push N routines (one per training day)
+ *     into the same per-client folder.
+ *   - Promoting the pushed routine to a "Program" with auto-progression.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
@@ -48,20 +53,119 @@ async function decryptApiKey(encrypted: string): Promise<string> {
 }
 
 // ─── Title helpers ─────────────────────────────────────────────────────────
+//
+// Format: "{Client} — {Source routine title} — {Month Day, Year}"
+// Example: "Jared Fur — Upper A — May 5, 2026"
+//
+// The em-dash separator (U+2014) makes the title visually distinct in the
+// coach's Hevy library. Trailing date suffix from a previous push is
+// stripped before re-stamping so re-pushing doesn't double up.
 
-const DATE_SUFFIX_RE = /\s+\d{2}\.\d{2}\.\d{2}\s*$/
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
 
-function todayMmDdYy(): string {
+// Matches " — Month D, YYYY" or " — Month DD, YYYY" at end of string.
+const DATE_SUFFIX_RE = / — (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, \d{4}\s*$/
+
+function todayLongDate(): string {
   const d = new Date()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  const yy = String(d.getFullYear() % 100).padStart(2, '0')
-  return `${mm}.${dd}.${yy}`
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
 }
 
-function buildPushedTitle(sourceTitle: string | null | undefined): string {
+function buildPushedTitle(
+  clientName: string,
+  sourceTitle: string | null | undefined,
+): string {
   const base = (sourceTitle || 'KPI·FIT').replace(DATE_SUFFIX_RE, '').trim()
-  return `${base} ${todayMmDdYy()}`
+  return `${clientName} — ${base} — ${todayLongDate()}`
+}
+
+// ─── Per-client folder management on the coach's Hevy account ─────────────
+//
+// Each client gets one folder on the coach's Hevy library, named after the
+// client. We cache the folder_id on training_clients.hevy_coach_folder_id
+// so subsequent pushes don't re-call GET /v1/routine_folders.
+//
+// Order of operations on push:
+//   1. If client.hevy_coach_folder_id is set, use it (fast path).
+//   2. Else GET /v1/routine_folders, look for a folder titled with the
+//      client's name. If found, cache and use.
+//   3. Else POST /v1/routine_folders to create one, cache and use.
+
+interface HevyFolder {
+  id: number
+  title: string
+}
+
+async function listAllHevyFolders(apiKey: string): Promise<HevyFolder[]> {
+  const all: HevyFolder[] = []
+  let page = 1
+  while (page <= 20) {
+    const r = await fetch(
+      `https://api.hevyapp.com/v1/routine_folders?page=${page}&page_size=10`,
+      { headers: { 'api-key': apiKey, accept: 'application/json' } },
+    )
+    if (r.status === 404 && page > 1) break // pagination exhausted
+    if (!r.ok) throw new Error(`Hevy folder list failed: ${r.status}`)
+    const data = await r.json()
+    const folders: HevyFolder[] = (data.routine_folders || []).map((f: any) => ({
+      id: Number(f.id),
+      title: String(f.title || ''),
+    }))
+    all.push(...folders)
+    if (folders.length < 10) break
+    page++
+  }
+  return all
+}
+
+async function createHevyFolder(apiKey: string, title: string): Promise<number> {
+  const r = await fetch('https://api.hevyapp.com/v1/routine_folders', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'Content-Type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify({ routine_folder: { title } }),
+  })
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '')
+    throw new Error(`Hevy folder create failed: ${r.status} ${txt}`)
+  }
+  const data = await r.json()
+  // Hevy returns either { routine_folder: { id } } or { id }.
+  const id = data?.routine_folder?.id ?? data?.id
+  if (typeof id !== 'number') {
+    throw new Error('Hevy folder create: no id in response')
+  }
+  return id
+}
+
+async function ensureClientFolder(
+  apiKey: string,
+  client: { id: string; name: string; hevy_coach_folder_id: number | null },
+): Promise<number> {
+  // Fast path: cached id.
+  if (client.hevy_coach_folder_id != null) return client.hevy_coach_folder_id
+
+  // Slow path: probe for existing folder by name (in case the coach already
+  // created one manually), else create a new one.
+  const existing = await listAllHevyFolders(apiKey)
+  const match = existing.find(
+    (f) => f.title.trim().toLowerCase() === client.name.trim().toLowerCase(),
+  )
+  const folderId = match ? match.id : await createHevyFolder(apiKey, client.name)
+
+  // Cache for next time.
+  await supabase
+    .from('training_clients')
+    .update({ hevy_coach_folder_id: folderId })
+    .eq('id', client.id)
+
+  return folderId
 }
 
 // ─── Hevy payload construction ─────────────────────────────────────────────
@@ -261,29 +365,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
+    // ── Coach Hevy connection + key decrypt ──────────────────────────
+    // Push lands on the COACH'S Hevy library (not the client's). The coach
+    // then assigns it via Hevy Coach UI. Requires the coach to have
+    // connected their Hevy Pro API key via /api/coach/connect-hevy.
+    const { data: conn } = await supabase
+      .from('training_coach_hevy_connections')
+      .select('hevy_api_key_encrypted, connection_status')
+      .eq('coach_id', coach.id)
+      .single()
+    if (!conn) {
+      return res.status(404).json({
+        error:
+          'Connect your Hevy Pro account first. Open Settings → Hevy connection and paste your API key.',
+        error_code: 'COACH_HEVY_NOT_CONNECTED',
+      })
+    }
+    if (conn.connection_status === 'expired') {
+      return res.status(400).json({
+        error: 'Your Hevy API key was rejected. Reconnect in Settings.',
+        error_code: 'COACH_HEVY_KEY_EXPIRED',
+      })
+    }
+    const apiKey = await decryptApiKey(conn.hevy_api_key_encrypted)
+
+    // ── Client info: name (for title + folder) and cached folder_id ──
+    const { data: client, error: clientErr } = await supabase
+      .from('training_clients')
+      .select('id, name, hevy_coach_folder_id')
+      .eq('id', rec.client_id)
+      .single()
+    if (clientErr || !client) {
+      return res.status(404).json({ error: 'Client not found' })
+    }
+
+    // ── Folder: get-or-create on the coach's account ─────────────────
+    let folderId: number
+    try {
+      folderId = await ensureClientFolder(apiKey, {
+        id: client.id,
+        name: client.name,
+        hevy_coach_folder_id: client.hevy_coach_folder_id,
+      })
+    } catch (err: any) {
+      return res.status(502).json({
+        error: `Hevy folder setup failed: ${err?.message || err}`,
+        error_code: 'HEVY_FOLDER_FAILED',
+      })
+    }
+
     // ── Title ──────────────────────────────────────────────────────────
     const sourceTitle: string | null =
       (rec.ai_snapshot?.current_hevy_routines?.[0]?.title as string | null) ?? null
-    const title = buildPushedTitle(sourceTitle)
-
-    // ── Hevy connection + key decrypt ─────────────────────────────────
-    const { data: conn } = await supabase
-      .from('training_hevy_connections')
-      .select('hevy_api_key_encrypted, connection_status')
-      .eq('client_id', rec.client_id)
-      .single()
-    if (!conn) return res.status(404).json({ error: 'No Hevy connection for client' })
-    if (conn.connection_status === 'expired') {
-      return res.status(400).json({ error: 'Client Hevy API key expired' })
-    }
-    const apiKey = await decryptApiKey(conn.hevy_api_key_encrypted)
+    const title = buildPushedTitle(client.name, sourceTitle)
 
     // ── Push ──────────────────────────────────────────────────────────
     const payload = {
       routine: {
         title,
-        folder_id: null,
-        notes: routine_notes || `Generated by KPI·FIT Coach`,
+        folder_id: folderId,
+        notes: routine_notes || `Generated by KPI·FIT Coach for ${client.name}`,
         exercises: hevyExercises,
       },
     }

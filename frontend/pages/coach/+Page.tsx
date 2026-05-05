@@ -6,6 +6,10 @@ import { supabase } from '../../utils/supabase/client'
 import type { Coach, TrainingClient, ClientWithConnection } from '../../utils/supabase/client'
 import { navigate } from 'vike/client/router'
 import { CoachClientDashboard } from './CoachClientDashboard'
+import {
+  CoachHevyConnectionChip,
+  CoachHevyConnectionBanner,
+} from './CoachHevyConnectionPanel'
 
 // ─── Sub-views ──────────────────────────────────────────────────────────────
 
@@ -142,6 +146,7 @@ function DashboardView({ coach, clients, onRefresh, onSelectClient }: {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <CoachHevyConnectionChip />
             <span className="text-zinc-500 text-sm">{coach.display_name}</span>
             <button onClick={handleSignOut} className="text-zinc-500 text-sm hover:text-zinc-300 transition-colors">
               Sign Out
@@ -152,6 +157,8 @@ function DashboardView({ coach, clients, onRefresh, onSelectClient }: {
 
       {/* Main */}
       <main className="max-w-6xl mx-auto px-6 py-8">
+        <CoachHevyConnectionBanner />
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold">Your Clients</h1>
