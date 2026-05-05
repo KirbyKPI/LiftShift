@@ -89,7 +89,6 @@ interface HevyExerciseInput {
     distance_meters: number | null
     duration_seconds: number | null
     custom_metric: number | null
-    rpe: number | null
   }>
 }
 
@@ -149,7 +148,9 @@ function toHevyExercise(item: ItemRow): HevyExerciseInput | null {
       distance_meters: s?.distance_meters ?? null,
       duration_seconds: s?.duration_seconds ?? null,
       custom_metric: s?.custom_metric ?? null,
-      rpe: s?.rpe ?? null,
+      // Note: Hevy's POST /v1/routines does NOT accept `rpe` on sets.
+      // It's only stored on completed workouts (GET /v1/workouts), not on
+      // routine templates. Sending it triggers a validation error.
     })),
   }
 }
