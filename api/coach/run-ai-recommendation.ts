@@ -47,6 +47,90 @@ export const config = {
   maxDuration: 300,
 }
 
+// ─── Template catalog ──────────────────────────────────────────────────────
+//
+// Hevy resolves exercises by exercise_template_id and ignores any title we
+// send. If the AI pairs a template_id with the wrong exercise title (e.g.
+// labels template `552AB030` "Lateral Raise" when it's actually "Single Arm
+// Triceps Pushdown"), the wrong exercise lands on Hevy. Observed in the
+// wild: Claude has hallucinated 3/8 template_ids on a single recommendation.
+//
+// Defense in depth: (1) inject a clean catalog into the prompt, (2) tighten
+// system instructions, (3) validate every returned template_id server-side
+// against the catalog. If the AI's title doesn't match the canonical title
+// for that template_id, null the template_id (treat as novel) and keep the
+// AI's title — the coach can resolve template_id at push time.
+
+interface TemplateCatalogEntry {
+  template_id: string
+  title: string
+}
+
+function extractTemplateCatalog(snapshot: any): Map<string, string> {
+  const catalog = new Map<string, string>()
+  const add = (id: unknown, title: unknown) => {
+    if (typeof id !== 'string' || !id) return
+    if (typeof title !== 'string' || !title) return
+    if (!catalog.has(id)) catalog.set(id, title)
+  }
+
+  const routines: any[] = Array.isArray(snapshot?.current_hevy_routines)
+    ? snapshot.current_hevy_routines
+    : []
+  for (const r of routines) {
+    const exs: any[] = Array.isArray(r?.exercises) ? r.exercises : []
+    for (const ex of exs) add(ex?.exercise_template_id, ex?.title)
+  }
+
+  const recent: any[] = Array.isArray(snapshot?.recent_workout_sets)
+    ? snapshot.recent_workout_sets
+    : []
+  for (const s of recent) add(s?.exercise_template_id, s?.exercise_title || s?.exercise_name)
+
+  return catalog
+}
+
+function buildCatalogBlock(catalog: Map<string, string>): string {
+  if (catalog.size === 0) return 'VALID_EXERCISE_TEMPLATES: (none — snapshot has no template_ids)'
+  const lines = Array.from(catalog.entries())
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([id, title]) => `- ${id} = ${title}`)
+  return [
+    'VALID_EXERCISE_TEMPLATES (the ONLY exercise_template_ids you may use):',
+    ...lines,
+    '',
+    'For any exercise NOT in this list, set exercise_template_id to null.',
+    'Never pair a template_id from this list with a different exercise.',
+  ].join('\n')
+}
+
+function normalizeTitle(s: string | null | undefined): string {
+  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '')
+}
+
+/** Returns true if the AI's title plausibly refers to the same exercise as
+ *  the canonical title for that template (allowing minor wording variance
+ *  like "DB" vs "(Dumbbell)"). */
+function titlesMatch(aiTitle: string, canonicalTitle: string): boolean {
+  const a = normalizeTitle(aiTitle)
+  const c = normalizeTitle(canonicalTitle)
+  if (!a || !c) return false
+  if (a === c) return true
+  // Allow either being a substring of the other (covers abbreviations like
+  // "Bench Press DB" vs "Bench Press (Dumbbell)" only in one direction; the
+  // stricter substring path catches "Lateral Raise" vs "Single Arm Triceps
+  // Pushdown" as a mismatch — exactly what we want).
+  return a.includes(c) || c.includes(a)
+}
+
+interface TemplateValidationWarning {
+  position: number
+  ai_title: string
+  ai_template_id: string
+  canonical_title: string | null
+  reason: 'unknown_template_id' | 'title_mismatch'
+}
+
 // ─── Prompt building ───────────────────────────────────────────────────────
 
 type AdjustmentLevel =
@@ -184,6 +268,22 @@ submit it via the propose_routine_adjustment tool. Coaching principles:
   hand for farmers walk") so the client knows what to grab. This also
   applies to plate-loaded carries when the implement is kg-marked.
 
+EXERCISE TEMPLATE IDs — ABSOLUTE RULES:
+- The user message contains a VALID_EXERCISE_TEMPLATES list. Each entry is
+  "<id> = <canonical title>". These are the ONLY exercise_template_ids you
+  may use, and only paired with the exercise they represent.
+- If you propose an exercise that exists in VALID_EXERCISE_TEMPLATES, copy
+  its template_id verbatim and use the canonical title (or a clearly
+  equivalent variant — e.g. "Bench Press (DB)" ≈ "Bench Press (Dumbbell)").
+- If you propose an exercise that does NOT appear in VALID_EXERCISE_TEMPLATES
+  (a novel swap, a new addition), set exercise_template_id to null and pick
+  a clear exercise_title. The coach will resolve the template_id at push.
+- NEVER invent a template_id. NEVER pair a template_id with a different
+  exercise than the one it represents in VALID_EXERCISE_TEMPLATES. Server
+  validation will null-out any mismatched template_ids and surface a
+  warning to the coach — preventing the wrong exercise from landing on
+  Hevy, but also signaling that you got it wrong.
+
 Call the propose_routine_adjustment tool exactly once with your full proposal.
 Do not produce any prose outside the tool call — the coach will review in a
 diff UI that reads the tool_use input.
@@ -289,6 +389,11 @@ based on their recent workout patterns.
     current_hevy_routines: primary ? [primary] : [],
   }
 
+  // Pull the catalog from the FULL snapshot (not the trimmed one) so the AI
+  // can use template_ids from any of the client's routines, not just the
+  // primary one being adjusted.
+  const catalogBlock = buildCatalogBlock(extractTemplateCatalog(snapshot))
+
   const prefsBlock = formatPlanPreferences(planPreferences)
 
   const focusBlock =
@@ -313,6 +418,10 @@ based on their recent workout patterns.
         coachIntent,
         '---',
         '',
+        catalogBlock,
+        '',
+        '---',
+        '',
         'CLIENT CONTEXT:',
         primary
           ? `The client has an existing routine "${primary.title}" with ${
@@ -335,6 +444,10 @@ based on their recent workout patterns.
         '',
         coachIntent,
         primaryBanner,
+        '',
+        catalogBlock,
+        '',
+        '---',
         '',
         'OTHER ROUTINES (context only):',
         otherList,
@@ -634,6 +747,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(502).json({ error: msg, raw: aiResponse })
     }
 
+    // ── Validate template_ids against the snapshot catalog ──────────────
+    // Hevy resolves exercises by template_id and ignores our title; if the
+    // AI hallucinates a template_id (or pairs a real one with the wrong
+    // title) the wrong exercise lands on Hevy. Null-out any mismatch and
+    // surface a warning so the coach knows to resolve it manually.
+    const catalog = extractTemplateCatalog(rec.ai_snapshot)
+    const templateWarnings: TemplateValidationWarning[] = []
+    const cleanedItems = parsed.items.map((item) => {
+      if (!item.exercise_template_id) return item
+      const canonical = catalog.get(item.exercise_template_id)
+      if (!canonical) {
+        templateWarnings.push({
+          position: item.position,
+          ai_title: item.exercise_title,
+          ai_template_id: item.exercise_template_id,
+          canonical_title: null,
+          reason: 'unknown_template_id',
+        })
+        return { ...item, exercise_template_id: null }
+      }
+      if (!titlesMatch(item.exercise_title, canonical)) {
+        templateWarnings.push({
+          position: item.position,
+          ai_title: item.exercise_title,
+          ai_template_id: item.exercise_template_id,
+          canonical_title: canonical,
+          reason: 'title_mismatch',
+        })
+        return { ...item, exercise_template_id: null }
+      }
+      return item
+    })
+
+    if (templateWarnings.length > 0) {
+      console.warn(
+        '[run-ai-recommendation] template_id validation nullified',
+        templateWarnings.length,
+        'item(s):',
+        templateWarnings,
+      )
+    }
+
     // Persist raw response for forensics.
     await supabase
       .from('training_coach_recommendations')
@@ -646,7 +801,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Build the item rows. Match each proposal back to the client's current
     // routine so the review UI can diff current vs proposed.
-    const itemRows = parsed.items.map((item) => {
+    const itemRows = cleanedItems.map((item) => {
       const currentSlot = findCurrentSlot(rec.ai_snapshot, item)
       return {
         recommendation_id: rec.id,
@@ -677,6 +832,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       status: 'awaiting_review',
       summary: parsed.summary,
       items: insertedItems,
+      template_warnings: templateWarnings,
       usage: {
         input_tokens: aiResponse.usage?.input_tokens ?? null,
         output_tokens: aiResponse.usage?.output_tokens ?? null,

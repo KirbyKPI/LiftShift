@@ -54,15 +54,72 @@ explained why. Your job: propose a single replacement exercise that:
   coach's stated reason (e.g. equipment swap, injury accommodation).
 - Uses the same prescription philosophy as the original (similar rep range,
   similar loading scheme, same rest interval).
-- Picks an exercise_template_id that appears in the client's snapshot
-  (recent_workout_sets or current_hevy_routines) when possible — those are
-  exercises the client has equipment access to and Hevy has cataloged. If
-  no good match exists, set exercise_template_id to null and pick a clear
-  exercise_title; the coach will resolve.
+
+EXERCISE TEMPLATE IDs — ABSOLUTE RULES:
+- The user message contains a VALID_EXERCISE_TEMPLATES list. Each entry is
+  "<id> = <canonical title>". These are the ONLY exercise_template_ids you
+  may use, and only paired with the exercise they represent.
+- If your replacement exists in VALID_EXERCISE_TEMPLATES, copy its
+  template_id verbatim and use the canonical title (or a clearly equivalent
+  variant — e.g. "Bench Press (DB)" ≈ "Bench Press (Dumbbell)").
+- If your replacement does NOT appear in VALID_EXERCISE_TEMPLATES, set
+  exercise_template_id to null and pick a clear exercise_title — the coach
+  will resolve template_id at push.
+- NEVER invent a template_id. NEVER pair a template_id with a different
+  exercise. Server validation will null-out any mismatched template_ids.
 
 Call the propose_substitute tool exactly once with your suggestion. Do not
 write prose outside the tool call.
 `.trim()
+
+// ─── Template catalog (mirror of run-ai-recommendation.ts) ─────────────────
+
+function extractTemplateCatalog(snapshot: any): Map<string, string> {
+  const catalog = new Map<string, string>()
+  const add = (id: unknown, title: unknown) => {
+    if (typeof id !== 'string' || !id) return
+    if (typeof title !== 'string' || !title) return
+    if (!catalog.has(id)) catalog.set(id, title)
+  }
+  const routines: any[] = Array.isArray(snapshot?.current_hevy_routines)
+    ? snapshot.current_hevy_routines
+    : []
+  for (const r of routines) {
+    const exs: any[] = Array.isArray(r?.exercises) ? r.exercises : []
+    for (const ex of exs) add(ex?.exercise_template_id, ex?.title)
+  }
+  const recent: any[] = Array.isArray(snapshot?.recent_workout_sets)
+    ? snapshot.recent_workout_sets
+    : []
+  for (const s of recent) add(s?.exercise_template_id, s?.exercise_title || s?.exercise_name)
+  return catalog
+}
+
+function buildCatalogBlock(catalog: Map<string, string>): string {
+  if (catalog.size === 0) return 'VALID_EXERCISE_TEMPLATES: (none — snapshot has no template_ids)'
+  const lines = Array.from(catalog.entries())
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([id, title]) => `- ${id} = ${title}`)
+  return [
+    'VALID_EXERCISE_TEMPLATES (the ONLY exercise_template_ids you may use):',
+    ...lines,
+    '',
+    'For any exercise NOT in this list, set exercise_template_id to null.',
+    'Never pair a template_id from this list with a different exercise.',
+  ].join('\n')
+}
+
+function normalizeTitle(s: string | null | undefined): string {
+  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '')
+}
+
+function titlesMatch(aiTitle: string, canonicalTitle: string): boolean {
+  const a = normalizeTitle(aiTitle)
+  const c = normalizeTitle(canonicalTitle)
+  if (!a || !c) return false
+  if (a === c) return true
+  return a.includes(c) || c.includes(a)
+}
 
 const PROPOSE_TOOL = {
   name: 'propose_substitute',
@@ -115,6 +172,7 @@ function buildUserMessage(
   snapshot: any,
   originalSlot: { exercise_title: string; exercise_template_id: string | null; proposed_json: any },
   reason: string | null,
+  catalogBlock: string,
 ): string {
   return [
     `The coach is replacing ONE slot in the routine and wants a single alternative.`,
@@ -130,6 +188,10 @@ function buildUserMessage(
     reason && reason.trim()
       ? `COACH'S REASON FOR SUBSTITUTING:\n${reason.trim()}`
       : `COACH'S REASON: (not specified — pick a sensible swap based on the data)`,
+    '',
+    '---',
+    '',
+    catalogBlock,
     '',
     '---',
     '',
@@ -191,6 +253,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (rec.coach_id !== coach.id) return res.status(403).json({ error: 'Not your recommendation' })
 
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+    const catalog = extractTemplateCatalog(rec.ai_snapshot)
     const userMessage = buildUserMessage(
       rec.ai_snapshot,
       {
@@ -199,6 +262,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         proposed_json: item.proposed_json,
       },
       reason ?? null,
+      buildCatalogBlock(catalog),
     )
 
     const aiResponse = await anthropic.messages.create({
@@ -222,9 +286,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const alternative = toolBlock.input as {
       exercise_template_id: string | null
+      exercise_template_id_warning?: 'unknown_template_id' | 'title_mismatch' | null
       exercise_title: string
       proposed: any
       rationale: string
+    }
+
+    // Validate template_id against the catalog — same defense as the main
+    // recommendation flow. If the AI hallucinated or mispaired the id,
+    // null it out so the coach (or push) doesn't ship the wrong exercise.
+    if (alternative.exercise_template_id) {
+      const canonical = catalog.get(alternative.exercise_template_id)
+      if (!canonical) {
+        console.warn('[substitute-item] unknown template_id from AI:', {
+          ai_template_id: alternative.exercise_template_id,
+          ai_title: alternative.exercise_title,
+        })
+        alternative.exercise_template_id_warning = 'unknown_template_id'
+        alternative.exercise_template_id = null
+      } else if (!titlesMatch(alternative.exercise_title, canonical)) {
+        console.warn('[substitute-item] template_id/title mismatch from AI:', {
+          ai_template_id: alternative.exercise_template_id,
+          ai_title: alternative.exercise_title,
+          canonical_title: canonical,
+        })
+        alternative.exercise_template_id_warning = 'title_mismatch'
+        alternative.exercise_template_id = null
+      }
     }
 
     // Stash the alternative on the item so the UI can render it without

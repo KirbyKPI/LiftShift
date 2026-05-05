@@ -83,10 +83,22 @@ interface AiResultItem {
   } | null
 }
 
+interface TemplateWarning {
+  position: number
+  ai_title: string
+  ai_template_id: string
+  canonical_title: string | null
+  reason: 'unknown_template_id' | 'title_mismatch'
+}
+
 interface AiResult {
   recommendation_id: string
   summary: string
   items: AiResultItem[]
+  /** Server-side validation flagged these items: their AI-supplied
+   *  exercise_template_id was nullified because it didn't match the
+   *  catalog. The coach needs to resolve template_id manually before push. */
+  template_warnings?: TemplateWarning[]
   usage: { input_tokens: number | null; output_tokens: number | null }
   model: string
 }
@@ -623,12 +635,45 @@ function ResultView({ result }: { result: AiResult }) {
     {} as Record<CoachAction, number>,
   )
 
+  const warnings = result.template_warnings ?? []
+
   return (
     <div className="space-y-3 pt-3 border-t border-zinc-800">
       <div>
         <h3 className="text-sm font-semibold text-zinc-200 mb-1">Proposal summary</h3>
         <p className="text-sm text-zinc-400 whitespace-pre-wrap">{result.summary}</p>
       </div>
+
+      {warnings.length > 0 && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+          <div className="font-semibold text-amber-300 mb-1">
+            ⚠ {warnings.length} item{warnings.length === 1 ? '' : 's'} need a Hevy template_id
+          </div>
+          <p className="text-amber-200/80 mb-2">
+            Claude paired these with an invalid or mismatched template_id, so we
+            cleared the id on the affected items. Hevy will reject these on push
+            unless you set the template via Edit before assigning.
+          </p>
+          <ul className="space-y-1 text-amber-100/90">
+            {warnings.map((w) => (
+              <li key={`${w.position}-${w.ai_template_id}`}>
+                <span className="font-mono text-amber-200/70">#{w.position}</span>{' '}
+                <strong>{w.ai_title}</strong>{' '}
+                {w.reason === 'title_mismatch' && w.canonical_title ? (
+                  <>
+                    — AI used template id <span className="font-mono">{w.ai_template_id}</span>{' '}
+                    which is actually <em>{w.canonical_title}</em>
+                  </>
+                ) : (
+                  <>
+                    — AI used unknown template id <span className="font-mono">{w.ai_template_id}</span>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Bulk action bar */}
       <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -703,6 +748,11 @@ function ItemRow({
   const persist = async (patch: {
     coach_action: CoachAction
     coach_edited_json?: any
+    // Substitutes can change which exercise occupies the slot; persist the
+    // new title + template_id so the push picks up the right exercise on
+    // Hevy (otherwise push would use the row's stale original template_id).
+    exercise_title?: string
+    exercise_template_id?: string | null
   }) => {
     const { error } = await supabase
       .from('training_coach_recommendation_items')
@@ -735,16 +785,16 @@ function ItemRow({
     const alt = item.substitution_context?.alternative
     if (!alt) return
     // Substitute writes the alternative into coach_edited_json so push uses it.
-    // Update the displayed exercise_title locally too so the UI reflects the swap.
-    void (async () => {
-      const ok = await persist({ coach_action: 'substitute', coach_edited_json: alt.proposed })
-      if (ok) {
-        onUpdate(item.id, {
-          exercise_title: alt.exercise_title,
-          exercise_template_id: alt.exercise_template_id,
-        })
-      }
-    })()
+    // CRITICAL: also persist exercise_title + exercise_template_id to the row
+    // columns. push-recommendation.ts reads template_id from the row (not from
+    // coach_edited_json) — without this, the push uses the OLD template_id and
+    // the wrong exercise lands on Hevy.
+    void persist({
+      coach_action: 'substitute',
+      coach_edited_json: alt.proposed,
+      exercise_title: alt.exercise_title,
+      exercise_template_id: alt.exercise_template_id,
+    })
   }
 
   const requestSubstitute = async (reason: string) => {
