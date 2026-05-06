@@ -747,6 +747,24 @@ function ItemRow({
     ? item.current_json.sets
     : []
 
+  // "Hold" detection — the proposed prescription is identical to the current
+  // routine slot (same weight, reps, type per set). The AI sometimes holds
+  // a slot intentionally ("client hasn't earned a bump yet") but the diff
+  // UI looks like there's a change to review. Flag these so the coach can
+  // scan past them.
+  const isHold =
+    !!item.current_json &&
+    currentSets.length > 0 &&
+    proposedSets.length === currentSets.length &&
+    proposedSets.every((p, i) => {
+      const c = currentSets[i] || {}
+      return (
+        (p?.weight_kg ?? null) === (c?.weight_kg ?? null) &&
+        (p?.reps ?? null) === (c?.reps ?? null) &&
+        (p?.type || 'normal') === (c?.type || 'normal')
+      )
+    })
+
   const persist = async (patch: {
     coach_action: CoachAction
     coach_edited_json?: any
@@ -869,6 +887,14 @@ function ItemRow({
               NEW
             </span>
           )}
+          {isHold && action !== 'reject' && (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded-full border border-zinc-700 bg-zinc-800/60 text-zinc-400"
+              title="Proposed prescription is identical to the current routine — AI is holding, not changing."
+            >
+              HOLD
+            </span>
+          )}
           {!item.exercise_template_id && action !== 'reject' && (
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300"
@@ -908,10 +934,20 @@ function ItemRow({
         <div>
           <div
             className={
-              action === 'edit' || action === 'substitute' ? 'text-amber-400 mb-1' : 'text-lime-400 mb-1'
+              action === 'edit' || action === 'substitute'
+                ? 'text-amber-400 mb-1'
+                : isHold
+                  ? 'text-zinc-500 mb-1'
+                  : 'text-lime-400 mb-1'
             }
           >
-            {action === 'edit' ? 'Edited' : action === 'substitute' ? 'Substitute' : 'Proposed'}
+            {action === 'edit'
+              ? 'Edited'
+              : action === 'substitute'
+                ? 'Substitute'
+                : isHold
+                  ? 'Proposed (same as current — hold)'
+                  : 'Proposed'}
           </div>
           {editing ? (
             <SetEditor
