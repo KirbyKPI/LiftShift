@@ -253,9 +253,11 @@ function toHevyExercise(item: ItemRow): HevyExerciseInput | null {
     sets: sets.map((s: any) => ({
       type: s?.type || 'normal',
       // Kettlebell-loaded exercises: keep the kg as-is (16/20/24 etc).
-      // Other exercises: snap to nearest whole-pound equivalent so Hevy
-      // displays clean values for clients on lbs preference.
-      weight_kg: kgNative ? s?.weight_kg ?? null : snapToWholePoundKg(s?.weight_kg),
+      // Other exercises: snap to nearest 5-lb increment. US gyms load in
+      // 5-lb plates; 1-lb resolution lands on numbers no plate combo can
+      // make (e.g. "232 lbs"). Coach can always Edit a set to use 2.5-lb
+      // microplates if needed.
+      weight_kg: kgNative ? s?.weight_kg ?? null : snapTo5LbKg(s?.weight_kg),
       reps: s?.reps ?? null,
       distance_meters: s?.distance_meters ?? null,
       duration_seconds: s?.duration_seconds ?? null,
@@ -268,19 +270,27 @@ function toHevyExercise(item: ItemRow): HevyExerciseInput | null {
 }
 
 /**
- * Snap a kg weight to the nearest whole-pound equivalent.
+ * Snap a kg weight to the nearest 5-lb plate-math increment.
  *
- * Claude often proposes weights like 47.6 kg because that's what it sees in
- * the client's logs (Hevy stores 105 lbs as 47.627 kg internally). Pushing
- * 47.6 kg back would have Hevy display 104.9 lbs — slightly off. Round-trip
- * through whole pounds so the prescription is clean: 47.6 kg → 105 lbs →
- * 47.627 kg, which Hevy renders as exactly 105 lbs in the client's app.
+ * US gyms load in 5-lb plates. The AI reasons in kg (Hevy's storage unit)
+ * and often proposes values like 47.6 kg or 105.5 kg — convert to lbs and
+ * those land on 105 lbs (clean) or 232.5 lbs (no plate combo). Round to
+ * the nearest 5-lb multiple, then convert back to the kg value Hevy will
+ * render as exactly that lb number in the client's app.
+ *
+ * Examples:
+ *   47.627 kg (105 lbs) -> 47.627 kg (still 105 lbs)
+ *   105.5 kg (232.6 lbs) -> 104.326 kg (230 lbs)
+ *   46 kg (101.4 lbs)    -> 45.359 kg (100 lbs)
+ *
+ * If the coach wants 2.5-lb microplate precision they can Edit the set
+ * by hand.
  */
-function snapToWholePoundKg(kg: number | null | undefined): number | null {
+function snapTo5LbKg(kg: number | null | undefined): number | null {
   if (kg == null) return null
   if (!Number.isFinite(kg)) return null
   if (kg === 0) return 0
-  const lbs = Math.round(kg * 2.20462)
+  const lbs = Math.round((kg * 2.20462) / 5) * 5
   return Math.round((lbs / 2.20462) * 1000) / 1000
 }
 

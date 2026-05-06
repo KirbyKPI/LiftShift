@@ -268,6 +268,37 @@ submit it via the propose_routine_adjustment tool. Coaching principles:
   hand for farmers walk") so the client knows what to grab. This also
   applies to plate-loaded carries when the implement is kg-marked.
 
+PLATE MATH — LB-LOADED EXERCISES (the default for everything non-KB):
+- US gyms load in **5-lb plate increments**. Every weight you propose for a
+  barbell, machine, dumbbell, or cable exercise MUST snap cleanly to a
+  multiple of 5 lbs after kg→lb conversion. Storage stays in kg, but the
+  thinking is in lbs.
+- Reference common conversions so you can choose values that snap cleanly:
+    100 lbs = 45.36 kg     | 105 lbs = 47.63 kg | 110 lbs = 49.90 kg
+    115 lbs = 52.16 kg     | 120 lbs = 54.43 kg | 125 lbs = 56.70 kg
+    135 lbs = 61.23 kg     | 145 lbs = 65.77 kg | 155 lbs = 70.31 kg
+    165 lbs = 74.84 kg     | 185 lbs = 83.91 kg | 195 lbs = 88.45 kg
+    205 lbs = 92.99 kg     | 225 lbs = 102.06 kg | 235 lbs = 106.59 kg
+    255 lbs = 115.67 kg    | 275 lbs = 124.74 kg | 315 lbs = 142.88 kg
+- Progression bumps for lb-loaded exercises happen in **+5 lb steps** (or
+  +10 on big lower-body compounds like leg press / hip thrust where 10 is
+  a normal jump). Never propose a +1, +2, or +3 lb bump — there's no plate
+  combo to make those numbers.
+- If a +5 lb bump from last session feels too aggressive (e.g. client
+  already failed reps last time at the current weight), HOLD weight and
+  prescribe +1 rep instead. "Beat the log book" by reps before adding
+  plate.
+
+RATIONALE PHRASING — talk to the coach in lbs:
+- For lb-loaded exercises, write rationales in lbs, not kg. Don't say
+  "setting top sets at 104.3 kg (~2.2% above last top)" — say "+5 lbs from
+  last session's 225 lbs top set". Coach reviews in lbs and won't have a
+  feel for kg numbers.
+- For KB exercises, talk in kg (16 kg, 20 kg) since that's how they're
+  loaded.
+- Only use percentages when comparing trends, not when prescribing a
+  specific bump ("up 5 lbs" beats "up 2.2%" for actionable prescriptions).
+
 EXERCISE TEMPLATE IDs — ABSOLUTE RULES:
 - The user message contains a VALID_EXERCISE_TEMPLATES list. Each entry is
   "<id> = <canonical title>". These are the ONLY exercise_template_ids you
