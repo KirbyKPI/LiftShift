@@ -17,17 +17,25 @@ import { supabase } from '../../utils/supabase/client'
 import { CoachNotesPanel, useCoachNotesPreview } from './CoachNotesPanel'
 import { GenerateRecommendationPanel } from './GenerateRecommendationPanel'
 import { SavedRecommendationsPanel } from './SavedRecommendationsPanel'
+import { DataQualityPanel } from './DataQualityPanel'
 
-type Tab = 'notes' | 'ai' | 'saved'
+type Tab = 'notes' | 'ai' | 'saved' | 'data'
 
 interface CoachWorkspaceTabsProps {
   clientId: string
   /** Controlled by the parent — when false, no toolbar renders at all
    *  (the show/hide toggle lives in CoachHeader instead). */
   visible: boolean
+  /** Called after the coach saves a data-quality override. Parent re-runs
+   *  /api/hevy/sync so alerts / PRs / strength chart reflect the fix. */
+  onAppliedOverride?: () => void
 }
 
-export function CoachWorkspaceTabs({ clientId, visible }: CoachWorkspaceTabsProps) {
+export function CoachWorkspaceTabs({
+  clientId,
+  visible,
+  onAppliedOverride,
+}: CoachWorkspaceTabsProps) {
   const [active, setActive] = useState<Tab | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
   const [externalResult, setExternalResult] = useState<any>(null)
@@ -109,6 +117,12 @@ export function CoachWorkspaceTabs({ clientId, visible }: CoachWorkspaceTabsProp
             active={active === 'saved'}
             onClick={() => toggle('saved')}
           />
+          <TabChip
+            label="Data"
+            sublabel="exclude · edit"
+            active={active === 'data'}
+            onClick={() => toggle('data')}
+          />
           {active && (
             <button
               onClick={() => setActive(null)}
@@ -143,6 +157,12 @@ export function CoachWorkspaceTabs({ clientId, visible }: CoachWorkspaceTabsProp
               mode="embedded"
               refreshKey={refreshKey}
               onLoad={handleLoadSaved}
+            />
+          )}
+          {active === 'data' && (
+            <DataQualityPanel
+              clientId={clientId}
+              onAppliedOverride={() => onAppliedOverride?.()}
             />
           )}
         </div>

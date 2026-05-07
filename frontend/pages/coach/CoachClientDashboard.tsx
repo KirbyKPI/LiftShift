@@ -275,9 +275,13 @@ export function CoachClientDashboard({ clientId, coach, onBack }: CoachClientDas
         syncSource={syncSource}
         lastSyncAt={lastSyncAt}
       >
-        {/* Compact one-row toolbar with Notes / AI / Saved tabs.
+        {/* Compact one-row toolbar with Notes / AI / Saved / Data tabs.
             Visibility is controlled by the toggle in CoachHeader. */}
-        <CoachWorkspaceTabs clientId={clientId} visible={toolbarVisible} />
+        <CoachWorkspaceTabs
+          clientId={clientId}
+          visible={toolbarVisible}
+          onAppliedOverride={() => runSync(true)}
+        />
 
         <div className="h-[100dvh]" key={clientId}>
           <HashRouter>

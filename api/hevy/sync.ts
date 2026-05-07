@@ -78,6 +78,99 @@ async function fetchAllWorkouts(apiKey: string): Promise<HevyWorkout[]> {
   return all
 }
 
+// ─── Coach overrides ────────────────────────────────────────────────────────
+//
+// The coach can layer overrides on top of cached Hevy data so insights
+// reflect a corrected picture without modifying the client's actual logs.
+// Two kinds:
+//   - exclude=true: drop these sets from analysis (e.g. wrong exercise
+//     template, garbage data)
+//   - override_weight_kg / override_reps: replace those fields (e.g. typo
+//     where client logged 1500 lbs instead of 150 lbs)
+//
+// Scope:
+//   - set_index = N    -> applies to that specific set in the workout
+//   - set_index = null -> applies to ALL sets of that exercise in that
+//                          workout (typical "exclude this exercise's
+//                          session" use case)
+
+interface CoachOverride {
+  hevy_workout_id: string
+  exercise_template_id: string
+  set_index: number | null
+  exclude: boolean
+  override_weight_kg: number | null
+  override_reps: number | null
+}
+
+/** Map keyed by `${workout_id}:${template_id}:${set_index ?? 'all'}`. */
+type OverrideMap = Map<string, CoachOverride>
+
+function overrideKey(workoutId: string, templateId: string, setIndex: number | 'all'): string {
+  return `${workoutId}:${templateId}:${setIndex}`
+}
+
+async function fetchOverrideMap(clientId: string): Promise<OverrideMap> {
+  const { data } = await supabase
+    .from('training_coach_set_overrides')
+    .select(
+      'hevy_workout_id, exercise_template_id, set_index, exclude, override_weight_kg, override_reps',
+    )
+    .eq('client_id', clientId)
+  const map: OverrideMap = new Map()
+  for (const row of (data || []) as CoachOverride[]) {
+    map.set(
+      overrideKey(
+        row.hevy_workout_id,
+        row.exercise_template_id,
+        row.set_index === null ? 'all' : row.set_index,
+      ),
+      row,
+    )
+  }
+  return map
+}
+
+/** Resolve overrides for a single set. Returns:
+ *   - null if the set should be excluded from analysis
+ *   - { weight_kg, reps } with possibly-overridden values otherwise
+ *
+ * Applies set-specific override first, then falls back to whole-exercise
+ * override (set_index = null). Set-specific exclude wins over whole-exercise
+ * override and vice versa — both excludes drop the set. */
+function applyOverrideToSet(
+  workoutId: string,
+  templateId: string | null | undefined,
+  setIndex: number,
+  rawWeightKg: number | null | undefined,
+  rawReps: number | null | undefined,
+  overrides: OverrideMap,
+): { weight_kg: number; reps: number } | null {
+  // No template_id means we can't match an override; pass through raw.
+  if (!templateId) {
+    return { weight_kg: rawWeightKg ?? 0, reps: rawReps ?? 0 }
+  }
+
+  const setOverride = overrides.get(overrideKey(workoutId, templateId, setIndex))
+  const exerciseOverride = overrides.get(overrideKey(workoutId, templateId, 'all'))
+
+  // Either scope can exclude.
+  if (setOverride?.exclude || exerciseOverride?.exclude) return null
+
+  // Set-specific value override beats exercise-scope value override.
+  const weight =
+    setOverride?.override_weight_kg ??
+    exerciseOverride?.override_weight_kg ??
+    rawWeightKg ??
+    0
+  const reps =
+    setOverride?.override_reps ??
+    exerciseOverride?.override_reps ??
+    rawReps ??
+    0
+  return { weight_kg: weight, reps }
+}
+
 // ─── Transform workout to flat rows (like kpifit-assess format) ─────────────
 
 interface WorkoutRow {
@@ -91,17 +184,26 @@ interface WorkoutRow {
   rpe: number | null
 }
 
-function workoutsToRows(workouts: HevyWorkout[]): WorkoutRow[] {
+function workoutsToRows(workouts: HevyWorkout[], overrides: OverrideMap): WorkoutRow[] {
   const rows: WorkoutRow[] = []
   for (const w of workouts) {
     for (const ex of w.exercises) {
       for (const s of ex.sets) {
+        const ov = applyOverrideToSet(
+          w.id,
+          ex.exercise_template_id,
+          s.index ?? 0,
+          s.weight_kg,
+          s.reps,
+          overrides,
+        )
+        if (!ov) continue // excluded
         rows.push({
           date: w.start_time,
           workout_name: w.title || 'Workout',
           exercise_name: ex.title,
-          weight_lbs: s.weight_kg ? Math.round(s.weight_kg * 2.20462 * 100) / 100 : 0,
-          reps: s.reps || 0,
+          weight_lbs: ov.weight_kg ? Math.round(ov.weight_kg * 2.20462 * 100) / 100 : 0,
+          reps: ov.reps,
           set_type: s.set_type || 'normal',
           duration_seconds: s.duration_seconds || 0,
           rpe: s.rpe ?? null,
@@ -135,13 +237,26 @@ interface CoachWorkoutSet {
   source: 'hevy'
 }
 
-function workoutsToWorkoutSets(workouts: HevyWorkout[]): CoachWorkoutSet[] {
+function workoutsToWorkoutSets(
+  workouts: HevyWorkout[],
+  overrides: OverrideMap,
+): CoachWorkoutSet[] {
   const sets: CoachWorkoutSet[] = []
   for (const w of workouts) {
     const exList = Array.isArray(w.exercises) ? w.exercises : []
     for (const ex of exList) {
       const exSets = Array.isArray(ex.sets) ? ex.sets : []
       for (const s of exSets) {
+        const setIdx = s.index ?? 0
+        const ov = applyOverrideToSet(
+          w.id,
+          ex.exercise_template_id,
+          setIdx,
+          s.weight_kg,
+          s.reps,
+          overrides,
+        )
+        if (!ov) continue // excluded
         sets.push({
           title: w.title || 'Workout',
           start_time: w.start_time,
@@ -154,10 +269,10 @@ function workoutsToWorkoutSets(workouts: HevyWorkout[]): CoachWorkoutSet[] {
               ? ''
               : String(ex.superset_id),
           exercise_notes: ex.notes || '',
-          set_index: s.index ?? 0,
+          set_index: setIdx,
           set_type: s.set_type || 'normal',
-          weight_kg: s.weight_kg ?? 0,
-          reps: s.reps ?? 0,
+          weight_kg: ov.weight_kg,
+          reps: ov.reps,
           distance_km:
             s.distance_meters != null ? s.distance_meters / 1000 : 0,
           duration_seconds: s.duration_seconds ?? 0,
@@ -177,11 +292,13 @@ function workoutsToWorkoutSets(workouts: HevyWorkout[]): CoachWorkoutSet[] {
  */
 function cachedWorkoutsToWorkoutSets(
   cached: Array<{
+    hevy_workout_id: string
     exercises: any
     workout_date: string
     workout_name: string
     duration_seconds: number
   }>,
+  overrides: OverrideMap,
 ): CoachWorkoutSet[] {
   const sets: CoachWorkoutSet[] = []
   for (const c of cached) {
@@ -198,6 +315,16 @@ function cachedWorkoutsToWorkoutSets(
     for (const ex of exercises) {
       const exSets = Array.isArray(ex.sets) ? ex.sets : []
       for (const s of exSets) {
+        const setIdx = s.index ?? 0
+        const ov = applyOverrideToSet(
+          c.hevy_workout_id,
+          ex.exercise_template_id,
+          setIdx,
+          s.weight_kg,
+          s.reps,
+          overrides,
+        )
+        if (!ov) continue
         sets.push({
           title: c.workout_name || 'Workout',
           start_time: startIso,
@@ -210,10 +337,10 @@ function cachedWorkoutsToWorkoutSets(
               ? ''
               : String(ex.superset_id),
           exercise_notes: ex.notes || '',
-          set_index: s.index ?? 0,
+          set_index: setIdx,
           set_type: s.set_type || 'normal',
-          weight_kg: s.weight_kg ?? 0,
-          reps: s.reps ?? 0,
+          weight_kg: ov.weight_kg,
+          reps: ov.reps,
           distance_km:
             s.distance_meters != null ? s.distance_meters / 1000 : 0,
           duration_seconds: s.duration_seconds ?? 0,
@@ -264,16 +391,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const lastFetch = syncMeta?.last_api_fetch_at ? new Date(syncMeta.last_api_fetch_at) : null
     const cacheAge = lastFetch ? (Date.now() - lastFetch.getTime()) / 60000 : Infinity
 
+    // Fetch coach overrides once; reuse across all conversion paths below.
+    const overrides = await fetchOverrideMap(client_id)
+
     if (!force_refresh && cacheAge < ttlMinutes) {
       // Return cached data
       const { data: cached } = await supabase
         .from('training_workout_cache')
-        .select('exercises, workout_date, workout_name, duration_seconds')
+        .select('hevy_workout_id, exercises, workout_date, workout_name, duration_seconds')
         .eq('client_id', client_id)
         .order('workout_date', { ascending: false })
 
-      const rows = flattenCachedRows(cached || [])
-      const sets = cachedWorkoutsToWorkoutSets(cached || [])
+      const rows = flattenCachedRows(cached || [], overrides)
+      const sets = cachedWorkoutsToWorkoutSets(cached || [], overrides)
       return res.status(200).json({
         rows,
         sets,
@@ -310,14 +440,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const { data: stale } = await supabase
         .from('training_workout_cache')
-        .select('exercises, workout_date, workout_name, duration_seconds')
+        .select('hevy_workout_id, exercises, workout_date, workout_name, duration_seconds')
         .eq('client_id', client_id)
         .order('workout_date', { ascending: false })
 
       if (stale && stale.length > 0) {
         return res.status(200).json({
-          rows: flattenCachedRows(stale),
-          sets: cachedWorkoutsToWorkoutSets(stale),
+          rows: flattenCachedRows(stale, overrides),
+          sets: cachedWorkoutsToWorkoutSets(stale, overrides),
           source: 'stale_cache',
           warning: `Sync failed: ${err.message}`,
           last_sync_at: syncMeta?.last_api_fetch_at,
@@ -367,8 +497,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
       .eq('client_id', client_id)
 
-    const rows = workoutsToRows(workouts)
-    const sets = workoutsToWorkoutSets(workouts)
+    const rows = workoutsToRows(workouts, overrides)
+    const sets = workoutsToWorkoutSets(workouts, overrides)
     return res.status(200).json({
       rows,
       sets,
@@ -384,19 +514,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 // ─── Flatten cached workout exercises into flat rows ────────────────────────
 
-function flattenCachedRows(cached: Array<{ exercises: any; workout_date: string; workout_name: string; duration_seconds: number }>): WorkoutRow[] {
+function flattenCachedRows(
+  cached: Array<{
+    hevy_workout_id: string
+    exercises: any
+    workout_date: string
+    workout_name: string
+    duration_seconds: number
+  }>,
+  overrides: OverrideMap,
+): WorkoutRow[] {
   const rows: WorkoutRow[] = []
   for (const c of cached) {
     const exercises = Array.isArray(c.exercises) ? c.exercises : []
     for (const ex of exercises) {
       const sets = Array.isArray(ex.sets) ? ex.sets : []
       for (const s of sets) {
+        const ov = applyOverrideToSet(
+          c.hevy_workout_id,
+          ex.exercise_template_id,
+          s.index ?? 0,
+          s.weight_kg,
+          s.reps,
+          overrides,
+        )
+        if (!ov) continue
         rows.push({
           date: c.workout_date,
           workout_name: c.workout_name || 'Workout',
           exercise_name: ex.title || ex.exercise_name || '',
-          weight_lbs: s.weight_kg ? Math.round(s.weight_kg * 2.20462 * 100) / 100 : (s.weight_lbs || 0),
-          reps: s.reps || 0,
+          weight_lbs: ov.weight_kg ? Math.round(ov.weight_kg * 2.20462 * 100) / 100 : 0,
+          reps: ov.reps,
           set_type: s.set_type || 'normal',
           duration_seconds: s.duration_seconds || 0,
           rpe: s.rpe ?? null,
