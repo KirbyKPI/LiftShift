@@ -148,18 +148,29 @@ async function ensureClientFolder(
   apiKey: string,
   client: { id: string; name: string; hevy_coach_folder_id: number | null },
 ): Promise<number> {
-  // Fast path: cached id.
-  if (client.hevy_coach_folder_id != null) return client.hevy_coach_folder_id
+  // Always list folders so we can VERIFY a cached id is still real. The
+  // coach may have manually deleted the per-client folder on Hevy between
+  // pushes — if we trusted the cache blindly, the next push would 4xx with
+  // "Invalid routine folder id" and the coach would be stuck. This also
+  // costs only one cheap GET (typical accounts have <50 folders).
+  const folders = await listAllHevyFolders(apiKey)
 
-  // Slow path: probe for existing folder by name (in case the coach already
-  // created one manually), else create a new one.
-  const existing = await listAllHevyFolders(apiKey)
-  const match = existing.find(
+  // Fast path: cached id is still present in Hevy. Use it.
+  if (client.hevy_coach_folder_id != null) {
+    const cachedHit = folders.find((f) => f.id === client.hevy_coach_folder_id)
+    if (cachedHit) return cachedHit.id
+    // Cached id no longer exists — fall through to probe / create. The
+    // cache will be overwritten with whatever we end up using below.
+  }
+
+  // Probe by client name (handles both first-time push AND the case where
+  // the coach manually re-created the folder with the same name).
+  const match = folders.find(
     (f) => f.title.trim().toLowerCase() === client.name.trim().toLowerCase(),
   )
   const folderId = match ? match.id : await createHevyFolder(apiKey, client.name)
 
-  // Cache for next time.
+  // Persist (or refresh) the cache for the next push.
   await supabase
     .from('training_clients')
     .update({ hevy_coach_folder_id: folderId })
