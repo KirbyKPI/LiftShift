@@ -20,6 +20,10 @@ export interface SavedRecommendationListItem {
   status: string
   coach_note: string | null
   focus_prompt: string | null
+  /** Source routine name (e.g. "Upper A") or "Week plan" — set at
+   *  generate time so the saved list can show what each rec was about
+   *  without loading the snapshot. */
+  target_routine_title: string | null
   created_at: string
   pushed_at: string | null
   error_message: string | null
@@ -75,7 +79,7 @@ export function SavedRecommendationsPanel({
     const { data, error: err } = await supabase
       .from('training_coach_recommendations')
       .select(
-        'id, adjustment_level, status, coach_note, focus_prompt, created_at, pushed_at, error_message, training_coach_recommendation_items(count)',
+        'id, adjustment_level, status, coach_note, focus_prompt, target_routine_title, created_at, pushed_at, error_message, training_coach_recommendation_items(count)',
       )
       .eq('client_id', clientId)
       .order('created_at', { ascending: false })
@@ -92,6 +96,7 @@ export function SavedRecommendationsPanel({
       status: r.status,
       coach_note: r.coach_note,
       focus_prompt: r.focus_prompt,
+      target_routine_title: r.target_routine_title,
       created_at: r.created_at,
       pushed_at: r.pushed_at,
       error_message: r.error_message,
@@ -267,8 +272,20 @@ export function SavedRecommendationsPanel({
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm text-zinc-100 font-medium">
                               {row.coach_note ||
+                                row.target_routine_title ||
                                 `${prettyLevel(row.adjustment_level)} recommendation`}
                             </span>
+                            {/* If the coach didn't rename, surface the
+                                routine title alongside as a hint when
+                                coach_note is set (so renames don't lose
+                                the source routine context). */}
+                            {row.coach_note &&
+                              row.target_routine_title &&
+                              row.coach_note !== row.target_routine_title && (
+                                <span className="text-[11px] text-zinc-500">
+                                  ({row.target_routine_title})
+                                </span>
+                              )}
                             <button
                               onClick={() => startEditNote(row)}
                               title="Rename"

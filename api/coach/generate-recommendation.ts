@@ -493,6 +493,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const effectiveStatus =
       routineFetchError && !isCreateFromScratch ? 'failed' : 'draft'
 
+    // Display label for the saved-list panel. For single-routine modes,
+    // use the source routine's title (whatever the AI is adjusting). For
+    // week_plan mode there isn't one source routine — show "Week plan".
+    const targetRoutineTitle: string | null =
+      adjustment_level === 'week_plan'
+        ? 'Week plan'
+        : (snapshot.current_hevy_routines?.[0]?.title as string | undefined) ?? null
+
     const { data: inserted, error: insertErr } = await supabase
       .from('training_coach_recommendations')
       .insert({
@@ -505,6 +513,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         coach_note: coach_note ?? null,
         focus_prompt: focus_prompt?.trim() || null,
         plan_preferences: hasStructuredPrefs ? plan_preferences : null,
+        target_routine_title: targetRoutineTitle,
       })
       .select('id, status, created_at')
       .single()
