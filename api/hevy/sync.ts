@@ -101,6 +101,10 @@ interface CoachOverride {
   exclude: boolean
   override_weight_kg: number | null
   override_reps: number | null
+  /** When set (only valid at set_index = null scope), re-attribute every set
+   *  of this exercise in this workout to the new template_id + title. */
+  remap_template_id: string | null
+  remap_exercise_title: string | null
 }
 
 /** Map keyed by `${workout_id}:${template_id}:${set_index ?? 'all'}`. */
@@ -114,7 +118,7 @@ async function fetchOverrideMap(clientId: string): Promise<OverrideMap> {
   const { data } = await supabase
     .from('training_coach_set_overrides')
     .select(
-      'hevy_workout_id, exercise_template_id, set_index, exclude, override_weight_kg, override_reps',
+      'hevy_workout_id, exercise_template_id, set_index, exclude, override_weight_kg, override_reps, remap_template_id, remap_exercise_title',
     )
     .eq('client_id', clientId)
   const map: OverrideMap = new Map()
@@ -133,11 +137,11 @@ async function fetchOverrideMap(clientId: string): Promise<OverrideMap> {
 
 /** Resolve overrides for a single set. Returns:
  *   - null if the set should be excluded from analysis
- *   - { weight_kg, reps } with possibly-overridden values otherwise
+ *   - { weight_kg, reps, remap_template_id?, remap_title? } otherwise
  *
- * Applies set-specific override first, then falls back to whole-exercise
- * override (set_index = null). Set-specific exclude wins over whole-exercise
- * override and vice versa — both excludes drop the set. */
+ * remap fields are populated only when an exercise-scope override has a
+ * remap_template_id set; the caller substitutes those into the emitted
+ * CoachWorkoutSet's exercise_template_id + exercise_title. */
 function applyOverrideToSet(
   workoutId: string,
   templateId: string | null | undefined,
@@ -145,7 +149,12 @@ function applyOverrideToSet(
   rawWeightKg: number | null | undefined,
   rawReps: number | null | undefined,
   overrides: OverrideMap,
-): { weight_kg: number; reps: number } | null {
+): {
+  weight_kg: number
+  reps: number
+  remap_template_id?: string
+  remap_title?: string
+} | null {
   // No template_id means we can't match an override; pass through raw.
   if (!templateId) {
     return { weight_kg: rawWeightKg ?? 0, reps: rawReps ?? 0 }
@@ -168,7 +177,17 @@ function applyOverrideToSet(
     exerciseOverride?.override_reps ??
     rawReps ??
     0
-  return { weight_kg: weight, reps }
+
+  // Remap (only meaningful at exercise scope). Schema constraint guarantees
+  // remap is exclusive with exclude / value overrides — so no conflict here.
+  const remap = exerciseOverride?.remap_template_id
+    ? {
+        remap_template_id: exerciseOverride.remap_template_id,
+        remap_title: exerciseOverride.remap_exercise_title || undefined,
+      }
+    : {}
+
+  return { weight_kg: weight, reps, ...remap }
 }
 
 // ─── Transform workout to flat rows (like kpifit-assess format) ─────────────
@@ -201,7 +220,7 @@ function workoutsToRows(workouts: HevyWorkout[], overrides: OverrideMap): Workou
         rows.push({
           date: w.start_time,
           workout_name: w.title || 'Workout',
-          exercise_name: ex.title,
+          exercise_name: ov.remap_title || ex.title,
           weight_lbs: ov.weight_kg ? Math.round(ov.weight_kg * 2.20462 * 100) / 100 : 0,
           reps: ov.reps,
           set_type: s.set_type || 'normal',
@@ -262,7 +281,7 @@ function workoutsToWorkoutSets(
           start_time: w.start_time,
           end_time: w.end_time || w.start_time,
           description: '',
-          exercise_title: ex.title || '',
+          exercise_title: ov.remap_title || ex.title || '',
           exercise_index: ex.index ?? 0,
           superset_id:
             ex.superset_id === null || ex.superset_id === undefined
@@ -330,7 +349,7 @@ function cachedWorkoutsToWorkoutSets(
           start_time: startIso,
           end_time: endIso,
           description: '',
-          exercise_title: ex.title || ex.exercise_name || '',
+          exercise_title: ov.remap_title || ex.title || ex.exercise_name || '',
           exercise_index: ex.index ?? 0,
           superset_id:
             ex.superset_id === null || ex.superset_id === undefined
@@ -542,7 +561,7 @@ function flattenCachedRows(
         rows.push({
           date: c.workout_date,
           workout_name: c.workout_name || 'Workout',
-          exercise_name: ex.title || ex.exercise_name || '',
+          exercise_name: ov.remap_title || ex.title || ex.exercise_name || '',
           weight_lbs: ov.weight_kg ? Math.round(ov.weight_kg * 2.20462 * 100) / 100 : 0,
           reps: ov.reps,
           set_type: s.set_type || 'normal',

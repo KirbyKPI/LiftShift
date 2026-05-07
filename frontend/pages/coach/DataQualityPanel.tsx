@@ -17,6 +17,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../utils/supabase/client'
+import { HevyTemplatePicker, type HevyTemplate } from './HevyTemplatePicker'
 
 interface DataQualityPanelProps {
   clientId: string
@@ -70,6 +71,8 @@ interface OverrideRow {
   exclude: boolean
   override_weight_kg: number | null
   override_reps: number | null
+  remap_template_id: string | null
+  remap_exercise_title: string | null
   reason: string | null
 }
 
@@ -302,6 +305,7 @@ function ExerciseRow({
               key={session.hevy_workout_id}
               session={session}
               templateId={group.exercise_template_id}
+              exerciseTitle={group.display_title}
               clientId={clientId}
               overrides={overrides}
               upsertOverride={upsertOverride}
@@ -324,6 +328,7 @@ function ExerciseRow({
 function SessionRow({
   session,
   templateId,
+  exerciseTitle,
   clientId,
   overrides,
   upsertOverride,
@@ -331,17 +336,20 @@ function SessionRow({
 }: {
   session: SessionGroup
   templateId: string
+  exerciseTitle: string
   clientId: string
   overrides: Map<string, OverrideRow>
   upsertOverride: (row: OverrideRow) => Promise<boolean>
   deleteOverride: (row: OverrideRow) => Promise<boolean>
 }) {
-  // Whole-exercise exclude lives at set_index = null.
+  // Whole-exercise overrides (exclude OR remap) live at set_index = null.
   const exerciseOv = overrides.get(overrideKey(session.hevy_workout_id, templateId, null))
   const isExcluded = !!exerciseOv?.exclude
+  const isRemapped = !!exerciseOv?.remap_template_id
   const [showReason, setShowReason] = useState(false)
   const [reason, setReason] = useState<string>(exerciseOv?.reason || '')
   const [busy, setBusy] = useState(false)
+  const [pickingRemap, setPickingRemap] = useState(false)
 
   const onExclude = async () => {
     setBusy(true)
@@ -353,6 +361,8 @@ function SessionRow({
       exclude: true,
       override_weight_kg: null,
       override_reps: null,
+      remap_template_id: null,
+      remap_exercise_title: null,
       reason: reason || null,
     })
     setBusy(false)
@@ -360,6 +370,31 @@ function SessionRow({
   }
 
   const onUnexclude = async () => {
+    if (!exerciseOv) return
+    setBusy(true)
+    await deleteOverride(exerciseOv)
+    setBusy(false)
+  }
+
+  const onRemap = async (template: HevyTemplate) => {
+    setBusy(true)
+    const ok = await upsertOverride({
+      client_id: clientId,
+      hevy_workout_id: session.hevy_workout_id,
+      exercise_template_id: templateId,
+      set_index: null,
+      exclude: false,
+      override_weight_kg: null,
+      override_reps: null,
+      remap_template_id: template.id,
+      remap_exercise_title: template.title,
+      reason: exerciseOv?.reason ?? null,
+    })
+    setBusy(false)
+    if (ok) setPickingRemap(false)
+  }
+
+  const onUnremap = async () => {
     if (!exerciseOv) return
     setBusy(true)
     await deleteOverride(exerciseOv)
@@ -383,15 +418,34 @@ function SessionRow({
             >
               Restore
             </button>
-          ) : (
+          ) : isRemapped ? (
             <button
-              onClick={() => setShowReason((v) => !v)}
+              onClick={onUnremap}
               disabled={busy}
-              className="text-[11px] px-2 py-1 bg-zinc-900 hover:bg-amber-500/15 hover:text-amber-300 hover:border-amber-500/40 border border-zinc-800 rounded text-zinc-400 transition-colors disabled:opacity-50"
-              title="Exclude every set from this exercise in this workout"
+              className="text-[11px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded text-zinc-300 transition-colors disabled:opacity-50"
+              title="Drop the remap and re-attribute this session to the original exercise"
             >
-              Exclude session
+              Undo remap
             </button>
+          ) : (
+            <>
+              <button
+                onClick={() => setPickingRemap(true)}
+                disabled={busy}
+                className="text-[11px] px-2 py-1 bg-zinc-900 hover:bg-blue-500/15 hover:text-blue-300 hover:border-blue-500/40 border border-zinc-800 rounded text-zinc-400 transition-colors disabled:opacity-50"
+                title="Re-attribute this session to a different Hevy exercise (e.g. client picked the wrong template)"
+              >
+                Remap exercise
+              </button>
+              <button
+                onClick={() => setShowReason((v) => !v)}
+                disabled={busy}
+                className="text-[11px] px-2 py-1 bg-zinc-900 hover:bg-amber-500/15 hover:text-amber-300 hover:border-amber-500/40 border border-zinc-800 rounded text-zinc-400 transition-colors disabled:opacity-50"
+                title="Exclude every set from this exercise in this workout"
+              >
+                Exclude session
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -420,12 +474,18 @@ function SessionRow({
         <p className="text-amber-200/70 text-[11px] mb-2 italic">"{exerciseOv.reason}"</p>
       )}
 
+      {isRemapped && (
+        <p className="text-blue-300/80 text-[11px] mb-2 italic">
+          ↪ Re-attributed to <strong>{exerciseOv?.remap_exercise_title}</strong>
+        </p>
+      )}
+
       <ul className="space-y-1 font-mono text-[11px]">
         {session.sets.map((s) => (
           <SetRow
             key={s.set_index}
             set={s}
-            disabled={isExcluded}
+            disabled={isExcluded || isRemapped}
             templateId={templateId}
             clientId={clientId}
             overrides={overrides}
@@ -434,6 +494,15 @@ function SessionRow({
           />
         ))}
       </ul>
+
+      {pickingRemap && (
+        <HevyTemplatePicker
+          suggestedTitle={exerciseTitle}
+          currentTemplateId={null}
+          onSelect={onRemap}
+          onClose={() => setPickingRemap(false)}
+        />
+      )}
     </li>
   )
 }
@@ -501,6 +570,8 @@ function SetRow({
       exclude: false,
       override_weight_kg: sameKg ? null : newKg,
       override_reps: sameReps ? null : newReps,
+      remap_template_id: null,
+      remap_exercise_title: null,
       reason: setOv?.reason ?? null,
     })
     setBusy(false)

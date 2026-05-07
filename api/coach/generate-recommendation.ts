@@ -163,6 +163,46 @@ interface HevyWorkoutNote {
   }>
 }
 
+// ─── Coach overrides (mirrors api/hevy/sync.ts; same semantics) ───────────
+
+interface CoachOverrideRow {
+  hevy_workout_id: string
+  exercise_template_id: string
+  set_index: number | null
+  exclude: boolean
+  override_weight_kg: number | null
+  override_reps: number | null
+  remap_template_id: string | null
+  remap_exercise_title: string | null
+}
+
+type CoachOverrideMap = Map<string, CoachOverrideRow>
+
+function ovKey(workoutId: string, templateId: string, setIndex: number | 'all'): string {
+  return `${workoutId}:${templateId}:${setIndex}`
+}
+
+async function fetchCoachOverrideMap(clientId: string): Promise<CoachOverrideMap> {
+  const { data } = await supabase
+    .from('training_coach_set_overrides')
+    .select(
+      'hevy_workout_id, exercise_template_id, set_index, exclude, override_weight_kg, override_reps, remap_template_id, remap_exercise_title',
+    )
+    .eq('client_id', clientId)
+  const map: CoachOverrideMap = new Map()
+  for (const row of (data || []) as CoachOverrideRow[]) {
+    map.set(
+      ovKey(
+        row.hevy_workout_id,
+        row.exercise_template_id,
+        row.set_index === null ? 'all' : row.set_index,
+      ),
+      row,
+    )
+  }
+  return map
+}
+
 // ─── Pull recent cached sets ───────────────────────────────────────────────
 
 async function fetchRecentSetSummaries(
@@ -173,28 +213,59 @@ async function fetchRecentSetSummaries(
     .toISOString()
     .slice(0, 10)
 
-  const { data: cached } = await supabase
-    .from('training_workout_cache')
-    .select('exercises, workout_date, workout_name, duration_seconds')
-    .eq('client_id', clientId)
-    .gte('workout_date', sinceIso)
-    .order('workout_date', { ascending: false })
+  const [{ data: cached }, overrides] = await Promise.all([
+    supabase
+      .from('training_workout_cache')
+      .select('hevy_workout_id, exercises, workout_date, workout_name, duration_seconds')
+      .eq('client_id', clientId)
+      .gte('workout_date', sinceIso)
+      .order('workout_date', { ascending: false }),
+    fetchCoachOverrideMap(clientId),
+  ])
 
   const summaries: RecentSetSummary[] = []
   for (const c of cached || []) {
     const exercises: any[] = Array.isArray(c.exercises) ? c.exercises : []
     for (const ex of exercises) {
       const sets: any[] = Array.isArray(ex.sets) ? ex.sets : []
+      const exTemplateId: string | null = ex.exercise_template_id ?? null
+      // Pre-compute exercise-scope override once per exercise per workout.
+      const exOv =
+        exTemplateId
+          ? overrides.get(ovKey(c.hevy_workout_id, exTemplateId, 'all'))
+          : undefined
+
+      // If the whole exercise is excluded, drop all its sets.
+      if (exOv?.exclude) continue
+
+      const remappedTemplateId = exOv?.remap_template_id || exTemplateId
+      const remappedTitle =
+        exOv?.remap_exercise_title || ex.title || ex.exercise_name || ''
+
       for (const s of sets) {
+        const setIdx = s.index ?? 0
+        const setOv =
+          exTemplateId
+            ? overrides.get(ovKey(c.hevy_workout_id, exTemplateId, setIdx))
+            : undefined
+        if (setOv?.exclude) continue
+
+        const weight =
+          setOv?.override_weight_kg ??
+          exOv?.override_weight_kg ??
+          (s.weight_kg ?? null)
+        const reps =
+          setOv?.override_reps ?? exOv?.override_reps ?? (s.reps ?? null)
+
         summaries.push({
           workout_date: c.workout_date,
           workout_name: c.workout_name || 'Workout',
-          exercise_title: ex.title || ex.exercise_name || '',
-          exercise_template_id: ex.exercise_template_id ?? null,
-          set_index: s.index ?? 0,
+          exercise_title: remappedTitle,
+          exercise_template_id: remappedTemplateId,
+          set_index: setIdx,
           set_type: s.set_type || 'normal',
-          weight_kg: s.weight_kg ?? null,
-          reps: s.reps ?? null,
+          weight_kg: weight,
+          reps: reps,
           rpe: s.rpe ?? null,
           duration_seconds: s.duration_seconds ?? null,
         })
