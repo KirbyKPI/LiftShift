@@ -1,17 +1,26 @@
 export { Page }
 
 import React, { useState, useEffect } from 'react'
-import { signIn, signUp, getSession, getCoachProfile } from '../../utils/supabase/auth'
+import {
+  signIn,
+  signUp,
+  getSession,
+  getCoachProfile,
+  requestPasswordReset,
+} from '../../utils/supabase/auth'
 import { navigate } from 'vike/client/router'
 import { ClientOnly } from 'vike-react/ClientOnly'
 import { assetPath } from '../../constants'
 
+type Mode = 'login' | 'signup' | 'forgot'
+
 function Page() {
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
   const [loading, setLoading] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
 
@@ -34,19 +43,32 @@ function Page() {
     )
   }
 
+  const switchMode = (next: Mode) => {
+    setMode(next)
+    setError('')
+    setInfo('')
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setInfo('')
     setLoading(true)
 
     try {
       if (mode === 'signup') {
         if (!name.trim()) { setError('Name is required'); setLoading(false); return }
         await signUp(email, password, name.trim())
+        navigate('/coach')
+      } else if (mode === 'forgot') {
+        await requestPasswordReset(email)
+        setInfo(
+          `Reset link sent to ${email.trim()}. Check your inbox (and spam). The link lands you back here to set a new password.`,
+        )
       } else {
         await signIn(email, password)
+        navigate('/coach')
       }
-      navigate('/coach')
     } catch (err: any) {
       setError(err.message || 'Authentication failed')
     } finally {
@@ -92,12 +114,18 @@ function Page() {
             {/* Card */}
             <div className="rounded-2xl border border-white/10 bg-black/30 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.5)] p-8">
               <h1 className="text-xl font-bold text-white mb-1">
-                {mode === 'login' ? 'Welcome back' : 'Create your account'}
+                {mode === 'login'
+                  ? 'Welcome back'
+                  : mode === 'signup'
+                    ? 'Create your account'
+                    : 'Reset your password'}
               </h1>
               <p className="text-slate-400 text-sm mb-6">
                 {mode === 'login'
                   ? 'Sign in to your KPI·FIT coaching dashboard'
-                  : 'Set up your coach account to manage clients'}
+                  : mode === 'signup'
+                    ? 'Set up your coach account to manage clients'
+                    : 'Enter the email tied to your account and we’ll send a reset link.'}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -124,21 +152,35 @@ function Page() {
                     className="w-full px-3.5 py-2.5 bg-slate-900/60 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
                   />
                 </div>
-                <div>
-                  <label className="block text-slate-400 text-xs font-medium mb-1.5">Password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    minLength={6}
-                    className="w-full px-3.5 py-2.5 bg-slate-900/60 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
-                  />
-                </div>
+                {mode !== 'forgot' && (
+                  <div>
+                    <label className="block text-slate-400 text-xs font-medium mb-1.5">Password</label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      minLength={6}
+                      className="w-full px-3.5 py-2.5 bg-slate-900/60 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                    />
+                    {mode === 'login' && (
+                      <button
+                        type="button"
+                        onClick={() => switchMode('forgot')}
+                        className="mt-2 text-xs text-slate-500 hover:text-emerald-300 transition-colors"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {error && (
                   <p className="text-red-300 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
+                )}
+                {info && (
+                  <p className="text-emerald-300 text-sm bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">{info}</p>
                 )}
 
                 <button
@@ -146,17 +188,29 @@ function Page() {
                   disabled={loading}
                   className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/20"
                 >
-                  {loading ? 'Loading...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                  {loading
+                    ? 'Loading...'
+                    : mode === 'login'
+                      ? 'Sign In'
+                      : mode === 'signup'
+                        ? 'Create Account'
+                        : 'Send Reset Link'}
                 </button>
               </form>
 
-              <div className="mt-6 text-center">
-                <button
-                  onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}
-                  className="text-slate-500 text-sm hover:text-emerald-300 transition-colors"
-                >
-                  {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-                </button>
+              <div className="mt-6 text-center space-y-2">
+                {/* Signup mode disabled — this app is solo-coach (Kirby).
+                    New coaches are added manually via the Supabase dashboard
+                    (Authentication → Users → Add user). The 'forgot' branch
+                    stays so locked-out users can recover. */}
+                {mode === 'forgot' && (
+                  <button
+                    onClick={() => switchMode('login')}
+                    className="text-slate-500 text-sm hover:text-emerald-300 transition-colors"
+                  >
+                    ← Back to sign in
+                  </button>
+                )}
               </div>
             </div>
           </div>
